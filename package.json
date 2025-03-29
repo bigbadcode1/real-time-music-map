@@ -1,16 +1,11 @@
 {
   "name": "fullstack-app",
   "version": "1.0.0",
-  "private": true,
   "scripts": {
     "start:backend": "cd backend && npm start",
     "start:frontend": "cd frontend && npm start",
     "dev:backend": "cd backend && npm run dev",
     "dev:frontend": "cd frontend && npm run dev",
     "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install"
-  },
-  "devDependencies": {
-    "typescript": "^5.3.3",
-    "@types/react": "~18.3.12"
   }
 }

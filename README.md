@@ -4,7 +4,7 @@
 </p>
 
 <p align="center">
-  Feel the sound around you.
+  See the sound around you - live.
 </p>
 
 <p align="center">
