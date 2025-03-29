@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "frontend",
-    "slug": "frontend",
+    "name": "Real time Music Map",
+    "slug": "real-time-music-map",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -13,13 +13,33 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bigbadcode1.realtimemusicmap",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "This app needs access to your location to show you on the map.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs access to your location in the background for location tracking features.",
+        "NSLocationAlwaysUsageDescription": "This app needs access to your location in the background for location tracking features.",
+        "UIBackgroundModes": [
+          "location",
+          "fetch"
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "NSLocationAlwaysAndWhenInUseUsageDescription": "We need your location to show nearby music activity.",
+      "NSLocationWhenInUseUsageDescription": "We need your location to show nearby music activity.",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION"
+      ],
+      "backgroundLocation": true,
+      "package": "com.bigbadcode1.realtimemusicmap"
     },
     "web": {
       "favicon": "./assets/favicon.png"
