@@ -18,13 +18,13 @@ import { Text, ActivityIndicator } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import * as geohash from 'ngeohash';
-import { requestPermissions, getCurrentLocation } from '../services/locationService';
+import { requestPermissions, getCurrentLocation, watchLocation } from '../services/locationService';
 import { startBackgroundLocationTracking } from '../tasks/backgroundLocationTask';
 
 const MapScreen = () => {
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
+  const [locationSubscription, setLocationSubscription] = useState<Location.LocationSubscription | null>(null);
   // Effect hook runs once when component mounts to initialize location services
   useEffect(() => {
 
@@ -37,12 +37,23 @@ const MapScreen = () => {
         setLocation(currentLocation);
         
         // Start tracking location in the background
-        // (!!!) For our current testing, dont track background location so keep it commented
-        // await startBackgroundLocationTracking();
+        const subscription = await watchLocation((newLocation) => {
+          console.log('📍 Location update:', newLocation);
+          setLocation(newLocation);
+        });
+
+        setLocationSubscription(subscription);
       } catch (error) {
         setErrorMsg(error instanceof Error ? error.message : 'An error occurred');
       }
     })();
+
+    return () => {
+      if (locationSubscription) {
+        locationSubscription.remove();
+      }
+    };
+
   }, []);
 
   if (errorMsg) return <Text>{errorMsg}</Text>;

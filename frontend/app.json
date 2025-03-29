@@ -16,13 +16,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.bigbadcode1.realtimemusicmap",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "This app needs access to your location to show you on the map.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs access to your location in the background for location tracking features.",
-        "NSLocationAlwaysUsageDescription": "This app needs access to your location in the background for location tracking features.",
-        "UIBackgroundModes": [
-          "location",
-          "fetch"
-        ]
+        "NSLocationWhenInUseUsageDescription": "This app needs access to your location to show you on the map."
       }
     },
     "android": {
