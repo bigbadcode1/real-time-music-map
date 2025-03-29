@@ -7,13 +7,12 @@
 
 import * as Location from 'expo-location';
 
-export async function requestPermissions() {
+export async function requestPermissions(): Promise<void> {
   const { status: foregroundStatus } = await Location.requestForegroundPermissionsAsync();
   if (foregroundStatus !== 'granted') {
     throw new Error('Foreground location permission not granted');
   }
   
-  // (!!!) For our current testing, dont track background location so keep it commented
   // const { status: backgroundStatus } = await Location.requestBackgroundPermissionsAsync();
   // if (backgroundStatus !== 'granted') {
   //   throw new Error('Background location permission not granted');
@@ -21,6 +20,21 @@ export async function requestPermissions() {
 }
 
 // Gets the device's current location (one-time request)
-export async function getCurrentLocation() {
-  return await Location.getCurrentPositionAsync({});
+export async function getCurrentLocation(): Promise<Location.LocationObject> {
+  return await Location.getCurrentPositionAsync({
+    accuracy: Location.Accuracy.Balanced
+  });
+}
+
+export function watchLocation(
+  onLocationUpdate: (location: Location.LocationObject) => void
+): Promise<Location.LocationSubscription> {
+  return Location.watchPositionAsync(
+    {
+      accuracy: Location.Accuracy.Balanced,
+      timeInterval: 10000,
+      distanceInterval: 50,
+    },
+    onLocationUpdate
+  );
 }
