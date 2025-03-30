@@ -1,17 +1,13 @@
 {
   "expo": {
-    "name": "Real time Music Map",
-    "slug": "real-time-music-map",
+    "name": "Real Time Music Map",
+    "slug": "frontend",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "icon": "./assets/images/bbclogo.png",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
+    "scheme": "myapp",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.bigbadcode1.realtimemusicmap",
@@ -21,7 +17,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/images/splash-screen-logo.png",
         "backgroundColor": "#ffffff"
       },
       "NSLocationAlwaysAndWhenInUseUsageDescription": "We need your location to show nearby music activity.",
@@ -36,7 +32,24 @@
       "package": "com.bigbadcode1.realtimemusicmap"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/bbclogo.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
     }
   }
 }
