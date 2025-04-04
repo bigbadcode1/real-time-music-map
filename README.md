@@ -29,7 +29,7 @@
 
 ## Introduction
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum mi lorem, vehicula non cursus quis, sagittis eu erat. Nam a neque euismod, ornare urna ultricies, lobortis orci. In commodo tortor odio, quis laoreet nisl malesuada quis. Nullam varius, velit ac finibus consectetur, metus arcu blandit dui, sit amet convallis lorem erat eget odio. In pulvinar varius augue, ac sollicitudin enim. Quisque rhoncus dui at leo cursus, et aliquam justo euismod. Nulla sit amet faucibus massa, et ornare ante. Integer finibus nisi nulla, ut pulvinar dui sollicitudin et. Donec tellus libero, feugiat sit amet malesuada ut, tincidunt quis erat. Curabitur lacinia tortor vel enim placerat, id tempus lorem volutpat. Nunc sit amet luctus nisl, et egestas diam. Vivamus gravida nisi a arcu tristique, et tincidunt massa scelerisque.
+Real-Time Music Map is a live geosocial platform that visualizes what people are listening to around you. Connect your Spotify account, see nearby listeners, explore local trends, and share your own music vibe — all in real-time.
 
 **Available for both iOS and Android.**
 
@@ -40,16 +40,37 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum mi lorem, ve
 
 ## Features
 
-A few of the things you can do with our App:
+### 🎵 Live Music Visualization
+- **Real-time listener map**: See nearby users with their currently playing tracks.
+- **Hotspots**: Identify areas with high musical activity (popular hangouts or public places).
+- **Geohash precision**: Adjustable location granularity (pinpoint exact or general area).
 
-* tba
-* tba
-* tba
-* tba
-* tba
-* tba
-* tba
-* tba
+### 🔐 Privacy & Sharing
+- **Multi-mode visibility**:
+  - 🌍 Public - visible to all users
+  - 👥 Friends-only - share with connections
+  - 👻 Ghost mode - hide location (shows only music data)
+- **Proximity ghosts**: Animated indicators for nearby ghost-mode users.
+
+### 🎧 Music Integration
+- **Spotify sync**: Display your currently playing track automatically.
+- **Listening history**: Recent plays with timestamps.
+- **Top stats**: Favorite artists/albums/tracks.
+
+### 📊 Local Music Analytics
+- **Area trends**: See what's popular in specific zones (hotspots or draw custom areas).
+- **Time filters**: Compare trends by hour/day/week.
+- **Heatmaps**: Visualize musical activity density.
+
+### 🤝 Social Features
+- **Friend system**: Add users or auto-follow option.
+- **Block list**: Manage unwanted interactions.
+- **Playlist sharing**: Recommend tracks to others.
+
+### ⚙️ Technical Features
+- **Battery-optimized updates**: Smart location refresh intervals.
+- **Cross-platform**: Works on iOS and Android.
+- **Secure auth**: Spotify OAuth2 login with minimal permissions.
 
 <p align="center">
   <img src = "https://github.com/user-attachments/assets/c33462e5-ad18-4d1e-944f-2c6a0f6cef06" width=750>
@@ -90,7 +111,12 @@ npx expo start
 ```
 ## Built Using
 
-tba
+- React Native (Expo)
+- TailwindCSS
+- Node.js + Express.js
+- PostgreSQL + PostGIS
+- Spotify OAuth2
+- Docker
 
 ## Contributors
 
