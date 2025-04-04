@@ -1,0 +1,16 @@
+services:
+  postgres_db:
+    image: postgres:14.5-alpine
+    restart: unless-stopped
+    ports:
+      - 5432:5432
+    env_file: ".env.example"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - music_map_pgdata:/var/lib/postgresql/data
+      
+volumes:
+  music_map_pgdata:
