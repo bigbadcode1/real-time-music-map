@@ -21,6 +21,7 @@
   <a href="#introduction">Introduction</a> •
   <a href="#features">Features</a> •
   <a href="#feedback">Feedback</a> •
+  <a href="documentation">Documentation> •
   <a href="#build-process">Build Process</a> •
   <a href="#built-using">Built Using</a> •
   <a href="#contributors">Contributors</a> •
@@ -131,6 +132,6 @@ npx expo start
 
 ## License
 
-MIT
+GPL-3.0
 
 ---
