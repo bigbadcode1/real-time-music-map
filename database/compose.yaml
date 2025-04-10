@@ -1,10 +1,10 @@
 services:
   postgres_db:
-    image: postgres:14.5-alpine
+    image: postgres:15-alpine
     restart: unless-stopped
     ports:
       - 5432:5432
-    env_file: ".env.example"
+    env_file: ".env"
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
