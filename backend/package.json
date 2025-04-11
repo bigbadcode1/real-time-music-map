@@ -1,25 +1,35 @@
 {
-  "name": "backend",
+  "name": "real-time-music-map-backend",
   "version": "1.0.0",
-  "main": "server.js",
+  "description": "Backend for Real-Time Music Map application",
+  "main": "server.ts",
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/server.js",
+    "start": "node server.ts",
     "dev": "nodemon --watch '**/*.ts' --exec 'ts-node' server.ts",
+    "build": "tsc",
     "prod": "npm run build && npm run start",
-    "watch": "tsc -w"
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "dependencies": {
+    "express": "^4.18.2",
+    "axios": "^1.6.7",
+    "dotenv": "^16.4.5",
     "body-parser": "^1.20.2",
-    "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
-    "express": "^4.18.2"
+    "cors": "^2.8.5"
   },
   "devDependencies": {
+    "@types/express": "^4.17.21",
     "@types/cors": "^2.8.17",
-    "@types/express": "^5.0.1",
-    "@types/node": "^22.13.14",
-    "nodemon": "^3.1.9",
-    "ts-node": "^10.9.2"
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.11.24",
+    "@types/supertest": "^6.0.2",
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.0",
+    "supertest": "^6.3.4",
+    "ts-jest": "^29.1.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
   }
 }
