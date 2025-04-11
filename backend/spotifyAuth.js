@@ -1,29 +1,32 @@
-const axios = require('axios');
-const querystring = require('querystring');
+import axios from 'axios';
+import queryString from 'querystring';
+import dotenv from 'dotenv';
+dotenv.config();
 
-const client_id = process.env.SPOTIFY_CLIENT_ID;
-const client_secret = process.env.SPOTIFY_CLIENT_SECRET;
-const redirect_uri = process.env.SPOTIFY_REDIRECT_URI;
+export async function getSpotifyAccessToken(clientId, clientSecret, code, redirectUri) {
+    try {
+        const tokenUrl = 'https://accounts.spotify.com/api/token';
 
-async function getAccessToken(code) {
-    /*
-    const body = querystring.stringify({
-        grant_type: 'authorization_code',
-        code,
-        redirect_uri,
-    });
+        // Encode client ID and secret in base64
+        const authString = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
 
-    const headers = {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        Authorization:
-            'Basic ' + Buffer.from(`${client_id}:${client_secret}`).toString('base64'),
-    };
 
-    const response = await axios.post('https://accounts.spotify.com/api/token', body, { headers });
 
-    return response.data;
+        const params = new URLSearchParams();
+        params.append('grant_type', 'authorization_code');
+        params.append('code', code);
+        params.append('redirect_uri', redirectUri);
 
-     */
+        const response = await axios.post(tokenUrl, params, {
+            headers: {
+                'Authorization': `Basic ${authString}`,
+                'Content-Type': 'application/x-www-form-urlencoded',
+            }
+        });
+
+        return response.data; // Contains access_token, refresh_token, etc.
+    } catch (error) {
+        console.error('Error exchanging code for token:', error.response?.data || error.message);
+        throw error;
+    }
 }
-
-module.exports = { getAccessToken };
