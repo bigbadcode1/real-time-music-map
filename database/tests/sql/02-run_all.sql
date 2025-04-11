@@ -1,6 +1,11 @@
 --  Essential: Stop on any error
 \set ON_ERROR_STOP 1 
 \set QUIET 1
+
+-- Setup for cleaner output
+\pset format unaligned
+\pset tuples_only on
+
 --  If you use a separate test schema:
 CREATE SCHEMA IF NOT EXISTS test;
 SET search_path TO test, public;

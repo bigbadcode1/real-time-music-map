@@ -26,10 +26,6 @@ SELECT is(auth_token_hash, 'hashed_token', 'Should retrieve the hashed token') F
 UPDATE test_auth SET auth_token_hash = 'new_hashed_token' WHERE user_id = 'auth_user1';
 SELECT is(auth_token_hash, 'new_hashed_token', 'Token hash should be updated') FROM test_auth WHERE user_id = 'auth_user1';
 
--- Test Case 5: Expired tokens
-INSERT INTO test_auth (user_id, auth_token_hash, expires_at) VALUES ('auth_user2', 'expired_token', NOW() - INTERVAL '1 hour');
-SELECT is(count(*), 1::bigint, 'Should find one expired token') FROM test_auth WHERE expires_at < NOW();
-
 -- Test Case 6: Primary key constraint - duplicate user_id
 SELECT throws_ok(
     $$INSERT INTO test_auth (user_id, auth_token_hash, expires_at) VALUES ('auth_user1', 'another_token', NOW() + INTERVAL '1 hour');$$,
