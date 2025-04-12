@@ -83,7 +83,8 @@ Real-Time Music Map is a live geosocial platform that visualizes what people are
 Feel free to send us feedback on [Discord](http://discord.com/users/859168656356933693) or [file an issue](https://github.com/gitpoint/git-point/issues/new). Feature requests are always welcome. If you wish to contribute, please take a quick look at the [guidelines](./CONTRIBUTING.md)!
 
 ## Documentation
-- ### [Database](/database/README.md)
+- #### [Database](/database/README.md)
+- #### [Spotify Auth Flow](/docs/spotify_auth_flow_docs.md)
 
 
 ## Build Process

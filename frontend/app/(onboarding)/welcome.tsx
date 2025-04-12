@@ -1,16 +1,28 @@
 import { router } from "expo-router";
-import { useRef, useState } from "react";
-import { Image, Text, View } from "react-native";
+import React, { useRef, useState } from "react";
+import { Image, Text, View, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Swiper from "react-native-swiper";
 import CustomButton from "@/components/CustomButton";
 import { onboarding } from "@/constants";
 import spotifyLogo from "@/assets/images/spotify.png";
+import { useSpotifyAuth } from "@/src/hooks/useSpotifyAuth";
 
-const Home = () => {
+const Onboarding = () => {
   const swiperRef = useRef<Swiper>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+
+  const { signInWithSpotify, isAuthRequestReady, isLoading, error } = useSpotifyAuth();
+
   const isLastSlide = activeIndex === onboarding.length - 1;
+
+  const handleButtonPress = () => {
+    if (isLastSlide) {
+      signInWithSpotify();
+    } else {
+      swiperRef.current?.scrollBy(1);
+    }
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -46,15 +58,18 @@ const Home = () => {
         </Swiper>
       </View>
 
+      {error && (
+         <View className="px-10 mb-2">
+           <Text className="text-red-600 text-center">Error: {error}</Text>
+         </View>
+      )}
+
       <View className="pb-5 px-10 w-full items-center">
         <CustomButton
             title={isLastSlide ? "Log in with Spotify" : "Next"}
-            onPress={() =>
-                isLastSlide
-                ? router.replace("/(root)/(tabs)/mapScreen")
-                : swiperRef.current?.scrollBy(1)
-            }
+            onPress={handleButtonPress}
             className="w-[75%] h-12 mt-10"
+            disabled={isLoading || (isLastSlide && !isAuthRequestReady)}
             IconLeft={isLastSlide ? () => (
               <Image 
                   source={spotifyLogo} 
@@ -70,4 +85,4 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default Onboarding;
