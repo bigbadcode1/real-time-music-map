@@ -79,6 +79,30 @@ app.post('/exchange-token', async function(req, res) {
     }
 });
 
+app.post('/refresh-token', async function(req, res) {
+    try {
+      const { refresh_token } = req.body;
+      
+      if (!refresh_token) {
+        return res.status(400).json({ error: 'Refresh token is required' });
+      }
+      
+      const tokens = await refreshSpotifyToken(
+        process.env.SPOTIFY_CLIENT_ID,
+        process.env.SPOTIFY_CLIENT_SECRET,
+        refresh_token
+      );
+      
+      res.json({
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
+        expires_in: tokens.expires_in
+      });
+    } catch (error) {
+      console.error('Error refreshing token:', error);
+      res.status(500).json({ error: 'Failed to refresh token' });
+    }
+  });
 
 app.listen(8888)
 

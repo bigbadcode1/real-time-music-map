@@ -1,17 +1,26 @@
-import { SafeAreaView } from "react-native-safe-area-context";
-import {Text} from 'react-native'
 import { Redirect } from "expo-router";
-import MapScreen from "./(root)/(tabs)/mapScreen";
-import "../global.css"
+import { useAuth } from "@/src/context/AuthContext";
+import { ActivityIndicator, View } from "react-native";
+import "../global.css";
 
 const Home = () => {
-    return <Redirect href ="/(onboarding)/welcome" />;
-    // return (
-    //     <SafeAreaView style={{flex:1}}>
-    //         <MapScreen/>
-    //     </SafeAreaView>
-    // )
-
-}
+    const { isLoggedIn, isLoading } = useAuth();
+    
+    // Show loading indicator while checking auth status
+    if (isLoading) {
+      return (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#1DB954" />
+        </View>
+      );
+    }
+    
+    // Redirect based on login status
+    if (isLoggedIn) {
+      return <Redirect href="/(root)/(tabs)/mapScreen" />;
+    } else {
+      return <Redirect href="/(onboarding)/welcome" />;
+    }
+  };
 
 export default Home;
