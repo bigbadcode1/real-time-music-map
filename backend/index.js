@@ -1,5 +1,6 @@
 import express from "express";
 import * as querystring from "node:querystring";
+import cors from "cors";
 import dotenv from "dotenv";
 import {getSpotifyAccessToken} from "./spotifyAuth.js";
 import {getCurrentlyPlayingTrack} from "./spotifyPlayer.js";
@@ -9,7 +10,7 @@ dotenv.config();
 
 var app = express();
 app.use(express.json());
-
+app.use(cors());
 app.get('/login', function(req, res) {
     const client_id = process.env.SPOTIFY_CLIENT_ID;
     const redirect_uri = process.env.SPOTIFY_REDIRECT_URI;
@@ -56,6 +57,27 @@ app.get('/currentTrack', async function (req, res) {
     console.log(track.track.name);
 })
 
+app.post('/exchange-token', async function(req, res) {
+    try {
+        const { code } = req.body;
+        const tokens = await getSpotifyAccessToken(
+          process.env.SPOTIFY_CLIENT_ID, 
+          process.env.SPOTIFY_CLIENT_SECRET, 
+          code, 
+          req.body.redirectUri
+        );
+
+        // return token to client
+        res.json({
+          access_token: tokens.access_token,
+          refresh_token: tokens.refresh_token,
+          expires_in: tokens.expires_in
+        });
+    } catch (error) {
+        console.error('Error exchanging code for token:', error);
+        res.status(500).json({ error: 'Failed to exchange code for token' });
+    }
+});
 
 
 app.listen(8888)
