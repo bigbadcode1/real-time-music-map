@@ -58,6 +58,7 @@ const Onboarding = () => {
         </Swiper>
       </View>
 
+      {/* todo: change to alert popup*/}
       {error && (
          <View className="px-10 mb-2">
            <Text className="text-red-600 text-center">Error: {error}</Text>

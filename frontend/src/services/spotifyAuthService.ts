@@ -13,17 +13,21 @@ export async function refreshAccessToken(): Promise<{success: boolean; tokens?: 
     if (!storedTokens) {
       return { success: false, error: 'No stored tokens found' };
     }
-    
-    const { refresh_token, expires_at_current } = JSON.parse(storedTokens);
-    
+
+    // Consistently use expires_at
+    const { refresh_token, expires_at } = JSON.parse(storedTokens);
+
     // Check if we actually need to refresh
-    if (expires_at_current && !isTokenExpired(expires_at_current)) {
+    if (expires_at && !isTokenExpired(expires_at)) {
       // Token is still valid, return stored tokens
+      console.log('[refreshAccessToken] Token still valid.');
       return { success: true, tokens: JSON.parse(storedTokens) };
     }
-    
+
     // Token is expired or about to expire, refresh it
+    // *** FIX: Use the correct endpoint ***
     const backendUrl = 'http://localhost:8888/refresh-token';
+    console.log(`[refreshAccessToken] Refreshing token at ${backendUrl}`);
     const response = await fetch(backendUrl, {
       method: 'POST',
       headers: {
@@ -31,24 +35,27 @@ export async function refreshAccessToken(): Promise<{success: boolean; tokens?: 
       },
       body: JSON.stringify({ refresh_token }),
     });
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`Failed to refresh token: ${response.status} - ${errorText}`);
     }
-    
+
     const newTokens = await response.json();
-    
-    // Calculate expiration time and store it
-    const expires_at_new = Date.now() + (newTokens.expires_in * 1000);
+
+    // Calculate expiration time and store it consistently as expires_at
+    const new_expires_at = Date.now() + (newTokens.expires_in * 1000);
     const tokensToStore = {
-      ...newTokens,
-      expires_at_new
+      access_token: newTokens.access_token,
+      refresh_token: newTokens.refresh_token || refresh_token, // Use original if backend doesn't send new one
+      expires_in: newTokens.expires_in,
+      expires_at: new_expires_at // Store consistently
     };
-    
+
     // Store the new tokens
+    console.log('[refreshAccessToken] Storing new tokens:', tokensToStore);
     await AsyncStorage.setItem('spotifyTokens', JSON.stringify(tokensToStore));
-    
+
     return {
       success: true,
       tokens: tokensToStore,
@@ -85,11 +92,18 @@ export async function exchangeCodeForTokens(code: string, redirectUri: string): 
     const tokens = await response.json();
     console.log("Tokens received from backend:", tokens);
 
-    await AsyncStorage.setItem('spotifyTokens', JSON.stringify(tokens));
+    // *** FIX: Calculate and store expires_at ***
+    const expires_at = Date.now() + (tokens.expires_in * 1000);
+    const tokensToStore = {
+        ...tokens,
+        expires_at // Add the calculated expiry timestamp
+    };
+    console.log("Storing tokens with expiry:", tokensToStore);
+    await AsyncStorage.setItem('spotifyTokens', JSON.stringify(tokensToStore));
 
     return {
       success: true,
-      tokens, // optional, idk whether they are needed
+      tokens: tokens, // Return original tokens from backend response as per previous logic
     };
   } catch (error: any) {
     console.error('Token exchange error: ', error);

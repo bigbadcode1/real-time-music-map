@@ -8,16 +8,15 @@
     "start": "node index.js",
     "dev": "nodemon index.js",
     "prod": "node index.js",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "axios": "^1.6.7",
-    "dotenv": "^16.4.5",
     "body-parser": "^1.20.2",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.18.2"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",

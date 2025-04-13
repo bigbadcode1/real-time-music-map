@@ -14,9 +14,6 @@ app.use(cors());
 app.get('/login', function(req, res) {
     const client_id = process.env.SPOTIFY_CLIENT_ID;
     const redirect_uri = process.env.SPOTIFY_REDIRECT_URI;
-
-
-
     const state = "4hdkjhgfjkldasj;l";
     const scope = [
         'user-read-private',
