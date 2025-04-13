@@ -1,8 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import {makeRedirectUri, useAuthRequest, ResponseType, AuthRequestPromptOptions,
-} from 'expo-auth-session';
+import {makeRedirectUri, useAuthRequest, ResponseType, AuthRequestPromptOptions} from 'expo-auth-session';
 import { exchangeCodeForTokens } from '@/src/services/spotifyAuthService';
 import { useAuth } from '@/src/context/AuthContext';
 
@@ -39,8 +38,7 @@ export const useSpotifyAuth = (): UseSpotifyAuthReturn => {
 
   // Use a fixed redirect URI during development for simplicity
   // TODO: Consider using makeRedirectUri({ scheme: 'your-app-scheme' }) for production builds
-  const redirectUri = useMemo(() => process.env.EXPO_PUBLIC_SPOTIFY_REDIRECT_URI || 'exp://172.20.10.3:8081', []); // Fallback for safety
-
+  const redirectUri = useMemo(() => process.env.EXPO_PUBLIC_SPOTIFY_REDIRECT_URI || 'exp://192.168.0.101:8081', []);
   useEffect(() => {
     console.log("[useSpotifyAuth] Using redirect URI: ", redirectUri);
   }, [redirectUri]);
