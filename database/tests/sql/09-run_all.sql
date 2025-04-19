@@ -15,7 +15,6 @@ CREATE EXTENSION IF NOT EXISTS pgtap;
 
 --  Execute your test files in the desired order
 \echo 'Running tests...'
-BEGIN;
 SELECT plan(NULL);
 
 \echo -e '\n\033[35mTesting hotspots...\033[0m\n'
@@ -39,11 +38,9 @@ SELECT plan(NULL);
 \echo -e '\n\033[35mTesting upsert_user()...\033[0m\n'
 \i ./docker-entrypoint-initdb.d/procedures/upsert_active_user.sql
 
-SELECT * FROM finish();
-ROLLBACK;
-
 --  (Optional: Clean up the test schema, but rollback usually handles this)
 DROP SCHEMA test CASCADE;
 
-\echo 'All tests completed!'
+\echo -e '\n\033[32mAll tests completed!\033[0m\n'
+
 

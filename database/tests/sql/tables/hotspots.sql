@@ -33,8 +33,8 @@ SELECT throws_ok(
 
 -- New Test: Test geohash constraint (too long)
 SELECT throws_ok(
-    $$INSERT INTO "Hotspots" (geohash, count) VALUES ('toooolong', 0)$$,
-    '23514',
+    $$INSERT INTO "Hotspots" (geohash, count) VALUES ('tooo000olong', 0)$$,
+    '22001',
     NULL,
     'Should throw error for geohash too long'
 );

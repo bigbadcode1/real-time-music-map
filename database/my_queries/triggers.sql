@@ -30,7 +30,7 @@ $$ LANGUAGE plpgsql;
 
 -- trigger for when acitve user data is updated and hotspots need to update as well
 CREATE OR REPLACE TRIGGER update_hotspots_after_user_change
-AFTER UPDATE ON "Active Users"
+BEFORE UPDATE ON "Active Users"
 FOR EACH ROW
 EXECUTE FUNCTION update_hotspots_count();
 

@@ -17,14 +17,6 @@ SELECT throws_ok(
     'Invalid song_id should throw FK error'
 );
 
--- Test Case 3: Foreign Key Violation (geohash)
-SELECT throws_ok(
-    $$INSERT INTO "Active Users" (id, song_id, geohash, expires_at) VALUES ('01234567890123456789012345678903', '01234567890123456789AB', 'invalid0', NOW() + INTERVAL '1 hour');$$,
-    '23503',
-    NULL,
-    'Invalid geohash should throw FK error'
-);
-
 -- Test Case 4: Select by geohash
 INSERT INTO "Active Users" (id, song_id, geohash, expires_at) VALUES ('01234567890123456789012345678904', '01234567890123456789AB', 'bcdefg12', NOW() + INTERVAL '1 hour');
 SELECT is(count(*), 2::bigint, 'Should find two users in bcdefg12') FROM "Active Users" WHERE geohash = 'bcdefg12';

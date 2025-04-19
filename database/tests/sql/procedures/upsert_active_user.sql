@@ -18,15 +18,16 @@ SELECT is(geohash, 'ge045678'::varchar, 'Should update geohash') FROM "Active Us
 
 -- Test Case 2: Insert New User with Valid Token
 SELECT upsert_active_user(
-    'user2'::text, 
+    'user2123456669696'::text, 
     'song11234908'::text, 
     'valid_token_hash'::text, 
     (NOW() + INTERVAL '1 hour')::timestamp without time zone, 
-    'ge7891234'::varchar
+    'ge789123'::varchar
 );
 SELECT is(count(*)::bigint, 2::bigint, 'Should insert new user') FROM "Active Users";
 
 -- Setup for Test Case 3
+INSERT INTO "Active Users" (id, song_id, geohash, expires_at) VALUES ('user3333333333', 'song11234908', 'ge012345', NOW() + INTERVAL '1 hour');
 INSERT INTO "Auth" (user_id, auth_token_hash, expires_at) VALUES ('user3333333333'::text, 'expired_token_hash'::text, NOW() - INTERVAL '1 hour');
 
 -- Test Case 3: Expired Token
@@ -36,7 +37,7 @@ SELECT throws_ok(
         'song11234908'::text, 
         'expired_token_hash'::text, 
         (NOW() + INTERVAL '1 hour')::timestamp without time zone, 
-        'ge1111111'::varchar
+        'ge111111'::varchar
     );$$,
     '0A000',
     'Authentication token expired',
@@ -50,7 +51,7 @@ SELECT throws_ok(
         'song11234908'::text, 
         'invalid_token_hash'::text, 
         (NOW() + INTERVAL '1 hour')::timestamp without time zone, 
-        'ge2222222'::varchar
+        'ge222222'::varchar
     );$$,
     '28000',
     'Invalid authentication token',
