@@ -11,6 +11,6 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - music_map_pgdata:/var/lib/postgresql/data
-      
+      - ./init:/docker-entrypoint-initdb.d
 volumes:
   music_map_pgdata:
