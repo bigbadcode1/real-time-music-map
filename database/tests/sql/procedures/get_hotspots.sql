@@ -39,7 +39,7 @@ SELECT is(
 -- Test Case 5: Test if all columns are returned correctly
 SELECT results_eq(
     $$SELECT geohash FROM get_hotspots(ARRAY['gbc']) ORDER BY geohash$$,
-    $$SELECT 'gbc12345' UNION ALL SELECT 'gbc12346' ORDER BY 1$$,
+    $$SELECT 'gbc12345'::varchar as geohash UNION ALL SELECT 'gbc12346'::varchar as geohash ORDER BY 1$$,
     'Should return the correct geohashes'
 );
 

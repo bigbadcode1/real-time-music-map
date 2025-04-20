@@ -36,11 +36,11 @@ SELECT throws_ok(
         'user3333333333'::text, 
         'song11234908'::text, 
         'expired_token_hash'::text, 
-        (NOW() + INTERVAL '1 hour')::timestamp without time zone, 
+        (NOW() - INTERVAL '1 hour')::timestamp without time zone, 
         'ge111111'::varchar
     );$$,
-    '0A000',
-    'Authentication token expired',
+    '23514',
+    'Provided auth token is expired',
     'Should throw error for expired token'
 );
 
@@ -53,8 +53,8 @@ SELECT throws_ok(
         (NOW() + INTERVAL '1 hour')::timestamp without time zone, 
         'ge222222'::varchar
     );$$,
-    '28000',
-    'Invalid authentication token',
+    'P0001',
+    'Invalid token for user id user123456789',
     'Should throw error for invalid token'
 );
 

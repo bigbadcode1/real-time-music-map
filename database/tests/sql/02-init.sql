@@ -29,17 +29,22 @@ CREATE OR REPLACE FUNCTION upsert_active_user(
 DECLARE
     auth_token_db TEXT;
     geohash_db TEXT;
+    auth_token_db_expires TIMESTAMP;
 BEGIN
+    IF p_expires_at < NOW() THEN
+        RAISE EXCEPTION 'Provided auth token is expired' USING ERRCODE = '23514';
+        RETURN;
+    END IF;
+
     -- first check if auth token is valid
-    SELECT auth_token_hash, geohash INTO auth_token_db, geohash_db
+    SELECT a.auth_token_hash, u.geohash, a.expires_at INTO auth_token_db, geohash_db, auth_token_db_expires
     FROM "Auth" a
     JOIN "Active Users" u ON a.user_id = u.id
     WHERE a.user_id = p_user_id;
 
     -- if there is no auth token for this user we are adding a new user with provided data
     IF NOT FOUND THEN 
-        RAISE NOTICE 'Adding new user with id %', p_user_id;
-        
+    
         INSERT INTO "Active Users" (id, song_id, geohash, expires_at)
         VALUES (p_user_id, p_song_id, p_geohash, p_expires_at);
 
@@ -52,8 +57,16 @@ BEGIN
 
     -- if we find user - check if tokens match
     IF (auth_token_db != p_token_hash) THEN
-        RAISE EXCEPTION 'Invalid token for user id %', p_user_id;
+        RAISE EXCEPTION 'Invalid token for user id %', p_user_id USING ERRCODE = 'P0001';
         RETURN;
+    END IF;
+
+    -- update expires at in db if differs from provided
+    IF (auth_token_db_expires != p_expires_at) THEN
+        UPDATE "Auth"
+        SET
+            expires_at = p_expires_at
+        WHERE user_id = p_user_id;
     END IF;
 
     -- else token is valid so we just update data in Active Users
@@ -61,11 +74,12 @@ BEGIN
     SET
         song_id = p_song_id,
         geohash = p_geohash,
-        expires_at = p_expires_at
+        expires_at = NOW() + INTERVAL '1 hour'
     WHERE id = p_user_id;
 
 END;
 $$ LANGUAGE plpgsql;
+
 
 
 CREATE OR REPLACE FUNCTION update_hotspots_count()
