@@ -1,5 +1,6 @@
 services:
   postgres:
+    restart: 'no'
     build:
       context: .
       dockerfile: Dockerfile

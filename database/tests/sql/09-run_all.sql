@@ -15,33 +15,32 @@ CREATE EXTENSION IF NOT EXISTS pgtap;
 
 --  Execute your test files in the desired order
 \echo 'Running tests...'
-BEGIN;
 SELECT plan(NULL);
 
-\echo 'Testing hotspots...'
+\echo -e '\n\033[35mTesting hotspots...\033[0m\n'
+
 \! pwd
 \i ./docker-entrypoint-initdb.d/tables/hotspots.sql
 
-\echo 'Testing songs...'
+\echo -e '\n\033[35mTesting songs...\033[0m\n'
 \i ./docker-entrypoint-initdb.d/tables/songs.sql
 
-\echo 'Testing users...'
+\echo -e '\n\033[35mTesting users...\033[0m\n'
 \i ./docker-entrypoint-initdb.d/tables/users.sql
 
-\echo 'Testing auth...'
+\echo -e '\n\033[35mTesting auth...\033[0m\n'
 \i ./docker-entrypoint-initdb.d/tables/auth.sql
 
-\echo 'Testing get_hotspots procedure...'
+\echo -e '\n\033[35mTesting get_hotspots()...\033[0m\n'
 \i ./docker-entrypoint-initdb.d/procedures/get_hotspots.sql
 
-\echo 'Testing update_user procedure...'
-\i ./docker-entrypoint-initdb.d/procedures/update_user.sql
 
-SELECT * FROM finish();
-ROLLBACK;
+\echo -e '\n\033[35mTesting upsert_user()...\033[0m\n'
+\i ./docker-entrypoint-initdb.d/procedures/upsert_active_user.sql
 
 --  (Optional: Clean up the test schema, but rollback usually handles this)
 DROP SCHEMA test CASCADE;
 
-\echo 'All tests completed!'
+\echo -e '\n\033[32mAll tests completed!\033[0m\n'
+
 
