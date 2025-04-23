@@ -25,6 +25,7 @@ Files can be found [here](/database/tests/sql)
 ## Running the Tests
 
 To run all tests using Docker:
+> Run it in database/tests directory
 
 ```bash
 docker compose up
