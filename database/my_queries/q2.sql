@@ -17,10 +17,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-                                           
 
 CREATE OR REPLACE FUNCTION upsert_active_user(
     p_user_id TEXT,
+    p_user_name TEXT,
     p_song_id TEXT,
     p_token_hash TEXT,
     p_expires_at TIMESTAMP,
@@ -44,9 +44,10 @@ BEGIN
 
     -- if there is no auth token for this user we are adding a new user with provided data
     IF NOT FOUND THEN 
-    
-        INSERT INTO "Active Users" (id, song_id, geohash, expires_at)
-        VALUES (p_user_id, p_song_id, p_geohash, p_expires_at);
+
+        INSERT INTO "Active Users" (id, name, song_id, geohash, expires_at)
+        VALUES (p_user_id, p_user_name, p_song_id, p_geohash, p_expires_at);
+
 
         INSERT INTO "Auth" (user_id, auth_token_hash, expires_at)
         VALUES (p_user_id, p_token_hash, p_expires_at);

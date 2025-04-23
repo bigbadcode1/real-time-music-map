@@ -15,6 +15,7 @@ CREATE TABLE "Songs" (
 
 CREATE TABLE "Active Users" (
   id TEXT PRIMARY KEY NOT NULL CHECK(id ~ '^[0-9A-Za-z]{10,80}$'),
+  name TEXT NOT NULL,
   song_id TEXT NOT NULL REFERENCES "Songs"(id),
   geohash VARCHAR(8) REFERENCES "Hotspots"(geohash) ON DELETE SET NULL,
   expires_at TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '1 hour')
@@ -26,3 +27,4 @@ CREATE TABLE "Auth" (
   auth_token_hash TEXT NOT NULL,  -- Hashed version
   expires_at TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '1 hour')
 );
+
