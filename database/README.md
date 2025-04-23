@@ -5,45 +5,57 @@ This sets up a PostgreSQL database with the necessary tables for our application
 ## Database Schema
 ![ER_diagram](https://github.com/user-attachments/assets/454880f0-5374-405a-83be-d47537eddf0a)
 
-### Tables
+## Key Features
 
-#### Hotspots
-- Stores geographic hotspots with activity tracking
-- **Fields**:
-  - `geohash` (VARCHAR(8)): Primary key, valid geohash string
-  - `count` (INT): Number of active users in this location
-  - `last_updated` (TIMESTAMPTZ): Timestamp of last activity
+- **Real-time Hotspot Tracking**: Identifies areas with high user concentrations using geohash technology
+- **User Management**: Tracks active users with their current locations and music preferences
+- **Authentication**: Secure token-based authentication system
+- **Optimized Performance**: Reduces Spotify API calls by caching song data
 
-#### Songs
-- Caches Spotify song information to reduce API calls
-- **Fields**:
-  - `id` (TEXT): Spotify song ID (22-character alphanumeric)
-  - `image_url` (TEXT): Album art URL
-  - `title` (TEXT): Song title
-  - `artist` (TEXT): Artist name
+## Database Schema
 
-#### Active Users
-- Tracks currently active users
-- **Fields**:
-  - `id` (TEXT): User ID (22-32 character alphanumeric)
-  - `song_id` (TEXT): Currently playing song (references Songs.id)
-  - `geohash` (VARCHAR(8)): User's location (references Hotspots.geohash)
-  - `expires_at` (TIMESTAMPTZ): Session expiration time (default 1 hour)
+### Main Tables
 
-#### Auth
-- Manages user authentication tokens
-- **Fields**:
-  - `user_id` (TEXT): References "Active Users".id
-  - `auth_token_hash` (TEXT): Hashed authentication token
-  - `expires_at` (TIMESTAMPTZ): Token expiration time (default 1 hour)
+1. **Hotspots**
+   - Tracks geographic areas with multiple users
+   - `geohash`: 8-character geohash identifier (primary key)
+   - `count`: Number of active users in the area
+   - `last_updated`: Timestamp of last activity
 
-## Docker Deployment
+2. **Active Users**
+   - Currently active users in the system
+   - `id`: User identifier
+   - `song_id`: Currently playing song (references Songs table)
+   - `geohash`: Current location (references Hotspots)
+   - `expires_at`: Session expiration time
 
-### Prerequisites
-- Docker
-- Docker Compose
+3. **Songs**
+   - Cache of Spotify song data to reduce API calls
+   - Stores song ID, image URL, title, and artist
 
-([Docker Desktop](https://www.docker.com/products/docker-desktop/) provides them)
+4. **Auth**
+   - User authentication system
+   - Stores hashed auth tokens with expiration times
+
+## Key Functions
+
+### `get_hotspots(geohash_prefixes)`
+Retrieves hotspot data matching the provided geohash prefixes.
+
+### `upsert_active_user()`
+Handles user authentication and updates user location/song data:
+- Validates auth tokens
+- Updates user location
+- Manages session expiration
+
+## Triggers
+
+1. **Hotspot Auto-update**
+   - Automatically updates hotspot counts when users change locations
+   - Removes empty hotspots
+
+2. **New User Handling**
+   - Increments hotspot counts when new users join
 
 
 ### Setup
