@@ -120,21 +120,25 @@ const MapScreen = () => {
       </View>
 
       <View style={styles.customNavBar} className="absolute bottom-12 left-12 right-12 h-20 bg-white rounded-full flex-row items-center justify-between px-6 py-2 shadow-xl">
-  <TouchableOpacity
-    onPress={toggleMode}
-    style={[styles.modeButton, mode === 'analyze' ? styles.modeButtonAnalyze : styles.modeButtonDiscover]}
-    className="flex-row items-center justify-center py-2 px-4 rounded-full"
-  >
-    <FontAwesome 
-      name={mode === 'discover' ? 'search' : 'map-pin'} 
-      size={16} 
-      color={mode === 'analyze' ? 'white' : 'black'} 
-      style={styles.iconSpacing} 
-    />
-    <Text style={[styles.modeButtonText, { color: mode === 'analyze' ? 'white' : 'black' }]}>
-      {mode === 'discover' ? 'Discover' : 'Analyze'}
-    </Text>
-  </TouchableOpacity>
+
+      <TouchableOpacity
+  onPress={toggleMode}
+  style={[
+    styles.modeButton, 
+    mode === 'discover' ? styles.modeButtonDiscover : styles.modeButtonAnalyze
+  ]}
+  className="flex-row items-center justify-center py-2 px-4 rounded-full"
+>
+  <FontAwesome 
+    name={mode === 'discover' ? 'map-pin' : 'search'} 
+    size={16} 
+    color={mode === 'discover' ? 'white' : 'black'} 
+    style={styles.iconSpacing} 
+  />
+  <Text style={[styles.modeButtonText, { color: mode === 'discover' ? 'white' : 'black' }]}>
+    {mode === 'discover' ? 'Analyze' : 'Discover'}
+  </Text>
+</TouchableOpacity>
 
   <View style={styles.navButtonsContainer}>
     <TouchableOpacity onPress={() => router.push('/friends')} style={styles.navButton}>
@@ -189,10 +193,10 @@ const styles = StyleSheet.create({
     height: 38,
   },
   modeButtonDiscover: {
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#000000',
   },
   modeButtonAnalyze: {
-    backgroundColor: '#000000',
+    backgroundColor: '#f0f0f0',
   },
   modeButtonText: {
     fontSize: 14,
