@@ -5,8 +5,6 @@ import "../global.css";
 
 const Home = () => {
     const { isLoggedIn, isLoading } = useAuth();
-    
-    // Show loading indicator while checking auth status
     if (isLoading) {
       return (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -14,8 +12,6 @@ const Home = () => {
         </View>
       );
     }
-    
-    // Redirect based on login status
     if (isLoggedIn) {
       return <Redirect href="/(root)/(tabs)/mapScreen" />;
     } else {
