@@ -64,7 +64,6 @@ app.post('/exchange-token', async function(req, res) {
           req.body.redirectUri
         );
 
-        // return token to client
         res.json({
           access_token: tokens.access_token,
           refresh_token: tokens.refresh_token,
