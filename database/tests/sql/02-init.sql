@@ -168,7 +168,6 @@ BEGIN
             FROM unnest(hotspot_prefixes) AS prefix
             WHERE h.geohash LIKE (prefix || '%')
         )
-    )
-    AND u.expires_at > NOW();
+    );
 END;
 $$ LANGUAGE plpgsql;
