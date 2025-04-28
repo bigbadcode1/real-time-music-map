@@ -169,6 +169,5 @@ BEGIN
             WHERE h.geohash LIKE (prefix || '%')
         )
     )
-    AND u.expires_at > NOW();
 END;
 $$ LANGUAGE plpgsql;
