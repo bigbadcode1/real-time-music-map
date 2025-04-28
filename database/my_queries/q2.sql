@@ -80,3 +80,31 @@ BEGIN
 
 END;
 $$ LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION getUsersFromHotspots(hotspot_prefixes text[])
+RETURNS TABLE (
+    id TEXT,
+    name TEXT,
+    song_id TEXT,
+    song_title TEXT,
+    song_image TEXT,
+    song_artist TEXT
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT u.id, u.name, u.song_id, s.title, s.image_url, s.artist
+    FROM "Active Users" u
+    JOIN "Hotspots" h ON u.geohash = h.geohash
+    JOIN "Songs" s ON u.song_id = s.id 
+    WHERE (
+        array_length(hotspot_prefixes, 1) IS NULL OR
+        EXISTS (
+            SELECT 1
+            FROM unnest(hotspot_prefixes) AS prefix
+            WHERE h.geohash LIKE (prefix || '%')
+        )
+    )
+    AND u.expires_at > NOW();
+END;
+$$ LANGUAGE plpgsql;

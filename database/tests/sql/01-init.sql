@@ -7,14 +7,14 @@ CREATE TABLE "Hotspots" (
 
 -- table with spotify songs to reduce api calls
 CREATE TABLE "Songs" (
-  id TEXT PRIMARY KEY NOT NULL CHECK(id ~ '^[0-9A-Za-z]{10,80}$'),
+  id TEXT PRIMARY KEY NOT NULL CHECK(id ~ '^[0-9A-Za-z]{1,80}$'),
   image_url TEXT NOT NULL CHECK(image_url ~ '^https?://[^\s/$.?#].[^\s]*$'),
   title TEXT,
   artist TEXT
 );
 
 CREATE TABLE "Active Users" (
-  id TEXT PRIMARY KEY NOT NULL CHECK(id ~ '^[0-9A-Za-z]{10,80}$'),
+  id TEXT PRIMARY KEY NOT NULL CHECK(id ~ '^[0-9A-Za-z]{1,80}$'),
   name TEXT NOT NULL,
   song_id TEXT NOT NULL REFERENCES "Songs"(id),
   geohash VARCHAR(8) REFERENCES "Hotspots"(geohash) ON DELETE SET NULL,
