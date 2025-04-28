@@ -3,6 +3,7 @@ RETURNS VOID AS $$
 DECLARE
     user_id TEXT;
     song_id TEXT;
+    user_name TEXT;
     geohash VARCHAR(8);
     token_hash TEXT;
     expires_at TIMESTAMP;
@@ -42,16 +43,19 @@ BEGIN
         
         -- Generate random geohash (8 characters)
         SELECT string_agg(substring(geohash_chars, ceil(random() * length(geohash_chars))::integer, 1), '') INTO geohash
-        FROM generate_series(1, 8);
+        FROM generate_series(8,8);
         
         -- Generate random token hash
         token_hash := md5(user_id || now()::text || random()::text);
         
         -- Generate random expiration time (between now and 3 hours from now)
         expires_at := now() + (random() * interval '3 hours');
+        -- Generate random username
+        user_name := 'user' || random()::text;
+        
         
         -- Call the upsert function
-        PERFORM upsert_active_user(user_id, song_id, token_hash, expires_at, geohash);
+        PERFORM upsert_active_user(user_id, user_name, song_id, token_hash, expires_at, geohash);
         
         RAISE NOTICE 'Added user %: song=%, geohash=%', user_id, song_id, geohash;
     END LOOP;

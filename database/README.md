@@ -105,6 +105,9 @@ OR (without removing the containers)
 docker compose stop
 ```
 
+## Testing
+[Tests Documentation](/database/tests/README.md)
+
 To completely remove the data volume (warning: irreversible):
 ```bash
 docker-compose down -v

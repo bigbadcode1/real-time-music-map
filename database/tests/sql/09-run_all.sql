@@ -38,7 +38,11 @@ SELECT plan(NULL);
 \echo -e '\n\033[35mTesting upsert_user()...\033[0m\n'
 \i ./docker-entrypoint-initdb.d/procedures/upsert_active_user.sql
 
---  (Optional: Clean up the test schema, but rollback usually handles this)
+
+\echo -e '\n\033[35mTesting get_users_from_hotspots()...\033[0m\n'
+\i ./docker-entrypoint-initdb.d/procedures/get_users_from_hotspots.sql
+
+--  (Optional: Cleanp the test schema, but rollback usually handles this)
 DROP SCHEMA test CASCADE;
 
 \echo -e '\n\033[32mAll tests completed!\033[0m\n'
