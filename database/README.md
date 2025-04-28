@@ -25,6 +25,7 @@ This sets up a PostgreSQL database with the necessary tables for our application
 2. **Active Users**
    - Currently active users in the system
    - `id`: User identifier
+   - `name`: User name
    - `song_id`: Currently playing song (references Songs table)
    - `geohash`: Current location (references Hotspots)
    - `expires_at`: Session expiration time
@@ -47,6 +48,12 @@ Handles user authentication and updates user location/song data:
 - Validates auth tokens
 - Updates user location
 - Manages session expiration
+
+### `getUsersFromHotspots(hotspot_prefixes)`
+Retrieves active users within specified hotspot areas along with their currently playing songs:
+- Returns user details (ID, name) and song information (ID, title, image, artist)
+- Filters users by matching geohash prefixes (if provided)
+- Joins data from Active Users, Hotspots, and Songs tables
 
 ## Triggers
 
