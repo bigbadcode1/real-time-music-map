@@ -15,7 +15,7 @@ The tests are organized into several categories:
 2. **Function Tests**:
    - `get_hotspots.sql` - Tests the hotspot lookup function
    - `upsert_active_user.sql` - Tests user upsert functionality
-
+   - `get_users_from_hotspots.sql` - Tests fetching users from hotspots functionality
 
 > **Note**: Tables are built from XX-init.sql files - include your definitions there.
 
