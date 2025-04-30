@@ -145,7 +145,7 @@ EXECUTE FUNCTION increment_hotspot();
 
 ---------------------------
 
-CREATE OR REPLACE FUNCTION getUsersFromHotspots(hotspot_prefixes text[])
+CREATE OR REPLACE FUNCTION get_users_from_hotspots(hotspot_prefixes text[])
 RETURNS TABLE (
     id TEXT,
     name TEXT,

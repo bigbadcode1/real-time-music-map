@@ -12,6 +12,9 @@ var app = express();
 
 app.use(express.json());
 app.use(cors());
+
+
+// --------------------- SPOTIFY API -------------------------
 app.get('/login', function (req, res) {
   const client_id = process.env.SPOTIFY_CLIENT_ID;
   const redirect_uri = process.env.SPOTIFY_REDIRECT_URI;
@@ -103,11 +106,17 @@ app.post('/refresh-token', async function (req, res) {
   }
 });
 
+
+// ------------------- DATABASE QUERIES -------------------------------
+
 app.get('/get_hotspots', async function (req, res) {
   try {
+    //test
     const array = ['abc', 'x'];
+    ///
+    
     const result = await Database.getHotspots(array);
- 
+    
     res.status(200).json({result})
   } catch (error) {
     console.log(error);
@@ -115,6 +124,22 @@ app.get('/get_hotspots', async function (req, res) {
   }
 });
 
+app.get('/get_users_from_hotspots', async function (req, res) {
+  try {
+    // test
+    const array = ['2', 'x'];
+    ///
+
+    const result = await Database.getUsersFromHotspots(array);
+    
+    res.status(200).json({result})
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Failed to get users from hotspots" });
+  }
+});
 
 
-app.listen(8888)
+
+
+app.listen(process.env.PORT);

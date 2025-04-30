@@ -23,51 +23,52 @@ INSERT INTO "Active Users" (id, name, song_id, geohash, expires_at) VALUES
     ('user6', 'User 123', 'song7392810312', 'gh190123', NOW() + INTERVAL '2 hours'),
     ('user7', 'User rob', 'song3928103129', 'gh190123', NOW() + INTERVAL '2 hours'),
     ('user8', 'User asdf', 'song1234567890', 'gh190123', NOW() + INTERVAL '2 hours');
+    
 -- Test Case 1: Basic Test with One Geohash Prefix
 SELECT is(
-    (SELECT count(*) FROM getUsersFromHotspots(ARRAY['gbc']))::integer,
+    (SELECT count(*) FROM get_users_from_hotspots(ARRAY['gbc']))::integer,
     2,
     'Should return 2 active users for prefix "gbc"'
 );
 
 -- Test Case 2: Test with Multiple Geohash Prefixes
 SELECT is(
-    (SELECT count(*) FROM getUsersFromHotspots(ARRAY['gbc', 'def']))::integer,
+    (SELECT count(*) FROM get_users_from_hotspots(ARRAY['gbc', 'def']))::integer,
     4,
     'Should return 4 active users for prefixes "gbc" and "def"'
 );
 
 -- Test Case 3: Test with No Matching Geohash Prefix
 SELECT is(
-    (SELECT count(*) FROM getUsersFromHotspots(ARRAY['xyz']))::integer,
+    (SELECT count(*) FROM get_users_from_hotspots(ARRAY['xyz']))::integer,
     0,
     'Should return 0 users for prefix "xyz"'
 );
 
 -- Test Case 4: Test with an Empty Array
 SELECT is(
-    (SELECT count(*) FROM getUsersFromHotspots(ARRAY[]::text[]))::integer,
+    (SELECT count(*) FROM get_users_from_hotspots(ARRAY[]::text[]))::integer,
     8,
     'Should return all active users (8) for an empty array'
 );
 
 -- Test Case 5: Test if only active users are returned
 SELECT is(
-    (SELECT count(*) FROM getUsersFromHotspots(ARRAY['gbc']) WHERE id = 'expired_user')::integer,
+    (SELECT count(*) FROM get_users_from_hotspots(ARRAY['gbc']) WHERE id = 'expired_user')::integer,
     0,
     'Should not return expired users'
 );
 
 -- Test Case 6: Test if all columns are returned correctly
 SELECT results_eq(
-    $$SELECT id FROM getUsersFromHotspots(ARRAY['gbc']) ORDER BY id$$,
+    $$SELECT id FROM get_users_from_hotspots(ARRAY['gbc']) ORDER BY id$$,
     $$SELECT 'user1'::text as id UNION ALL SELECT 'user2'::text as id ORDER BY 1$$,
     'Should return the correct user IDs'
 );
 
 -- Test Case 7: Get users from one hotspot
 SELECT is(
-    (SELECT count(*) FROM getUsersFromHotspots(ARRAY['gh190123']))::integer,
+    (SELECT count(*) FROM get_users_from_hotspots(ARRAY['gh190123']))::integer,
     4,
     'Should return 4 active users for hotspot "gh190123"'
 );
