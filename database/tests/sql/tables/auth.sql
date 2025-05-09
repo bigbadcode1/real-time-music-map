@@ -3,10 +3,10 @@ SELECT * FROM no_plan();
 
 -- Insert valid test data
 INSERT INTO "Songs" (id, image_url, title, artist) VALUES ('01234567890123456789CD', 'http://example.com/image.jpg', 'title', 'artist');
-INSERT INTO "Hotspots" (geohash, count, last_updated) VALUES ('bcdefg12', 1, NOW());
+INSERT INTO "Hotspots" (geohash, count, last_updated) VALUES ('bcdefg1', 1, NOW());
 INSERT INTO "Active Users" (id, name, song_id, geohash, expires_at) VALUES 
-    ('01234567890123456789012345678901', 'rob', '01234567890123456789CD', 'bcdefg12', NOW() + INTERVAL '1 hour'),
-    ('01234567890123456789012345678902', 'tom', '01234567890123456789CD', 'bcdefg12', NOW() + INTERVAL '1 hour');
+    ('01234567890123456789012345678901', 'rob', '01234567890123456789CD', 'bcdefg1', NOW() + INTERVAL '1 hour'),
+    ('01234567890123456789012345678902', 'tom', '01234567890123456789CD', 'bcdefg1', NOW() + INTERVAL '1 hour');
 
 -- Test Case 1: Valid Auth Token Insert
 INSERT INTO "Auth" (user_id, auth_token_hash, expires_at) VALUES ('01234567890123456789012345678901', 'hashed_token', NOW() + INTERVAL '1 hour');

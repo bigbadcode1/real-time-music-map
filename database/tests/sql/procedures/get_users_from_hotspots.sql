@@ -3,11 +3,11 @@ SELECT * FROM no_plan();
 
 -- Setup test data
 INSERT INTO "Hotspots" (geohash, count, last_updated) VALUES
-    ('gbc12345', 10, NOW()),
-    ('gbc12346', 5, NOW()),
-    ('def67890', 20, NOW()),
-    ('def67891', 15, NOW()),
-    ('gh190123', 30, NOW());
+    ('gbc1234', 10, NOW()), 
+    ('gbc1235', 5, NOW()),  
+    ('def6789', 20, NOW()), 
+    ('def6780', 15, NOW()), 
+    ('gh19012', 30, NOW()); 
 
 INSERT INTO "Songs" (id, image_url, title, artist) VALUES
     ('song1234567890', 'http://example.com/image1.jpg', 'Song 1', 'Artist 1'),
@@ -15,15 +15,15 @@ INSERT INTO "Songs" (id, image_url, title, artist) VALUES
     ('song3928103129', 'http://example.com/image3.jpg', 'Song 3', 'Artist 3');
 
 INSERT INTO "Active Users" (id, name, song_id, geohash, expires_at) VALUES
-    ('user1', 'User One', 'song1234567890', 'gbc12345', NOW() + INTERVAL '2 hours'),
-    ('user2', 'User Two', 'song7392810312', 'gbc12346', NOW() + INTERVAL '2 hours'),
-    ('user3', 'User Three', 'song3928103129', 'def67890', NOW() + INTERVAL '2 hours'),
-    ('user4', 'User Four', 'song1234567890', 'def67891', NOW() + INTERVAL '2 hours'),
-    ('user5', 'User Five', 'song7392810312', 'gh190123', NOW() + INTERVAL '2 hours'),
-    ('user6', 'User 123', 'song7392810312', 'gh190123', NOW() + INTERVAL '2 hours'),
-    ('user7', 'User rob', 'song3928103129', 'gh190123', NOW() + INTERVAL '2 hours'),
-    ('user8', 'User asdf', 'song1234567890', 'gh190123', NOW() + INTERVAL '2 hours');
-    
+    ('user1', 'User One', 'song1234567890', 'gbc1234', NOW() + INTERVAL '2 hours'), 
+    ('user2', 'User Two', 'song7392810312', 'gbc1235', NOW() + INTERVAL '2 hours'), 
+    ('user3', 'User Three', 'song3928103129', 'def6789', NOW() + INTERVAL '2 hours'),
+    ('user4', 'User Four', 'song1234567890', 'def6780', NOW() + INTERVAL '2 hours'), 
+    ('user5', 'User Five', 'song7392810312', 'gh19012', NOW() + INTERVAL '2 hours'), 
+    ('user6', 'User 123', 'song7392810312', 'gh19012', NOW() + INTERVAL '2 hours'), 
+    ('user7', 'User rob', 'song3928103129', 'gh19012', NOW() + INTERVAL '2 hours'), 
+    ('user8', 'User asdf', 'song1234567890', 'gh19012', NOW() + INTERVAL '2 hours'); 
+
 -- Test Case 1: Basic Test with One Geohash Prefix
 SELECT is(
     (SELECT count(*) FROM get_users_from_hotspots(ARRAY['gbc']))::integer,
@@ -68,9 +68,9 @@ SELECT results_eq(
 
 -- Test Case 7: Get users from one hotspot
 SELECT is(
-    (SELECT count(*) FROM get_users_from_hotspots(ARRAY['gh190123']))::integer,
+    (SELECT count(*) FROM get_users_from_hotspots(ARRAY['gh19012']))::integer, 
     4,
-    'Should return 4 active users for hotspot "gh190123"'
+    'Should return 4 active users for hotspot "gh19012"'
 );
 
 
