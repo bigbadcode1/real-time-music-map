@@ -115,4 +115,4 @@ docker compose down -v
 ```
 
 ## Testing
-For testing documentation, see [Tests Documentation](/database/tests/README.md)
+For tests documentation, see [Tests Documentation](/database/tests/README.md)
