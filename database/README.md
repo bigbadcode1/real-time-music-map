@@ -54,8 +54,8 @@ This repository contains a PostgreSQL database setup for a real-time music map a
 - Automatic geohash to coordinates conversion using PostGIS
 
 ## Technologies
-- PostgreSQL 14.5
-- PostGIS extension for geospatial functionality
+- PostgreSQL 16
+- PostGIS (3.5.2) extension for geospatial functionality
 - Docker and Docker Compose for deployment
 
 ## Docker Deployment
