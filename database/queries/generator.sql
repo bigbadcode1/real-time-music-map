@@ -53,9 +53,9 @@ BEGIN
         -- Generate random username
         user_name := 'user' || random()::text;
         
-        
         -- Call the upsert function
-        PERFORM upsert_active_user(user_id, user_name, song_id, token_hash, expires_at, geohash);
+        PERFORM add_new_user(user_id, user_name, token_hash, expires_at, geohash);
+        PERFORM update_user_info(user_id, token_hash, geohash, song_id); 
         
         RAISE NOTICE 'Added user %: song=%, geohash=%', user_id, song_id, geohash;
     END LOOP;
@@ -112,7 +112,8 @@ BEGIN
         user_name := 'user' || random()::text;
         
         -- Call the upsert function
-        PERFORM upsert_active_user(user_id, user_name, song_id, token_hash, expires_at, geohash);
+        PERFORM add_new_user(user_id, user_name, token_hash, expires_at, geohash);
+        PERFORM update_user_info(user_id, token_hash, geohash, song_id);
         
         RAISE NOTICE 'Added user %: song=%, geohash=%', user_id, song_id, geohash;
     END LOOP;
@@ -122,4 +123,3 @@ BEGIN
     RAISE NOTICE 'Successfully inserted % random active users for existing Hotspots', num_users;
 END;
 $$ LANGUAGE plpgsql;
-

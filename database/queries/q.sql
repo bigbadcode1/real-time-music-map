@@ -15,14 +15,14 @@
 
 
 
-BEGIN;
+-- BEGIN;
 
-    SELECT * FROM "Hotspots";
-    SELECT add_new_user('user12039812358', 'Test User', 'hash123123421498271', (NOW() - INTERVAL '1 hour')::TIMESTAMP, 'dr72h56');
-    SELECT * FROM "Hotspots";
-    SELECT * FROM "Active Users";
+--     SELECT * FROM "Hotspots";
+--     SELECT add_new_user('user12039812358', 'Test User', 'hash123123421498271', (NOW() - INTERVAL '1 hour')::TIMESTAMP, 'dr72h56');
+--     SELECT * FROM "Hotspots";
+--     SELECT * FROM "Active Users";
 
-ROLLBACK;
+-- ROLLBACK;
 
 
 /*

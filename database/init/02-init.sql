@@ -132,9 +132,10 @@ BEGIN
   
   -- Check if song exists (if provided)
   IF p_song_id IS NOT NULL THEN
-    INSERT INTO "Songs" (id, image_url, title, artist) 
-    VALUES (p_song_id, p_song_image, p_song_title, p_song_artist)
-      ON CONFLICT (id) DO NOTHING;
+    IF NOT EXISTS (SELECT 1 FROM "Songs" WHERE id = p_song_id) THEN
+      INSERT INTO "Songs" (id, image_url, title, artist) 
+      VALUES (p_song_id, p_song_image, p_song_title, p_song_artist);
+    END IF;
   END IF;
   
   -- Update user info'User does not exist'
