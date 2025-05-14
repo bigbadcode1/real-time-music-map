@@ -28,6 +28,7 @@ SELECT is(
 SELECT throws_ok(
     $$SELECT update_auth_token('user1', 'wronghash', 'newhash456', NOW() + INTERVAL '2 hours')$$,
     '23505',
+    'Old auth token does not match',
     'Should throw error when old token is invalid'
 );
 
@@ -35,6 +36,7 @@ SELECT throws_ok(
 SELECT throws_ok(
     $$SELECT update_auth_token('nonexistent', 'somehash', 'newhash789', NOW() + INTERVAL '2 hours')$$,
     '23505',
+    'User does not exist',
     'Should throw error when user does not exist'
 );
 

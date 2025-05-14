@@ -53,6 +53,7 @@ SELECT throws_ok(
 SELECT throws_ok(
     $$SELECT add_new_user('user12039812358', 'Duplicate User', 'hash999', (NOW() + INTERVAL '1 hour'), NULL)$$,
     '23505',
+    'User already exists',
     'Should throw error when adding duplicate user'
 );
 

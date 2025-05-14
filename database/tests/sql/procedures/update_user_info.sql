@@ -46,6 +46,7 @@ SELECT is(
 SELECT throws_ok(
     $$SELECT update_user_info('nonexistent', 'somehash', '9q8yykv', 'spotify123', 'https://example.com/image.jpg', 'Some Song', 'Some Artist')$$,
     '23505',
+    'User does not exist',
     'Should throw error when user does not exist'
 );
 
@@ -53,6 +54,7 @@ SELECT throws_ok(
 SELECT throws_ok(
     $$SELECT update_user_info('user1', 'wronghash', '9q8yykv', 'spotify123', 'https://example.com/image.jpg', 'Some Song', 'Some Artist')$$,
     'UE001',
+    'Auth token invalid',
     'Should throw error when token is invalid'
 );
 

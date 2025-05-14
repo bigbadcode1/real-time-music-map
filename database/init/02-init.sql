@@ -112,16 +112,18 @@ CREATE OR REPLACE FUNCTION update_user_info(
   p_song_artist TEXT DEFAULT NULL
 ) RETURNS VOID AS $$
 DECLARE
-  v_auth TEXT;
   v_old_geohash VARCHAR(7);
+  v_auth_old TEXT DEFAULT NULL;
 BEGIN
 
+  SELECT auth_token_hash INTO v_auth_old FROM "Auth" WHERE user_id = p_user_id;
+
   -- Check if user exists
-  IF NOT EXISTS (SELECT auth_token_hash INTO v_auth FROM "Auth" WHERE user_id = p_user_id) THEN
+  IF v_auth_old IS NULL THEN
     RAISE EXCEPTION 'User does not exist' USING ERRCODE = '23505';
   END IF;
 
-  IF v_auth != p_user_token THEN
+  IF v_auth_old != p_user_token THEN
     RAISE EXCEPTION 'Auth token invalid' USING ERRCODE = 'UE001';
   END IF;
   
@@ -131,10 +133,11 @@ BEGIN
   -- Check if song exists (if provided)
   IF p_song_id IS NOT NULL THEN
     INSERT INTO "Songs" (id, image_url, title, artist) 
-    VALUES (p_song_id, p_song_image, p_song_title, p_song_artist);
+    VALUES (p_song_id, p_song_image, p_song_title, p_song_artist)
+      ON CONFLICT (id) DO NOTHING;
   END IF;
   
-  -- Update user info
+  -- Update user info'User does not exist'
   UPDATE "Active Users"
   SET 
     geohash = COALESCE(p_geohash, geohash),
@@ -156,7 +159,7 @@ CREATE OR REPLACE FUNCTION update_auth_token(
   p_token_expires_at TIMESTAMPTZ
 ) RETURNS VOID AS $$
 DECLARE
-  v_token TEXT;
+  v_token TEXT DEFAULT NULL;
 BEGIN
   -- Check if user exists in Auth table
   SELECT 
@@ -173,7 +176,7 @@ BEGIN
 
   -- Verify if old token matches
   IF v_token != p_old_token THEN
-    RAISE EXCEPTION 'Old auth token invalid' USING ERRCODE = '23505'; 
+    RAISE EXCEPTION 'Old auth token does not match' USING ERRCODE = '23505'; 
   END IF;
   
   -- Update token and extend expiration
