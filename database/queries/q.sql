@@ -1,8 +1,10 @@
 -- SELECT generate_random_active_users(40);
 -- SELECT random_users_exitsing_hotspots(1000);
 -- SELECT * FROM "Hotspots";
--- SELECT * FROM "Active Users";
+SELECT * FROM "Active Users";
+SELECT * FROM "Auth";
 
+-- DELETE FROM "Active Users";
 
 -- Function 3: Add new user with auth token
 -- CREATE OR REPLACE FUNCTION add_new_user(

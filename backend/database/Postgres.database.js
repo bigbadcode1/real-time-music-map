@@ -29,9 +29,29 @@ class Database {
 
 
   // functions for calling db queries
-  async upsertUser(id, name, song_id, token_hash, expires_at, geohash) {
-    const result = await this.query('SELECT upsert_active_user($1, $2, $3, $4, $5, $6)', [id, name, song_id, token_hash, expires_at, geohash]);
+  async addNewUser(id, name, token_hash, expires_at, geohash = null) {
+    
+    let result;
+    if (geohash) {
+      result = await this.query('SELECT add_new_user($1, $2, $3, $4, $5)', [id, name, token_hash, expires_at, geohash]);
+    } else {
+      result = await this.query('SELECT add_new_user($1, $2, $3, $4)', [id, name, token_hash, expires_at]);
+    }
+    
     return result;
+  }
+
+  async updateUserInfo(user_id, token, geohash, song_id, song_image, song_title, song_artist) {
+    const result = await this.query('SELECT update_user_info($1, $2, $3, $4, $5, $6, $7)', [user_id, token, geohash, song_id, song_image, song_title, song_artist]);
+    
+    return result;    
+  }
+
+
+  async updateAuthToken(user_id, old_token, new_token, expires_at) {
+    const result = await this.query('SELECT update_auth_token($1, $2, $3, $4)', [user_id, old_token, new_token, expires_at]);
+
+    return result;    
   }
 
   async getUsersFromHotspots(array) {
@@ -42,7 +62,6 @@ class Database {
   }
 
   async getHotspots(ne_lat, ne_long, sw_lat, sw_long) {
-    // const result = await this.query('SELECT * FROM get_hotspots($1, $2, $3, $4)', [90, 180, -90, -180]);
     const result = await this.query('SELECT * FROM get_hotspots($1, $2, $3, $4)', [ne_lat, ne_long, sw_lat, sw_long]);
     const data = result?.rows;
 

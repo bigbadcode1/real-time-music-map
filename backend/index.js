@@ -5,8 +5,7 @@ import dotenv from "dotenv";
 import { getSpotifyAccessToken } from "./utils/spotify/spotifyAuth.js";
 import { getCurrentlyPlayingTrack } from "./utils/spotify/spotifyPlayer.js";
 import Database from "./database/Postgres.database.js";
-
-
+import { hashToken } from "#utils/hashToken.js";
 
 
 dotenv.config();
@@ -65,8 +64,6 @@ app.get('/currentTrack', async function (req, res) {
   const track = await getCurrentlyPlayingTrack(req.session.accessToken);
   console.log(track.track.name);
 
-
-
 })
 
 app.post('/exchange-token', async function (req, res) {
@@ -89,6 +86,7 @@ app.post('/exchange-token', async function (req, res) {
       refresh_token: tokens.refresh_token,
       expires_in: tokens.expires_in
     });
+
 
   } catch (error) {
     console.error('Error exchanging code for token:', error);
@@ -125,6 +123,10 @@ app.post('/refresh-token', async function (req, res) {
 });
 
 
+
+
+
+
 // ------------------- DATABASE QUERIES -------------------------------
 
 
@@ -145,7 +147,7 @@ app.post('/get_hotspots', async function (req, res) {
 
     res.status(200).json({ "hotspots": result })
   } catch (error) {
-    console.log(error);
+    console.log("Error ", error.code)
     res.status(500).json({ error: "Failed to get hotspots" });
   }
 });
@@ -153,9 +155,9 @@ app.post('/get_hotspots', async function (req, res) {
 // get users from an array of hotspots (geohashes)
 app.post('/get_users_from_hotspots', async function (req, res) {
   try {
-
+    
     const { hotspots } = req.body;
-
+    
     if (!hotspots || !hotspots.length) {
       throw new Error("Invalid hotspots array");
     }
@@ -163,16 +165,16 @@ app.post('/get_users_from_hotspots', async function (req, res) {
     
     let result = [];
     
-
+    
     // example
     // result = await Database.getUsersFromHotspots(['xj', '4d1q', '6vw', 'd2zuqdt', 'kscwfkb']);
     //
-
-
+    
+    
     if (hotspots.length > 0) {
       result = await Database.getUsersFromHotspots(hotspots);
     }
-
+    
     // console.log("result: ", result);
     res.status(200).json({ "users": result });
   } catch (error) {
@@ -182,6 +184,38 @@ app.post('/get_users_from_hotspots', async function (req, res) {
 });
 
 
+
+// ------------------- random testing
+
+app.post('/db_test', async function (req, res) {
+  try {
+    
+
+    //add new user test
+    
+    // now() + 1 hour
+    const date = new Date(Date.now() + 60 * 60 * 1000);
+    const secret_token = "mysecrettoekn123124";
+
+
+    const hash = hashToken(secret_token);
+
+    const user = {
+      id: "userid1234123",
+      name: "User Test 1234",
+      token_hash: hash,
+      expires_at: date, 
+      geohash: "eszbfxt"
+    };
+    
+    const result = await Database.addNewUser(...Object.values(user));
+    
+    res.status(200).send("OK");
+  } catch (error) {
+    console.log("error in /db_test -", "Error", error.code)
+    res.status(500).json({ error: `Error ${error.code}` });
+  }
+});
 
 
 app.listen(process.env.PORT);
