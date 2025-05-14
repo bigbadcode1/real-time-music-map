@@ -35,12 +35,18 @@ SELECT plan(NULL);
 \i ./docker-entrypoint-initdb.d/procedures/get_hotspots.sql
 
 
-\echo -e '\n\033[35mTesting upsert_user()...\033[0m\n'
-\i ./docker-entrypoint-initdb.d/procedures/upsert_active_user.sql
-
-
 \echo -e '\n\033[35mTesting get_users_from_hotspots()...\033[0m\n'
 \i ./docker-entrypoint-initdb.d/procedures/get_users_from_hotspots.sql
+
+\echo -e '\n\033[35mTesting add_new_user()...\033[0m\n'
+\i ./docker-entrypoint-initdb.d/procedures/add_new_user.sql
+
+\echo -e '\n\033[35mTesting update_auth_token()...\033[0m\n'
+\i ./docker-entrypoint-initdb.d/procedures/update_auth_token.sql
+
+\echo -e '\n\033[35mTesting update_user_info()...\033[0m\n'
+\i ./docker-entrypoint-initdb.d/procedures/update_user_info.sql
+
 
 --  (Optional: Cleanp the test schema, but rollback usually handles this)
 DROP SCHEMA test CASCADE;

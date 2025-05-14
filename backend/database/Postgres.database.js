@@ -12,6 +12,7 @@ class Database {
       database: process.env.DB_NAME,
       password: process.env.DB_PASS,
       port: process.env.DB_PORT,
+
     });
   }
 
@@ -29,19 +30,20 @@ class Database {
 
   // functions for calling db queries
   async upsertUser(id, name, song_id, token_hash, expires_at, geohash) {
-    const result = await this.query('SELECT upsert_active_user($1, $2, $3, $4, $5, $6)', id, name, song_id, token_hash, expires_at, geohash);
+    const result = await this.query('SELECT upsert_active_user($1, $2, $3, $4, $5, $6)', [id, name, song_id, token_hash, expires_at, geohash]);
     return result;
   }
 
   async getUsersFromHotspots(array) {
     const result = await this.query('SELECT * FROM get_users_from_hotspots($1)', [array]);
     const data = result?.rows;
-    
+
     return data;
   }
-  
-  async getHotspots(array) {
-    const result = await this.query('SELECT * FROM get_hotspots($1)', [array]);
+
+  async getHotspots(ne_lat, ne_long, sw_lat, sw_long) {
+    // const result = await this.query('SELECT * FROM get_hotspots($1, $2, $3, $4)', [90, 180, -90, -180]);
+    const result = await this.query('SELECT * FROM get_hotspots($1, $2, $3, $4)', [ne_lat, ne_long, sw_lat, sw_long]);
     const data = result?.rows;
 
     return data;

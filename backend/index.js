@@ -2,10 +2,17 @@ import express from "express";
 import * as querystring from "node:querystring";
 import cors from "cors";
 import dotenv from "dotenv";
-import { getSpotifyAccessToken } from "./util/spotify/spotifyAuth.js";
-import { getCurrentlyPlayingTrack } from "./util/spotify/spotifyPlayer.js";
+import { getSpotifyAccessToken } from "./utils/spotify/spotifyAuth.js";
+import { getCurrentlyPlayingTrack } from "./utils/spotify/spotifyPlayer.js";
 import Database from "./database/Postgres.database.js";
+
+
+
+
 dotenv.config();
+
+
+
 
 
 var app = express();
@@ -30,8 +37,8 @@ app.get('/login', function (req, res) {
     'playlist-read-private',
     'playlist-read-collaborative'
   ].join(' ');
-  
-  
+
+
   res.redirect('https://accounts.spotify.com/authorize?' +
     querystring.stringify({
       response_type: 'code',
@@ -40,11 +47,11 @@ app.get('/login', function (req, res) {
       redirect_uri: redirect_uri,
       state: state
     }));
-  });
-  
-  
-  
-  
+});
+
+
+
+
 app.get('/callback', async function (req, res) {
   console.log("callback")
   const code = req.query.code;
@@ -52,12 +59,14 @@ app.get('/callback', async function (req, res) {
   const track = await getCurrentlyPlayingTrack(AccessTokenResponse.access_token);
   console.log(track.track.name);
 
-
 });
 
 app.get('/currentTrack', async function (req, res) {
   const track = await getCurrentlyPlayingTrack(req.session.accessToken);
   console.log(track.track.name);
+
+
+
 })
 
 app.post('/exchange-token', async function (req, res) {
@@ -70,11 +79,17 @@ app.post('/exchange-token', async function (req, res) {
       req.body.redirectUri
     );
 
-    res.json({
+    // undefined check
+    if (!tokens.access_token || !tokens.refresh_token || !tokens.expires_in) {
+      throw new Error("Error fetching tokens");
+    }
+
+    res.status(200).json({
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token,
       expires_in: tokens.expires_in
     });
+
   } catch (error) {
     console.error('Error exchanging code for token:', error);
     res.status(500).json({ error: 'Failed to exchange code for token' });
@@ -95,11 +110,14 @@ app.post('/refresh-token', async function (req, res) {
       refresh_token
     );
 
-    res.json({
+
+    res.status(200).json({
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token,
       expires_in: tokens.expires_in
     });
+
+
   } catch (error) {
     console.error('Error refreshing token:', error);
     res.status(500).json({ error: 'Failed to refresh token' });
@@ -109,30 +127,54 @@ app.post('/refresh-token', async function (req, res) {
 
 // ------------------- DATABASE QUERIES -------------------------------
 
-app.get('/get_hotspots', async function (req, res) {
+
+// get hotspots from coordinates (provide two points NE and SW of the view box)
+app.post('/get_hotspots', async function (req, res) {
   try {
-    //test
-    const array = ['abc', 'x'];
-    ///
-    
-    const result = await Database.getHotspots(array);
-    
-    res.status(200).json({result})
+    const { ne_lat, ne_long, sw_lat, sw_long } = req.body;
+
+    if (isNaN(ne_lat) || isNaN(ne_long) || isNaN(sw_lat) || isNaN(sw_long)) {
+      throw new Error("isNaN error for coordinates");
+    }
+
+    // test to get all hotspots (limited to top 20)
+    // const result = await Database.getHotspots(90, 180, -90, -180);
+    //
+
+    const result = await Database.getHotspots(ne_lat, ne_long, sw_lat, sw_long);
+
+    res.status(200).json({ "hotspots": result })
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Failed to get hotspots" });
   }
 });
 
-app.get('/get_users_from_hotspots', async function (req, res) {
+// get users from an array of hotspots (geohashes)
+app.post('/get_users_from_hotspots', async function (req, res) {
   try {
-    // test
-    const array = ['2', 'x'];
-    ///
 
-    const result = await Database.getUsersFromHotspots(array);
+    const { hotspots } = req.body;
+
+    if (!hotspots || !hotspots.length) {
+      throw new Error("Invalid hotspots array");
+    }
     
-    res.status(200).json({result})
+    
+    let result = [];
+    
+
+    // example
+    // result = await Database.getUsersFromHotspots(['xj', '4d1q', '6vw', 'd2zuqdt', 'kscwfkb']);
+    //
+
+
+    if (hotspots.length > 0) {
+      result = await Database.getUsersFromHotspots(hotspots);
+    }
+
+    // console.log("result: ", result);
+    res.status(200).json({ "users": result });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Failed to get users from hotspots" });

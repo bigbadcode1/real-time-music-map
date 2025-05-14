@@ -11,23 +11,23 @@ CREATE TABLE "Hotspots" (
 CREATE TABLE "Songs" (
   id TEXT PRIMARY KEY NOT NULL CHECK(id ~ '^[0-9A-Za-z]{1,80}$'),
   image_url TEXT NOT NULL CHECK(image_url ~ '^https?://[^\s/$.?#].[^\s]*$'),
-  title TEXT,
-  artist TEXT
+  title TEXT NOT NULL,
+  artist TEXT NOT NULL
 );
 
 CREATE TABLE "Active Users" (
   id TEXT PRIMARY KEY NOT NULL CHECK(id ~ '^[0-9A-Za-z]{1,80}$'),
   name TEXT NOT NULL,
-  song_id TEXT NOT NULL REFERENCES "Songs"(id),
+  song_id TEXT REFERENCES "Songs"(id),
   geohash VARCHAR(7) REFERENCES "Hotspots"(geohash) ON DELETE SET NULL,
   expires_at TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '1 hour')
 );
 
 -- add token expiration and hashing
 CREATE TABLE "Auth" (
-  user_id TEXT PRIMARY KEY REFERENCES "Active Users"(id),
+  user_id TEXT PRIMARY KEY REFERENCES "Active Users"(id) ON DELETE CASCADE,
   auth_token_hash TEXT NOT NULL,  -- Hashed version
-  expires_at TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '1 hour')
+  expires_at TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '1 hour') CHECK(expires_at > NOW())
 );
 
 

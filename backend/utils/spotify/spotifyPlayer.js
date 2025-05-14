@@ -24,8 +24,8 @@ export async function getCurrentlyPlayingTrack(accessToken) {
             track: {
                 name: data.item.name,
                 artist: data.item.artists.map(artist => artist.name).join(', '),
-                album: data.item.album.name,
-                albumArt: data.item.album.images[0]?.url,
+                album_name: data.item.album.name,
+                image: data.item.album.images[0]?.url,
                 duration: data.item.duration_ms,
                 progress: data.progress_ms,
                 uri: data.item.uri
