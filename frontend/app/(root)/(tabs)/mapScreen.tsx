@@ -1,47 +1,43 @@
-/**
- * MapScreen.tsx
- * 
- * This component displays an interactive map centered on the user's current location.
- * It handles:
- * - Requesting location permissions from the user
- * - Retrieving the current device location
- * - Displaying the location on a map with a marker
- * - Converting the location to a geohash for efficient location encoding
- * - Starting a background location tracking service
- * 
- * The component shows appropriate loading states and error messages
- * during the location retrieval process.
- */
-
-import React, { useEffect, useState } from 'react';
-import { Text, ActivityIndicator } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import React, { useEffect, useState, useRef } from 'react';
+import { Text, ActivityIndicator, View } from 'react-native';
+import MapView, { Marker, Region } from 'react-native-maps';
 import * as Location from 'expo-location';
-import * as geohash from 'ngeohash';
-import { requestPermissions, getCurrentLocation, watchLocation } from '../../../src/services/locationService';
-import { startBackgroundLocationTracking } from '../../../src/tasks/backgroundLocationTask';
+import { requestPermissions, getCurrentLocation, watchLocation } from '@/src/services/locationService';
+import CustomHotspotMarker from '@/components/CustomHotspotMarker';
+import MapControls from '@/components/MapControls';
+import UserLocationMarker from '@/components/UserLocationMarker';
+import { dummyHotspots } from '@/constants/hotspots';
+import { calculateZoomLevel, createNearbyHotspots } from '@/src/services/mapUtils';
+import { Hotspot } from '@/types/map';
 
 const MapScreen = () => {
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [locationSubscription, setLocationSubscription] = useState<Location.LocationSubscription | null>(null);
-  // Effect hook runs once when component mounts to initialize location services
-  useEffect(() => {
+  const [visibleHotspots, setVisibleHotspots] = useState<Hotspot[]>([]);
+  const [zoomLevel, setZoomLevel] = useState<number>(15);
+  const mapRef = useRef<MapView | null>(null);
 
-    // Self-executing async function to handle location setup
+  useEffect(() => {
     (async () => {
       try {
         await requestPermissions();
-        
         const currentLocation = await getCurrentLocation();
         setLocation(currentLocation);
         
-        // Start tracking location in the background
+        if (currentLocation) {
+          const nearbyHotspots = createNearbyHotspots(
+            currentLocation.coords.latitude,
+            currentLocation.coords.longitude
+          );
+          setVisibleHotspots([...nearbyHotspots, ...dummyHotspots]);
+        } else {
+          setVisibleHotspots(dummyHotspots);
+        }
+        
         const subscription = await watchLocation((newLocation) => {
-          console.log('📍 Location update:', newLocation);
           setLocation(newLocation);
         });
-
         setLocationSubscription(subscription);
       } catch (error) {
         setErrorMsg(error instanceof Error ? error.message : 'An error occurred');
@@ -53,35 +49,77 @@ const MapScreen = () => {
         locationSubscription.remove();
       }
     };
-
   }, []);
 
-  if (errorMsg) return <Text>{errorMsg}</Text>;
-  
-  // Show loading indicator while waiting for location data
-  if (!location) return <ActivityIndicator size="large" className="mt-10" />;
-  
-  // Extract coordinates from location object and generate a geohash from coordinates with precision level 7
-  const { latitude, longitude } = location.coords;
-  const hash = geohash.encode(latitude, longitude, 7);
+  const handleRegionChange = (region: Region) => {
+    const newZoomLevel = calculateZoomLevel(region);
+    setZoomLevel(newZoomLevel);
+  };
 
-  // Render the map centered on user's location
+  const handleMoveToLocation = () => {
+    if (location && mapRef.current) {
+      mapRef.current.animateToRegion(
+        {
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        },
+        1000
+      );
+    }
+  };
+
+  const showAllMarkers = () => {
+    if (mapRef.current && location) {
+      const points = [
+        { latitude: location.coords.latitude, longitude: location.coords.longitude },
+        ...visibleHotspots.map(h => h.coordinate)
+      ];
+      mapRef.current.fitToCoordinates(points, {
+        edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
+        animated: true
+      });
+    }
+  };
+
+  if (errorMsg) return <Text>{errorMsg}</Text>;
+  if (!location) return <ActivityIndicator size="large" style={{ marginTop: 10 }} />;
+
   return (
-    <MapView
-      style={{ flex: 1 }}
-      initialRegion={{
-        latitude,
-        longitude,
-        latitudeDelta: 0.01,  
-        longitudeDelta: 0.01,
-      }}
-    >
-      <Marker
-        coordinate={{ latitude, longitude }}
-        title="You"
-        description={`Geohash: ${hash}`}
+    <>
+      <MapView
+        ref={mapRef}
+        style={{ flex: 1 }}
+        initialRegion={{
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        }}
+        onRegionChangeComplete={handleRegionChange}
+      >
+        <UserLocationMarker 
+          latitude={location.coords.latitude} 
+          longitude={location.coords.longitude} 
+        />
+        {visibleHotspots.map((hotspot) => (
+          <Marker
+            key={hotspot.id}
+            coordinate={hotspot.coordinate}
+            title={`${hotspot.listeners} listeners`}
+            tracksViewChanges={false}
+            anchor={{ x: 0.5, y: 0.5 }}
+          >
+            <CustomHotspotMarker hotspot={hotspot} zoomLevel={zoomLevel} />
+          </Marker>
+        ))}
+      </MapView>
+      <MapControls 
+        onCenterMap={handleMoveToLocation}
+        onShowAllMarkers={showAllMarkers}
       />
-    </MapView>
+    </>
   );
 };
 
