@@ -21,6 +21,7 @@
   <a href="#introduction">Introduction</a> •
   <a href="#features">Features</a> •
   <a href="#feedback">Feedback</a> •
+  <a href="#documentation">Documentation</a> •
   <a href="#build-process">Build Process</a> •
   <a href="#built-using">Built Using</a> •
   <a href="#contributors">Contributors</a> •
@@ -81,6 +82,11 @@ Real-Time Music Map is a live geosocial platform that visualizes what people are
 
 Feel free to send us feedback on [Discord](http://discord.com/users/859168656356933693) or [file an issue](https://github.com/gitpoint/git-point/issues/new). Feature requests are always welcome. If you wish to contribute, please take a quick look at the [guidelines](./CONTRIBUTING.md)!
 
+## Documentation
+- #### [Database](/database/README.md)
+- #### [Spotify Auth Flow](/docs/spotify_auth_flow_docs.md)
+
+
 ## Build Process
 
 Install all dependencies:
@@ -127,6 +133,6 @@ npx expo start
 
 ## License
 
-MIT
+GPL-3.0
 
 ---
