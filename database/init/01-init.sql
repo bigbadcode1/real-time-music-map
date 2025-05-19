@@ -18,6 +18,7 @@ CREATE TABLE "Songs" (
 CREATE TABLE "Active Users" (
   id TEXT PRIMARY KEY NOT NULL CHECK(id ~ '^[0-9A-Za-z]{1,80}$'),
   name TEXT NOT NULL,
+  image_url TEXT CHECK(image_url ~ '^https?://[^\s/$.?#].[^\s]*$'),
   song_id TEXT REFERENCES "Songs"(id),
   geohash VARCHAR(7) REFERENCES "Hotspots"(geohash) ON DELETE SET NULL,
   expires_at TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '1 hour')

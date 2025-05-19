@@ -9,8 +9,8 @@ INSERT INTO "Hotspots" (geohash, count, last_updated)
 VALUES ('bcdefg1', 1, NOW());
 
 -- Test Case 1: Valid Active User Insert
-INSERT INTO "Active Users" (id, name, song_id, geohash, expires_at) 
-VALUES ('01234567890123456789012345678901', 'Test User 1', '01234567890123456789AB', 'bcdefg1', NOW() + INTERVAL '1 hour');
+INSERT INTO "Active Users" (id, name, image_url, song_id, geohash, expires_at) 
+VALUES ('01234567890123456789012345678901', 'Test User 1','http://example.com/image.jpg', '01234567890123456789AB', 'bcdefg1', NOW() + INTERVAL '1 hour');
 
 SELECT is(count(*), 1::bigint, 'Valid insert') 
 FROM "Active Users" 
@@ -49,6 +49,25 @@ VALUES ('01234567890123456789012345678905', 'Test User 5', '01234567890123456789
 SELECT is(count(*), 1::bigint, 'Should find one expired user') 
 FROM "Active Users" 
 WHERE expires_at < NOW();
+
+
+-- Test Case 6: Invalid image_url format
+SELECT throws_ok(
+    $$INSERT INTO "Active Users" (id, name, image_url, song_id, geohash, expires_at) 
+      VALUES ('01234567890123456789012345678908', 'Test User 8', 'invalid-url', '01234567890123456789AB', 'bcdefg1', NOW() + INTERVAL '1 hour')$$,
+    '23514',  -- check_violation
+    NULL,
+    'Invalid image_url should throw CHECK error'
+);
+
+-- Test Case 7:  image_url with spaces
+SELECT throws_ok(
+    $$INSERT INTO "Active Users" (id, name, image_url, song_id, geohash, expires_at) 
+      VALUES ('01234567890123456789012345678909', 'Test User 9', 'http://invalid url.com', '01234567890123456789AB', 'bcdefg1', NOW() + INTERVAL '1 hour')$$,
+    '23514',  -- check_violation
+    NULL,
+    'Invalid image_url (with spaces) should throw CHECK error'
+);
 
 SELECT * FROM finish();
 ROLLBACK;
