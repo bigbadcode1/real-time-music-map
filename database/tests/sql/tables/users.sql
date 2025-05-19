@@ -9,13 +9,8 @@ INSERT INTO "Hotspots" (geohash, count, last_updated)
 VALUES ('bcdefg1', 1, NOW());
 
 -- Test Case 1: Valid Active User Insert
-<<<<<<< HEAD
 INSERT INTO "Active Users" (id, name, image_url, song_id, geohash, expires_at) 
 VALUES ('01234567890123456789012345678901', 'Test User 1','http://example.com/image.jpg', '01234567890123456789AB', 'bcdefg1', NOW() + INTERVAL '1 hour');
-=======
-INSERT INTO "Active Users" (id, name, song_id, geohash, expires_at) 
-VALUES ('01234567890123456789012345678901', 'Test User 1', '01234567890123456789AB', 'bcdefg1', NOW() + INTERVAL '1 hour');
->>>>>>> origin/jakubstec
 
 SELECT is(count(*), 1::bigint, 'Valid insert') 
 FROM "Active Users" 
@@ -46,7 +41,6 @@ VALUES ('01234567890123456789012345678904', 'Test User 4', '01234567890123456789
 SELECT is(count(*), 2::bigint, 'Should find two users in bcdefg1') 
 FROM "Active Users" 
 WHERE geohash = 'bcdefg1';
-<<<<<<< HEAD
 
 -- Test Case 5: Select expired users
 INSERT INTO "Active Users" (id, name, song_id, geohash, expires_at) 
@@ -55,14 +49,11 @@ VALUES ('01234567890123456789012345678905', 'Test User 5', '01234567890123456789
 SELECT is(count(*), 1::bigint, 'Should find one expired user') 
 FROM "Active Users" 
 WHERE expires_at < NOW();
-=======
->>>>>>> origin/jakubstec
 
 -- Test Case 5: Select expired users
 INSERT INTO "Active Users" (id, name, song_id, geohash, expires_at) 
 VALUES ('01234567890123456789012345678905', 'Test User 5', '01234567890123456789AB', 'bcdefg1', NOW() - INTERVAL '1 hour');
 
-<<<<<<< HEAD
 -- Test Case 6: Invalid image_url format
 SELECT throws_ok(
     $$INSERT INTO "Active Users" (id, name, image_url, song_id, geohash, expires_at) 
@@ -80,11 +71,6 @@ SELECT throws_ok(
     NULL,
     'Invalid image_url (with spaces) should throw CHECK error'
 );
-=======
-SELECT is(count(*), 1::bigint, 'Should find one expired user') 
-FROM "Active Users" 
-WHERE expires_at < NOW();
->>>>>>> origin/jakubstec
 
 SELECT * FROM finish();
 ROLLBACK;
