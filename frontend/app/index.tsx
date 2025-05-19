@@ -13,9 +13,11 @@ const Home = () => {
       );
     }
     if (isLoggedIn) {
-      return <Redirect href="/(root)/(tabs)/mapScreen" />;
+        console.log('[Home] User is logged in, redirecting to map');
+        return <Redirect href="/(root)/(tabs)/mapScreen" />;
     } else {
-      return <Redirect href="/(onboarding)/welcome" />;
+        console.log('[Home] User is not logged in, redirecting to welcome');
+        return <Redirect href="/(onboarding)/welcome" />;
     }
   };
 

@@ -34,7 +34,8 @@ app.get('/login', function (req, res) {
     'user-read-recently-played',
     'user-library-read',
     'playlist-read-private',
-    'playlist-read-collaborative'
+    'playlist-read-collaborative',
+    'streaming'
   ].join(' ');
 
 
@@ -61,10 +62,25 @@ app.get('/callback', async function (req, res) {
 });
 
 app.get('/currentTrack', async function (req, res) {
-  const track = await getCurrentlyPlayingTrack(req.session.accessToken);
-  console.log(track.track.name);
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'No access token provided' });
+    }
 
-})
+    const accessToken = authHeader.split(' ')[1];
+    const track = await getCurrentlyPlayingTrack(accessToken);
+    
+    if (!track) {
+      return res.status(204).send(); // No track playing
+    }
+
+    res.json(track);
+  } catch (error) {
+    console.error('Error in /currentTrack:', error);
+    res.status(500).json({ error: 'Failed to get current track' });
+  }
+});
 
 app.post('/exchange-token', async function (req, res) {
   try {

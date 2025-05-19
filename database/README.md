@@ -26,7 +26,10 @@ This repository contains a PostgreSQL database setup for a real-time music map a
 - **Fields**:
   - `id` (TEXT): User ID (alphanumeric, max 80 chars)
   - `name` (TEXT): User's display name
+<<<<<<< HEAD
   - `image_url` (TEXT): User's profile image URL
+=======
+>>>>>>> origin/jakubstec
   - `song_id` (TEXT): Currently playing song (references Songs.id)
   - `geohash` (VARCHAR(7)): User's location (references Hotspots.geohash)
   - `expires_at` (TIMESTAMPTZ): Session expiration time (default 1 hour)
@@ -38,6 +41,7 @@ This repository contains a PostgreSQL database setup for a real-time music map a
   - `auth_token_hash` (TEXT): Hashed authentication token
   - `expires_at` (TIMESTAMPTZ): Token expiration time (default 1 hour)
 
+<<<<<<< HEAD
 
 ## Core Functions
 
@@ -103,6 +107,23 @@ The database includes several automatic triggers:
 - `decrement_hotspots_on_user_delete`: Decrements hotspot count when users are removed
 - `trigger_update_coordinates`: Calculates longitude and latitude from geohash strings
 
+=======
+## Key Functions
+
+### User Management
+- `upsert_active_user`: Adds or updates a user with their current song and location
+  - Handles authentication
+  - Updates user session expiration
+  - Updates associated hotspot counts
+
+### Hotspot Management
+- `get_hotspots`: Retrieves hotspots within a geographic bounding box
+- `get_users_from_hotspots`: Gets users from specified hotspots with their song information
+
+### Triggers
+- Automatic hotspot counting when users are added, moved, or removed
+- Automatic geohash to coordinates conversion using PostGIS
+>>>>>>> origin/jakubstec
 
 ## Technologies
 - PostgreSQL 16
