@@ -1,33 +1,33 @@
-# Music Map Database Initialization
+# Music Map Database
 
-This sets up a PostgreSQL database with the necessary tables for our application, along with a Docker Compose configuration for easy deployment.
-
-## Database Schema
-![ER_diagram](https://github.com/user-attachments/assets/454880f0-5374-405a-83be-d47537eddf0a)
+This repository contains a PostgreSQL database setup for a real-time music map application, along with Docker Compose configuration for easy deployment. The application tracks user locations, their currently playing songs, and creates geographic hotspots of music activity.
 
 ### Tables
 
 #### Hotspots
 - Stores geographic hotspots with activity tracking
 - **Fields**:
-  - `geohash` (VARCHAR(8)): Primary key, valid geohash string
+  - `geohash` (VARCHAR(7)): Primary key, valid geohash string with 7 characters
   - `count` (INT): Number of active users in this location
   - `last_updated` (TIMESTAMPTZ): Timestamp of last activity
-
+  - `longitude` (DOUBLE PRECISION): Longitude coordinate (-180 to 180)
+  - `latitude` (DOUBLE PRECISION): Latitude coordinate (-90 to 90)
+  
 #### Songs
 - Caches Spotify song information to reduce API calls
 - **Fields**:
-  - `id` (TEXT): Spotify song ID (22-character alphanumeric)
-  - `image_url` (TEXT): Album art URL
+  - `id` (TEXT): Spotify song ID (alphanumeric, max 80 chars)
+  - `image_url` (TEXT): Album art URL (valid HTTP/HTTPS URL)
   - `title` (TEXT): Song title
   - `artist` (TEXT): Artist name
 
 #### Active Users
 - Tracks currently active users
 - **Fields**:
-  - `id` (TEXT): User ID (22-32 character alphanumeric)
+  - `id` (TEXT): User ID (alphanumeric, max 80 chars)
+  - `name` (TEXT): User's display name
   - `song_id` (TEXT): Currently playing song (references Songs.id)
-  - `geohash` (VARCHAR(8)): User's location (references Hotspots.geohash)
+  - `geohash` (VARCHAR(7)): User's location (references Hotspots.geohash)
   - `expires_at` (TIMESTAMPTZ): Session expiration time (default 1 hour)
 
 #### Auth
@@ -37,14 +37,34 @@ This sets up a PostgreSQL database with the necessary tables for our application
   - `auth_token_hash` (TEXT): Hashed authentication token
   - `expires_at` (TIMESTAMPTZ): Token expiration time (default 1 hour)
 
+## Key Functions
+
+### User Management
+- `upsert_active_user`: Adds or updates a user with their current song and location
+  - Handles authentication
+  - Updates user session expiration
+  - Updates associated hotspot counts
+
+### Hotspot Management
+- `get_hotspots`: Retrieves hotspots within a geographic bounding box
+- `get_users_from_hotspots`: Gets users from specified hotspots with their song information
+
+### Triggers
+- Automatic hotspot counting when users are added, moved, or removed
+- Automatic geohash to coordinates conversion using PostGIS
+
+## Technologies
+- PostgreSQL 16
+- PostGIS (3.5.2) extension for geospatial functionality
+- Docker and Docker Compose for deployment
+
 ## Docker Deployment
 
 ### Prerequisites
 - Docker
 - Docker Compose
 
-([Docker Desktop](https://www.docker.com/products/docker-desktop/) provides them)
-
+([Docker Desktop](https://www.docker.com/products/docker-desktop/) provides both)
 
 ### Setup
 
@@ -55,7 +75,7 @@ This sets up a PostgreSQL database with the necessary tables for our application
    POSTGRES_PASSWORD=your_secure_password
    ```
 
-2. Start the PostgreSQL container (you need to be inside real-time-music-map/database folder:
+2. Start the PostgreSQL container:
    ```bash
    docker compose up -d
    ```
@@ -65,16 +85,12 @@ This sets up a PostgreSQL database with the necessary tables for our application
    docker compose up
    ```
 
-3. Initialize the database by running the SQL scripts (you can use a client like psql or Azure Database)
+3. The database will be initialized with the schema and functions from the SQL scripts
 
 ### Volumes
 - Data is persisted in a Docker volume named `music_map_pgdata`
 
-### Configuration
-- PostgreSQL version: 14.5-alpine
-- Port: 5432 (mapped to host)
-
-## Usage
+## Connection Details
 
 To connect to the database:
 - Host: `localhost` (or your Docker host IP)
@@ -95,5 +111,8 @@ docker compose stop
 
 To completely remove the data volume (warning: irreversible):
 ```bash
-docker-compose down -v
+docker compose down -v
 ```
+
+## Testing
+For tests documentation, see [Tests Documentation](/database/tests/README.md)

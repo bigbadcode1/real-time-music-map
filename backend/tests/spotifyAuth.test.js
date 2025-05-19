@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { getSpotifyAccessToken, refreshSpotifyToken } from './spotifyAuth.js';
+import { getSpotifyAccessToken, refreshSpotifyToken } from '#utils/spotify/spotifyAuth.js';
 
 // Set up fetch mock
 global.fetch = jest.fn();

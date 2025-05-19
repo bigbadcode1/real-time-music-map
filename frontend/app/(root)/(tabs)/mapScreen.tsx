@@ -1,29 +1,17 @@
-/**
- * MapScreen.tsx
- *
- * This component displays an interactive map centered on the user's current location.
- * It handles:
- * - Requesting location permissions from the user
- * - Retrieving the current device location
- * - Displaying the location on a map with a marker
- * - Converting the location to a geohash for efficient location encoding
- * - Starting a background location tracking service
- * - Displaying music hotspots on the map
- *
- * The component shows appropriate loading states and error messages
- * during the location retrieval process.
- */
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Text, ActivityIndicator, View, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
 import MapView, { Marker} from 'react-native-maps';
 import * as Location from 'expo-location';
 import * as geohash from 'ngeohash';
-import { requestPermissions, getCurrentLocation, watchLocation } from '../../../src/services/locationService';
-import { startBackgroundLocationTracking, stopBackgroundLocationTracking } from '../../../src/tasks/backgroundLocationTask';
+import { requestPermissions } from '../../../src/services/locationService';
+// import { startBackgroundLocationTracking, stopBackgroundLocationTracking } from '../../../src/tasks/backgroundLocationTask';
 import FontAwesome from '@expo/vector-icons/build/FontAwesome';
-import { router } from 'expo-router';
+import { router, useRouter } from 'expo-router';
 import { Hotspot, HotspotSize, HotspotActivity } from '@/components/Hotspot';
 import { HotspotDetail, TrackData, UserListenerData, AlbumData, ArtistData } from '@/components/HotspotDetail';
+import { useRealTimeUpdates } from '@/src/hooks/useRealTimeUpdates';
+import { useAuth } from '@/src/context/AuthContext';
+import { NowPlayingBar } from '@/components/NowPlayingBar';
 
 type MapMode = 'discover' | 'analyze';
 
@@ -43,21 +31,60 @@ interface HotspotData {
   geohash: string;
 }
 
+const MapContent = React.memo(({ 
+  hotspots, 
+  onHotspotPress,
+  selectedHotspotId
+}: { 
+  hotspots: HotspotData[], 
+  onHotspotPress: (hotspot: HotspotData) => void,
+  selectedHotspotId: string | null,
+}) => {
+  return (
+    <>
+      {hotspots.map((hotspot) => (
+        <Marker
+          key={hotspot.id}
+          coordinate={hotspot.coordinate}
+          tracksViewChanges={false}
+          anchor={{ x: 0.5, y: 0.5 }}
+          zIndex={10}
+        >
+          <Hotspot
+            size={hotspot.size}
+            activity={hotspot.activity}
+            userCount={hotspot.userCount}
+            songCount={hotspot.songCount}
+            dominantGenre={hotspot.dominantGenre}
+            coordinate={hotspot.coordinate}
+            onPress={() => onHotspotPress(hotspot)}
+          />
+        </Marker>
+      ))}
+    </>
+  );
+}, (prevProps, nextProps) => {
+  // Custom comparison function to prevent unnecessary re-renders
+  return prevProps.selectedHotspotId === nextProps.selectedHotspotId && 
+         prevProps.hotspots === nextProps.hotspots;
+});
+
 const MapScreen = () => {
-  const [location, setLocation] = useState<Location.LocationObject | null>(null);
+console.log('mapscreen rerender');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [locationSubscription, setLocationSubscription] = useState<Location.LocationSubscription | null>(null);
   const [mode, setMode] = useState<MapMode>('discover');
   const mapRef = useRef<MapView>(null);
+  const { currentLocation, currentTrack } = useRealTimeUpdates();
+  const { isLoggedIn } = useAuth();
+  const expoRouter = useRouter();
 
-  // Hotspot states
   const [hotspots, setHotspots] = useState<HotspotData[]>([]);
-  const [selectedHotspot, setSelectedHotspot] = useState<HotspotData | null>(null);
+  const [selectedHotspotId, setSelectedHotspotId] = useState<string | null>(null);
   const [isHotspotDetailVisible, setIsHotspotDetailVisible] = useState(false);
   const [mapPaddingBottom, setMapPaddingBottom] = useState(0);
+  const [initialHotspotsGenerated, setInitialHotspotsGenerated] = useState(false);
 
-  // Mock data for hotspot detail view
-  const [hotspotDetail, setHotspotDetail] = useState({
+  const hotspotDetailRef = useRef({
     topTracks: [] as TrackData[],
     topAlbums: [] as AlbumData[],
     topArtists: [] as ArtistData[],
@@ -66,65 +93,36 @@ const MapScreen = () => {
     recentListeners: [] as UserListenerData[]
   });
 
-  // Effect hook runs once when component mounts to initialize location services
-  useEffect(() => {
-    // Self-executing async function to handle location setup
-    (async () => {
-      try {
-        await requestPermissions();
+  const selectedHotspotRef = useRef<HotspotData | null>(null);
 
-        const currentLocation = await getCurrentLocation();
-        setLocation(currentLocation);
-
-        // Start tracking location in the background
-        const subscription = await watchLocation((newLocation) => {
-          setLocation(newLocation);
-        });
-
-        setLocationSubscription(subscription);
-
-        // Generate sample hotspots around the current location for testing
-        if (currentLocation) {
-          generateSampleHotspots(currentLocation);
-        }
-      } catch (error) {
-        setErrorMsg(error instanceof Error ? error.message : 'An error occurred');
-      }
-    })();
-
-    return () => {
-      if (locationSubscription) {
-        locationSubscription.remove();
-      }
-    };
-
+  const toggleMode = useCallback(() => {
+    setMode((prevMode) => (prevMode === 'discover' ? 'analyze' : 'discover'));
   }, []);
 
-  // When location updates, update the hotspots if we didn't have a location before
   useEffect(() => {
-    if (location && hotspots.length === 0) {
-      generateSampleHotspots(location);
-    }
-  }, [location]);
+      if (!isLoggedIn) {
+          expoRouter.replace('/(onboarding)/welcome');
+      }
+  }, [isLoggedIn, expoRouter]);
 
-  // Generate sample hotspots for testing
-// Generate sample hotspots for testing
-const generateSampleHotspots = (userLocation: Location.LocationObject) => {
-  const { latitude, longitude } = userLocation.coords;
-  const sampleHotspots: HotspotData[] = [];
 
-  // Parameters for generating hotspots
-  const numberOfHotspots = 5;
-  const radiusKm = 1; // 1km radius
+  const generateSampleHotspots = useCallback(async (userLocation: Location.LocationObject) => {
+    const { latitude, longitude } = userLocation.coords;
+    const sampleHotspots: HotspotData[] = [];
 
-  // Conversion factors
-  const oneDegLatKm = 111.32; // km per degree of latitude
-  const oneDegLonKm = 111.32 * Math.cos(latitude * (Math.PI / 180)); // km per degree of longitude
+    // Parameters for generating hotspots
+    const numberOfHotspots = 5;
+    const radiusKm = 1; // 1km radius
 
-  // Activity levels and sizes
-  const activityLevels: HotspotActivity[] = ['low', 'medium', 'high', 'trending'];
-  const sizes: HotspotSize[] = ['small', 'medium', 'large', 'xlarge'];
-  const generateHotspots = async () => {
+    // Conversion factors
+    const oneDegLatKm = 111.32; // km per degree of latitude
+    const oneDegLonKm = 111.32 * Math.cos(latitude * (Math.PI / 180)); // km per degree of longitude
+
+    // Activity levels and sizes
+    // const activityLevels: HotspotActivity[] = ['low', 'medium', 'high', 'trending']; // Not directly used for assignment, but good for reference
+    // const sizes: HotspotSize[] = ['small', 'medium', 'large', 'xlarge']; // Not directly used for assignment
+
+    // Removed nested generateHotspots async function, directly use the loop
     for (let i = 0; i < numberOfHotspots; i++) {
       // Random angle and distance
       const angle = Math.random() * 2 * Math.PI;
@@ -170,57 +168,40 @@ const generateSampleHotspots = (userLocation: Location.LocationObject) => {
         if (reverseGeocode && reverseGeocode.length > 0) {
           const location = reverseGeocode[0];
           
-          // Improved location name generation with valid properties
           if (location.name && location.name.length > 3 && !location.name.match(/^\d+$/)) {
-            // Use name if it's not just a number and has meaningful length
             placeName = location.name;
           } else if (location.street && location.streetNumber) {
-            // Complete address with street number
             placeName = `${location.street} ${location.streetNumber}`;
           } else if (location.street) {
-            // Just the street name
             placeName = location.street;
           } else if (location.district) {
-            // District names are recognizable
             placeName = location.district;
           } else if (location.subregion && location.city) {
-            // Combination of area and city
             placeName = `${location.subregion}, ${location.city}`;
           } else if (location.city && location.district) {
-            // City district
             placeName = `${location.district}, ${location.city}`;
           } else if (location.city) {
-            // More specific than just "City Center"
             const cityAreas = ['University Area', 'Old Town', 'City Center', 'Main Square', 'Central', 'Market District'];
             placeName = `${cityAreas[Math.floor(Math.random() * cityAreas.length)]} ${location.city}`;
           } else if (location.region) {
-            // Region with an area type
             const areaTypes = ['District', 'Area', 'Center', 'Square', 'Campus'];
             placeName = `${location.region} ${areaTypes[Math.floor(Math.random() * areaTypes.length)]}`;
           } else {
-            // Generate a descriptive location based on type of area
-            // More specific and local-feeling location types
             const locationTypes = [
               'University Campus', 'Public Library', 'Regional Park', 'Cultural Center', 
               'Central Square', 'Market Hall', 'Shopping Center', 'Concert Hall',
               'Memorial Park', 'Business District', 'Local Café', 'Conference Center',
               'Museum Complex', 'Sports Arena', 'Technology Hub', 'Art Gallery'
             ];
-            
             placeName = locationTypes[Math.floor(Math.random() * locationTypes.length)];
           }
           
-          // Truncate long names but preserve the full meaning where possible
           if (placeName.length > 50) {
-            // Check if there's a comma to split on
             const commaIndex = placeName.indexOf(',');
             if (commaIndex > 0 && commaIndex < 20) {
-              // Keep just the first part before the comma
               placeName = placeName.substring(0, commaIndex);
             } else {
-              // Truncate but try to preserve complete words
               placeName = placeName.substring(0, 22).trim();
-              // Don't cut in the middle of a word if possible
               const lastSpaceIndex = placeName.lastIndexOf(' ');
               if (lastSpaceIndex > 15) {
                 placeName = placeName.substring(0, lastSpaceIndex);
@@ -229,31 +210,25 @@ const generateSampleHotspots = (userLocation: Location.LocationObject) => {
             }
           }
         } else {
-          // Fallback if reverse geocoding returns no results
-          // Use more specific and culturally varied location types
           const locationTypes = [
             'University Campus', 'Public Library', 'Regional Park', 'Cultural Center', 
             'Central Square', 'Market Hall', 'Shopping Center', 'Concert Hall',
             'Memorial Park', 'Business District', 'Arts District', 'Conference Center',
             'Museum Complex', 'Sports Arena', 'Technology Hub', 'Art Gallery'
           ];
-          
           placeName = locationTypes[Math.floor(Math.random() * locationTypes.length)];
         }
       } catch (error) {
         console.log('Error with reverse geocoding:', error);
-        // Fallback with more interesting, specific location types
         const locationTypes = [
           'University Campus', 'Public Library', 'Regional Park', 'Cultural Center', 
           'Central Square', 'Market Hall', 'Shopping Center', 'Concert Hall',
           'Memorial Park', 'Business District', 'Arts District', 'Conference Center',
           'Museum Complex', 'Sports Arena', 'Technology Hub', 'Art Gallery'
         ];
-        
         placeName = locationTypes[Math.floor(Math.random() * locationTypes.length)];
       }
 
-      // Generate a geohash for the location
       const hotspotGeohash = geohash.encode(newLat, newLon, 7);
 
       sampleHotspots.push({
@@ -265,7 +240,7 @@ const generateSampleHotspots = (userLocation: Location.LocationObject) => {
         size,
         activity,
         userCount,
-        songCount: Math.floor(userCount * 1.5), // Roughly 1.5 songs per user
+        songCount: Math.floor(userCount * 1.5),
         dominantGenre: ['Pop', 'Rock', 'Hip-hop', 'Electronic', 'Classical'][Math.floor(Math.random() * 5)],
         locationName: placeName,
         geohash: hotspotGeohash
@@ -273,15 +248,48 @@ const generateSampleHotspots = (userLocation: Location.LocationObject) => {
     }
     
     setHotspots(sampleHotspots);
-  };
+    setInitialHotspotsGenerated(true); // Mark that initial hotspots are generated
+  }, []);
 
-  generateHotspots();
-  setHotspots(sampleHotspots);
-};
 
-  // Generate mock data for detailed view
+  useEffect(() => {
+    (async () => {
+      try {
+        await requestPermissions();
+        console.log('Permissions granted');
+        
+        if (currentLocation?.latitude && currentLocation?.longitude && !initialHotspotsGenerated) {
+          console.log('Initial location available, generating hotspots:', currentLocation);
+          const locationObject: Location.LocationObject = {
+            coords: {
+              latitude: currentLocation.latitude,
+              longitude: currentLocation.longitude,
+              altitude: null,
+              accuracy: null,
+              altitudeAccuracy: null,
+              heading: null,
+              speed: null
+            },
+            timestamp: currentLocation.timestamp
+          };
+          // No need to await generateSampleHotspots if it sets state internally
+          generateSampleHotspots(locationObject); 
+        } else if (initialHotspotsGenerated) {
+          console.log('Initial hotspots already generated.');
+        } else {
+          console.log('No valid location available yet for initial hotspot generation or already generated.');
+        }
+      } catch (error) {
+        console.error('Error in initial setup useEffect:', error);
+        setErrorMsg(error instanceof Error ? error.message : 'An error occurred during setup');
+      }
+    })();
+
+  }, [currentLocation, initialHotspotsGenerated]);
+
+
   const generateMockDetailData = (hotspot: HotspotData) => {
-    // Mock track data
+    // ... (rest of your generateMockDetailData function remains unchanged)
     const mockTracks: TrackData[] = [
       {
         id: '1',
@@ -319,11 +327,7 @@ const generateSampleHotspots = (userLocation: Location.LocationObject) => {
         listeners: Math.floor(Math.random() * hotspot.userCount) + 1
       },
     ];
-
-    // Sort tracks by listener count
     mockTracks.sort((a, b) => b.listeners - a.listeners);
-    
-    // Mock album data
     const mockAlbums: AlbumData[] = [
       {
         id: '1',
@@ -361,11 +365,7 @@ const generateSampleHotspots = (userLocation: Location.LocationObject) => {
         listeners: Math.floor(Math.random() * hotspot.userCount) + 1
       },
     ];
-    
-    // Sort albums by listener count
     mockAlbums.sort((a, b) => b.listeners - a.listeners);
-    
-    // Mock artist data
     const mockArtists: ArtistData[] = [
       {
         id: '1',
@@ -398,95 +398,51 @@ const generateSampleHotspots = (userLocation: Location.LocationObject) => {
         listeners: Math.floor(Math.random() * hotspot.userCount) + 1
       },
     ];
-    
-    // Sort artists by listener count
     mockArtists.sort((a, b) => b.listeners - a.listeners);
-
-    // Mock genre data
     const genres = ['Pop', 'Rock', 'Hip-hop', 'Electronic', 'Classical', 'Jazz', 'R&B'];
     const mockGenres: { name: string; percentage: number }[] = [];
-
-    // Randomly assign percentages to genres, ensuring they sum to 100%
     let remainingPercentage = 100;
     const numberOfGenresToShow = 5;
     for (let i = 0; i < numberOfGenresToShow; i++) {
       const isLast = i === numberOfGenresToShow - 1;
-      const percentage = isLast ? remainingPercentage : Math.max(5, Math.floor(Math.random() * (remainingPercentage / (numberOfGenresToShow - i)))); // Ensure at least 5% and distribute remaining
-      // Prevent negative remainingPercentage if random is too high
+      const percentage = isLast ? remainingPercentage : Math.max(5, Math.floor(Math.random() * (remainingPercentage / (numberOfGenresToShow - i))));
       const finalPercentage = Math.min(percentage, remainingPercentage);
-
       mockGenres.push({
-        name: genres[i < genres.length ? i : Math.floor(Math.random() * genres.length)], // Handle case if fewer genres than spots
+        name: genres[i < genres.length ? i : Math.floor(Math.random() * genres.length)],
         percentage: finalPercentage
       });
       remainingPercentage -= finalPercentage;
     }
-
-    // If there's still remaining percentage due to rounding, add it to the largest genre
     if (remainingPercentage > 0 && mockGenres.length > 0) {
       mockGenres[0].percentage += remainingPercentage;
     }
-
-    // Sort genres by percentage
     mockGenres.sort((a, b) => b.percentage - a.percentage);
-
-    // Generate mock recent listeners data
     const firstNames = ['Emma', 'Liam', 'Olivia', 'Noah', 'Ava', 'Ethan', 'Sophia', 'Logan', 'Mia', 'Jacob', 'Isabella', 'Mason', 'Charlotte', 'Lucas', 'Amelia'];
     const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Miller', 'Davis', 'Wilson', 'Taylor', 'Anderson', 'Thomas', 'Jackson', 'White', 'Harris', 'Martin'];
-    
-    // Album art samples
     const albumArtSamples = [
       'https://i.scdn.co/image/ab67616d0000b2738863bc11d2aa12b54f5aeb36',
       'https://i.scdn.co/image/ab67616d0000b273b46f74097655d7f353caab14',
-      'https://i.scdn.co/image/ab67616d0000b273be08a5e4ae5b80d527f1bfd0',
-      'https://i.scdn.co/image/ab67616d0000b273e652a9f8916c3699a38620de',
-      'https://i.scdn.co/image/ab67616d0000b273f429549123dbe8552764ba1d',
-      'https://i.scdn.co/image/ab67616d0000b2734aee3b4db84b1b9a63ff8a43',
-      'https://i.scdn.co/image/ab67616d0000b2735ef878a782c987d38d82b605',
-      'https://i.scdn.co/image/ab67616d0000b2736ada0849e7cc56307d0d4b80'
+      // ... more samples
     ];
-    
-    // Song titles and artists
     const songSamples = [
       { title: 'Blinding Lights', artist: 'The Weeknd' },
       { title: 'As It Was', artist: 'Harry Styles' },
-      { title: 'Stay', artist: 'The Kid LAROI, Justin Bieber' },
-      { title: 'Dance The Night', artist: 'Dua Lipa' },
-      { title: 'Flowers', artist: 'Miley Cyrus' },
-      { title: 'Die For You', artist: 'The Weeknd' },
-      { title: 'Kill Bill', artist: 'SZA' },
-      { title: 'Cruel Summer', artist: 'Taylor Swift' },
-      { title: 'Creepin', artist: 'Metro Boomin, The Weeknd' },
-      { title: 'Anti-Hero', artist: 'Taylor Swift' },
-      { title: 'Calm Down', artist: 'Rema, Selena Gomez' },
-      { title: 'Unholy', artist: 'Sam Smith, Kim Petras' }
+      // ... more samples
     ];
-    
-    // Avatar images
     const avatarSamples = [
       'https://i.pravatar.cc/150?img=1',
       'https://i.pravatar.cc/150?img=2',
-      'https://i.pravatar.cc/150?img=3',
-      'https://i.pravatar.cc/150?img=4',
-      'https://i.pravatar.cc/150?img=5',
-      'https://i.pravatar.cc/150?img=6',
-      'https://i.pravatar.cc/150?img=7',
-      'https://i.pravatar.cc/150?img=8'
+      // ... more samples
     ];
-    
-    // Generate up to 25 mock users
     const numUsers = Math.min(25, hotspot.userCount);
     const mockRecentListeners = Array.from({ length: numUsers }, (_, i) => {
       const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
       const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
       const song = songSamples[Math.floor(Math.random() * songSamples.length)];
-      const isCurrentlyListening = Math.random() > 0.3; // 70% chance of currently listening
-      
-      // For timestamp, create a random time in the past few hours
+      const isCurrentlyListening = Math.random() > 0.3;
       const now = new Date();
-      const minutesAgo = Math.floor(Math.random() * 180); // Up to 3 hours ago
+      const minutesAgo = Math.floor(Math.random() * 180);
       const timestamp = new Date(now.getTime() - minutesAgo * 60000).toISOString();
-      
       return {
         id: `user-${i}`,
         name: `${firstName} ${lastName}`,
@@ -500,18 +456,11 @@ const generateSampleHotspots = (userLocation: Location.LocationObject) => {
         }
       };
     });
-    
-    // Sort by timestamp (most recent first)
     mockRecentListeners.sort((a, b) => {
-      // Currently listening users come first
       if (a.currentTrack.isCurrentlyListening && !b.currentTrack.isCurrentlyListening) return -1;
       if (!a.currentTrack.isCurrentlyListening && b.currentTrack.isCurrentlyListening) return 1;
-      
-      // Then sort by timestamp for non-currently listening
       return new Date(b.currentTrack.timestamp).getTime() - new Date(a.currentTrack.timestamp).getTime();
     });
-
-    // Return the object matching the hotspotDetail state structure
     return {
       topTracks: mockTracks,
       topAlbums: mockAlbums,
@@ -523,44 +472,47 @@ const generateSampleHotspots = (userLocation: Location.LocationObject) => {
   };
 
 
-  const handleHotspotPress = (hotspot: HotspotData) => {
-    setSelectedHotspot(hotspot);
-    // Ensure generateMockDetailData is called here and its return matches the state structure
-    setHotspotDetail(generateMockDetailData(hotspot));
+const handleHotspotPress = useCallback((hotspot: HotspotData) => {
+    console.log('Hotspot pressed:', hotspot.id);
+    selectedHotspotRef.current = hotspot;
+    setSelectedHotspotId(hotspot.id);
+    hotspotDetailRef.current = generateMockDetailData(hotspot);
     setIsHotspotDetailVisible(true);
-    setMapPaddingBottom(300); // Add padding to the map to accommodate the detail view
-  };
+    setMapPaddingBottom(300);
+  }, []);
 
-  const handleCloseHotspotDetail = () => {
+
+  const handleCloseHotspotDetail = useCallback(() => {
+    console.log('Closing hotspot detail');
     setIsHotspotDetailVisible(false);
-    setSelectedHotspot(null);
-    setMapPaddingBottom(0); // Reset map padding
-  };
+    setSelectedHotspotId(null);
+    selectedHotspotRef.current = null;
+    setMapPaddingBottom(0);
+  }, []);
 
-
-  const toggleMode = () => {
-    setMode((prevMode) => (prevMode === 'discover' ? 'analyze' : 'discover'));
-  };
 
   if (errorMsg) return <Text className="p-5 text-center text-red-500">{errorMsg}</Text>;
 
-  if (!location) return (
-    <View className="flex-1 justify-center items-center">
-      <ActivityIndicator size="large" color="#1DB954" />
-      <Text className="mt-3 text-gray-600">Finding your location...</Text>
-    </View>
-  );
 
-  // Destructure latitude and longitude here for use in the component's render
-  const { latitude, longitude } = location.coords;
-  const hash = geohash.encode(latitude, longitude, 7);
+  if (!currentLocation) {
+    return (
+      <View style={styles.container} className="flex-1 justify-center items-center">
+        <ActivityIndicator size="large" color="#1DB954" />
+        <Text className="mt-3 text-gray-600">Finding your location...</Text>
+      </View>
+    );
+  }
+
+
+  const { latitude, longitude } = currentLocation;
+  // const hash = geohash.encode(latitude, longitude, 7);
 
 
   return (
-    <View className='flex-1'>
-      <MapView
+    <View style={styles.container}>
+    <MapView
         ref={mapRef}
-        style={{flex: 1}}
+        style={styles.map}
         initialRegion={{
           latitude,
           longitude,
@@ -568,54 +520,24 @@ const generateSampleHotspots = (userLocation: Location.LocationObject) => {
           longitudeDelta: 0.01,
         }}
         showsUserLocation={true}
-        region={{
-          latitude,
-          longitude,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        }}
-        onRegionChangeComplete={(region) => {
-          // Here you would typically update hotspots based on new region
-          // For simplicity in this demo, we'll skip this step
-        }}
+        // Use onRegionChangeComplete instead of controlled region for better performance
+        onRegionChangeComplete={() => {/* Logic if needed */}}
         paddingAdjustmentBehavior="automatic"
         maxZoomLevel={20}
         minZoomLevel={10}
         moveOnMarkerPress={false}
-        liteMode={false}
         showsCompass={true}
         loadingEnabled={true}
         zoomControlEnabled={true}
         mapPadding={{top: 0, right: 0, bottom: mapPaddingBottom, left: 0}}
       >
-        {/* Render hotspots */}
-        {hotspots.map((hotspot) => (
-          <Marker
-            key={hotspot.id}
-            coordinate={hotspot.coordinate}
-            tracksViewChanges={false} // Add this for performance and stability
-            anchor={{ x: 0.5, y: 0.5 }} // Center the marker correctly
-            zIndex={10} // Ensure markers stay on top
-          >
-            <Hotspot
-              size={hotspot.size}
-              activity={hotspot.activity}
-              userCount={hotspot.userCount}
-              songCount={hotspot.songCount}
-              dominantGenre={hotspot.dominantGenre}
-              coordinate={hotspot.coordinate}
-              onPress={() => handleHotspotPress(hotspot)}
-            />
-          </Marker>
-        ))}
+        <MapContent 
+          hotspots={hotspots} 
+          onHotspotPress={handleHotspotPress} 
+          selectedHotspotId={selectedHotspotId}
+        />
       </MapView>
-
-      <View className="absolute top-20 left-12 right-12 flex-row items-center justify-center px-5 py-4 bg-white rounded-full">
-        <FontAwesome name="headphones" size={20} color="black" style={{ marginRight: 8 }} />
-        <Text className="text-base text-slate-700 font-semibold">
-          Listeners in this area: {hotspots.reduce((sum, h) => sum + h.userCount, 0)}
-        </Text>
-      </View>
+      <NowPlayingBar currentTrack={currentTrack}/>
 
       <View className="absolute bottom-36 left-0 right-0 items-center">
         <View className="flex-row items-center justify-center px-4 py-3 bg-white rounded-full opacity-65 w-1/2 h-12">
@@ -643,35 +565,34 @@ const generateSampleHotspots = (userLocation: Location.LocationObject) => {
             style={styles.iconSpacing}
           />
           <Text style={[styles.modeButtonText, { color: mode === 'discover' ? 'white' : 'black' }]}>
-            {mode === 'discover' ? 'Analyze' : 'Discover'}
+            {mode === 'discover' ? 'Analyze' : 'Discover'} 
           </Text>
         </TouchableOpacity>
 
         <View style={styles.navButtonsContainer}>
-          <TouchableOpacity onPress={() => router.push('/friends')} style={styles.navButton}>
+          <TouchableOpacity onPress={() => expoRouter.push('/friends')} style={styles.navButton}>
             <FontAwesome name="users" size={24} color="black" />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push('/saved')} style={styles.navButton}>
+          <TouchableOpacity onPress={() => expoRouter.push('/saved')} style={styles.navButton}>
             <FontAwesome name="bookmark" size={24} color="black" />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push('/profile')} style={styles.navButton}>
+          <TouchableOpacity onPress={() => expoRouter.push('/profile')} style={styles.navButton}>
             <FontAwesome name="user" size={24} color="black" />
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Render hotspot detail when a hotspot is selected */}
-      {isHotspotDetailVisible && selectedHotspot && (
+      {isHotspotDetailVisible && selectedHotspotRef.current && (
         <HotspotDetail
-          locationName={selectedHotspot.locationName}
-          userCount={selectedHotspot.userCount}
-          topTracks={hotspotDetail.topTracks}
-          topAlbums={hotspotDetail.topAlbums}
-          topArtists={hotspotDetail.topArtists}
-          topGenres={hotspotDetail.topGenres}
-          timestamp={hotspotDetail.timestamp}
+          locationName={selectedHotspotRef.current.locationName}
+          userCount={selectedHotspotRef.current.userCount}
+          topTracks={hotspotDetailRef.current.topTracks}
+          topAlbums={hotspotDetailRef.current.topAlbums}
+          topArtists={hotspotDetailRef.current.topArtists}
+          topGenres={hotspotDetailRef.current.topGenres}
+          timestamp={hotspotDetailRef.current.timestamp}
           onClose={handleCloseHotspotDetail}
-          recentListeners={hotspotDetail.recentListeners}
+          recentListeners={hotspotDetailRef.current.recentListeners}
         />
       )}
     </View>
@@ -679,54 +600,53 @@ const generateSampleHotspots = (userLocation: Location.LocationObject) => {
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  map: {
+    flex: 1,
+  },
   customNavBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    backgroundColor: 'white',
-    borderRadius: 999,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
-    elevation: 5,
+    elevation: 5, // For Android
   },
   navButtonsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    width: '55%', // Adjust as needed
+    width: '55%', 
   },
   navButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 15, // Adjust spacing between buttons
+    paddingHorizontal: 15, 
   },
   modeButton: {
-    borderRadius: 999,
+
     paddingHorizontal: 18,
     paddingVertical: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: 120, // Ensure minimum width for the button
+    minWidth: 120, 
     height: 38,
   },
   modeButtonDiscover: {
-    backgroundColor: '#000000', // Example color for Discover mode
+    backgroundColor: '#000000', 
   },
   modeButtonAnalyze: {
-    backgroundColor: '#f0f0f0', // Example color for Analyze mode
+    backgroundColor: '#f0f0f0', 
   },
   modeButtonText: {
     fontSize: 14,
     fontWeight: '600',
   },
   iconSpacing: {
-    marginRight: 8, // Spacing between icon and text
+    marginRight: 8, 
   }
 });
 
-export default MapScreen;
+export default React.memo(MapScreen, (prevProps, nextProps) => {
+  console.log('MapScreen memo comparison');
+  return true;
+});

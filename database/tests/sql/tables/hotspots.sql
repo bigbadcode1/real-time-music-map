@@ -1,69 +1,93 @@
 BEGIN;
 SELECT * FROM no_plan();
 
--- Setup: Create a temporary table (or use a test schema and insert into real table)
-CREATE TEMPORARY TABLE test_hotspots AS SELECT * FROM "Hotspots" WITH NO DATA;
-
 -- Test Case 1: Valid Insert
-INSERT INTO test_hotspots (geohash, count, last_updated) VALUES ('abc12345', 10, NOW());
-SELECT is(count(*), 1::bigint, 'Valid insert should add one row') FROM test_hotspots WHERE geohash = 'abc12345';
+INSERT INTO "Hotspots" (geohash, count, last_updated) VALUES ('0123bcd', 10, NOW()); 
+SELECT is(count(*), 1::bigint, 'Valid insert should add one row') FROM "Hotspots" WHERE geohash = '0123bcd'; 
 
--- Test Case 4:  Update count
-INSERT INTO test_hotspots (geohash, count, last_updated) VALUES ('ghi12345', 5, NOW());
-UPDATE test_hotspots SET count = 15 WHERE geohash = 'ghi12345';
-SELECT is(count, 15, 'Count should be updated to 15') FROM test_hotspots WHERE geohash = 'ghi12345';
+-- Test Case 4: Update count
+INSERT INTO "Hotspots" (geohash, count, last_updated) VALUES ('fghj567', 5, NOW()); 
+UPDATE "Hotspots" SET count = 15 WHERE geohash = 'fghj567'; 
+SELECT is(count, 15, 'Count should be updated to 15') FROM "Hotspots" WHERE geohash = 'fghj567'; 
 
--- Test Case 5:  Delete a hotspot
-INSERT INTO test_hotspots (geohash, count, last_updated) VALUES ('jkl12345', 20, NOW());
-DELETE FROM test_hotspots WHERE geohash = 'jkl12345';
-SELECT is(count(*), 0::bigint, 'Row should be deleted') FROM test_hotspots WHERE geohash = 'jkl12345';
+-- Test Case 5: Delete a hotspot
+INSERT INTO "Hotspots" (geohash, count, last_updated) VALUES ('kmnp901', 20, NOW()); 
+DELETE FROM "Hotspots" WHERE geohash = 'kmnp901';
+SELECT is(count(*), 0::bigint, 'Row should be deleted') FROM "Hotspots" WHERE geohash = 'kmnp901';
 
--- New Test: Test geohash constraint (empty string)
+--  Test: Test geohash constraint (empty string)
 SELECT throws_ok(
-    $$INSERT INTO test_hotspots (geohash, count) VALUES ('', 0)$$,
+    $$INSERT INTO "Hotspots" (geohash, count) VALUES ('', 0)$$,
     '23514',  -- check_violation
-    NULL,  -- We don't check the exact message as it may vary
+    NULL,
     'Should throw error for empty geohash'
 );
 
--- New Test: Test geohash constraint (invalid characters)
+--  Test: Test geohash constraint (invalid characters)
 SELECT throws_ok(
-    $$INSERT INTO test_hotspots (geohash, count) VALUES ('invalid!', 0)$$,
+    $$INSERT INTO "Hotspots" (geohash, count) VALUES ('inval!d', 0)$$,
     '23514',
     NULL,
     'Should throw error for invalid geohash characters'
 );
 
--- New Test: Test geohash constraint (too long)
+--  Test: Test geohash constraint (too long)
 SELECT throws_ok(
-    $$INSERT INTO test_hotspots (geohash, count) VALUES ('tooooolong12345', 0)$$,
-    '23514',
+    $$INSERT INTO "Hotspots" (geohash, count) VALUES ('tooo000olong', 0)$$,
+    '22001',
     NULL,
     'Should throw error for geohash too long'
 );
 
--- New Test: Test count default value
-INSERT INTO test_hotspots (geohash) VALUES ('testgeo8');
-SELECT is(count, 0, 'Count should default to 0') FROM test_hotspots WHERE geohash = 'testgeo8';
-
--- New Test: Test count constraint (negative value)
+--  Test: Test geohash constraint (too short)
 SELECT throws_ok(
-    $$INSERT INTO test_hotspots (geohash, count) VALUES ('neg45678', -1)$$,
+    $$INSERT INTO "Hotspots" (geohash, count) VALUES ('short', 0)$$,
     '23514',
     NULL,
-    'Should throw error for negative count'
+    'Should throw error for geohash too short'
 );
 
--- New Test: Test last_updated is updated on insert
-INSERT INTO test_hotspots (geohash, count) VALUES ('lastupd8', 1);
-SELECT ok(last_updated > NOW() - INTERVAL '5 seconds', 'last_updated should be recent') FROM test_hotspots WHERE geohash = 'lastupd';
+--  Test: Test geohash constraint (contains invalid Base32 character 'a')
+SELECT throws_ok(
+    $$INSERT INTO "Hotspots" (geohash, count) VALUES ('012a345', 0)$$,
+    '23514',
+    NULL,
+    'Should throw error for geohash with invalid Base32 character'
+);
 
--- New Test: Test last_updated is updated on update
-UPDATE test_hotspots SET count = 10 WHERE geohash = 'lastupd8';
-SELECT ok(last_updated > NOW() - INTERVAL '5 seconds', 'last_updated should be recent after update') FROM test_hotspots WHERE geohash = 'lastupd8';
 
--- Teardown
-DROP TABLE test_hotspots;
+-- Test: Test count default value
+INSERT INTO "Hotspots" (geohash) VALUES ('pqrst01');
+SELECT is(count, 0, 'Count should default to 0') FROM "Hotspots" WHERE geohash = 'pqrst01';
+
+
+-- Test: Verify coordinates were calculated
+-- around 1m error
+
+SELECT ok(ABS(longitude - (-179.6120452880)) < 0.000001 AND
+          ABS(latitude - (-82.6522064208)) < 0.000001,
+          'Coordinates for 0123bcd should be calculated correctly') 
+FROM "Hotspots" WHERE geohash = '0123bcd';
+
+SELECT ok(ABS(longitude - (-50.47737121582)) < 0.000001 AND
+          ABS(latitude - (62.76695251464)) < 0.000001,
+          'Coordinates for fghj567 should be calculated correctly') 
+FROM "Hotspots" WHERE geohash = 'fghj567';
+
+SELECT ok(ABS(longitude - (157.01866149902)) < 0.000001 AND
+          ABS(latitude - (-54.05204772949)) < 0.000001,
+          'Coordinates for pqrst01 should be calculated correctly') 
+FROM "Hotspots" WHERE geohash = 'pqrst01';
+
+
+-- Test: Test last_updated is updated on insert
+INSERT INTO "Hotspots" (geohash, count) VALUES ('yz78901', 1);
+SELECT ok(last_updated > NOW() - INTERVAL '5 seconds', 'last_updated should be recent') FROM "Hotspots" WHERE geohash = 'yz78901';
+
+-- Test: Test last_updated is updated on update
+UPDATE "Hotspots" SET count = 10 WHERE geohash = 'yz78901'; 
+SELECT ok(last_updated > NOW() - INTERVAL '5 seconds', 'last_updated should be recent after update') FROM "Hotspots" WHERE geohash = 'yz78901';
+
 
 SELECT * FROM finish();
 ROLLBACK;
