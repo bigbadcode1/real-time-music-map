@@ -32,20 +32,35 @@ These tests validate the schema, constraints, and basic CRUD operations for each
 ### Function Tests
 These tests validate the behavior of stored procedures and functions:
 
-- **`get_hotspots.sql`**:
-  - Tests geographic bounding box queries
-  - Verifies coordinate validation logic
-  - Tests the limit of 20 hotspots returned
+-   **`get_hotspots.sql`**:
+    -   Tests geographic bounding box queries
+    -   Verifies coordinate validation logic
+    -   Tests the limit of 20 hotspots returned
 
-- **`upsert_active_user.sql`**:
-  - Tests user insertion and update logic
-  - Verifies token validation and expiration handling
-  - Tests error cases for invalid tokens
+-   **`update_user_info.sql`**:
+    -   Tests updating user's geohash and song information.
+    -   Verifies handling of valid and invalid auth tokens.
+    -   Tests cases for updating with new songs and adding new songs to the database.
+    -   Ensures expiration time is correctly updated.
 
-- **`get_users_from_hotspots.sql`**:
-  - Tests filtering by geohash prefixes
-  - Verifies user and song data retrieval
-  - Tests edge cases with empty arrays and non-matching prefixes
+-   **`update_auth_token.sql`**:
+    -   Tests updating user's auth token.
+    -   Verifies updating with valid and invalid old tokens.
+    -   Tests updating token for non-existent users.
+    -   Ensures auth token and active user expiration times are updated.
+
+-   **`add_new_user.sql`**:
+    -   Tests adding new users with valid data.
+    -   Verifies user creation in `Active Users` and `Auth` tables.
+    -   Tests hotspot count incrementing.
+    -   Tests handling of users without geohash.
+    -   Verifies prevention of adding users with expired tokens or duplicate users.
+    -   Tests successful addition of a user replacing an expired user.
+
+-   **`get_users_from_hotspots.sql`**:
+    -   Tests filtering by geohash prefixes
+    -   Verifies user and song data retrieval
+    -   Tests edge cases with empty arrays and non-matching prefixes
 
 ## Running the Tests
 
