@@ -1,4 +1,4 @@
-FROM postgres:15
+FROM postgis/postgis:16-3.5
 
 # Install required dependencies
 RUN apt-get update && apt-get install -y \

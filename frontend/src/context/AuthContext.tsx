@@ -15,7 +15,7 @@ export function AuthProvider( {children}: { children: React.ReactNode}) {
     
     // placeholders for development, keep it true to skip onboarding while auth is not implemented yet
     const [isLoading, setIsLoading] = useState(true);
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(true);
 
     // Check for existing tokens on mount
     useEffect(() => {

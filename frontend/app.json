@@ -20,11 +20,7 @@
         "foregroundImage": "./assets/images/splash-screen-logo.png",
         "backgroundColor": "#ffffff"
       },
-      "NSLocationAlwaysAndWhenInUseUsageDescription": "We need your location to show nearby music activity.",
-      "NSLocationWhenInUseUsageDescription": "We need your location to show nearby music activity.",
       "permissions": [
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_BACKGROUND_LOCATION",
         "ACCESS_FINE_LOCATION",
         "ACCESS_BACKGROUND_LOCATION",
         "WRITE_EXTERNAL_STORAGE",
