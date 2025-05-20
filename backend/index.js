@@ -92,9 +92,8 @@ app.post('/exchange-token', async function (req, res) {
   try {
     console.log("req.body:", req.body);
 
-    const { code } = req.body;
+    const { code } = req.body;    
     
-
     const tokens = await getSpotifyAccessToken(
       process.env.SPOTIFY_CLIENT_ID,
       process.env.SPOTIFY_CLIENT_SECRET,
