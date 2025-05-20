@@ -12,8 +12,6 @@ dotenv.config();
 
 
 
-
-
 var app = express();
 
 app.use(express.json());
@@ -165,6 +163,102 @@ app.post('/get_hotspots', async function (req, res) {
   } catch (error) {
     console.log("Error ", error.code)
     res.status(500).json({ error: "Failed to get hotspots" });
+  }
+});
+
+app.post('/update-user-location', async (req, res) => {
+    try {
+        const { geohash, song } = req.body;
+        const authHeader = req.headers.authorization;
+        
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ error: 'No access token provided' });
+        }
+
+        const accessToken = authHeader.split(' ')[1];
+        const tokenHash = hashToken(accessToken);
+        
+        // Get user info from the token
+        const userInfo = await Database.query(
+            'SELECT user_id FROM "Auth" WHERE auth_token_hash = $1 AND expires_at > NOW()',
+            [tokenHash]
+        );
+
+        if (!userInfo.rows.length) {
+            return res.status(401).json({ error: 'Invalid or expired token' });
+        }
+
+        const userId = userInfo.rows[0].user_id;
+
+        // Extract song details if available
+        let songImage = null;
+        let songTitle = null;
+        let songArtist = null;
+
+        if (req.body.trackDetails) {
+            songImage = req.body.trackDetails.image || null;
+            songTitle = req.body.trackDetails.name || null;
+            songArtist = req.body.trackDetails.artist || null;
+        }
+
+        // Update user location and song info
+        await Database.updateUserInfo(
+            userId,
+            tokenHash,
+            geohash,
+            song || null,
+            songImage,
+            songTitle,
+            songArtist
+        );
+
+        // Get updated hotspot data to return to client
+        const updatedHotspot = await Database.query(
+            'SELECT geohash, count, last_updated, longitude, latitude FROM "Hotspots" WHERE geohash = $1',
+            [geohash]
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Location updated successfully',
+            updatedHotspot: updatedHotspot.rows[0] || null
+        });
+    } catch (error) {
+        console.error('Error updating user location:', error);
+        if (error.code === 'UE001') {
+            return res.status(401).json({ error: 'Authentication failed' });
+        }
+        res.status(500).json({ error: 'Failed to update user location' });
+    }
+});
+
+app.post('/get_updated_hotspots', async function (req, res) {
+  try {
+    const { ne_lat, ne_long, sw_lat, sw_long, lastUpdateTimestamp } = req.body;
+
+    if (isNaN(ne_lat) || isNaN(ne_long) || isNaN(sw_lat) || isNaN(sw_long)) {
+      return res.status(400).json({ error: "Invalid coordinates" });
+    }
+
+    // Convert string timestamp to Date if provided
+    const lastUpdateDate = lastUpdateTimestamp ? new Date(lastUpdateTimestamp) : new Date(0);
+    
+    // Get only hotspots that have been updated since the lastUpdateTimestamp
+    const result = await Database.getUpdatedHotspots(
+      ne_lat, 
+      ne_long, 
+      sw_lat, 
+      sw_long, 
+      lastUpdateDate
+    );
+
+    res.status(200).json({ 
+      hotspots: result,
+      timestamp: new Date().toISOString() // Current server timestamp
+    });
+  } catch (error) {
+    console.error('Error in get_updated_hotspots:', error);
+    res.status(500).json({ error: "Failed to get updated hotspots" });
   }
 });
 

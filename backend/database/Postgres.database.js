@@ -68,6 +68,33 @@ class Database {
     return data;
   }
 
+async getUpdatedHotspots(ne_lat, ne_long, sw_lat, sw_long, lastUpdateTimestamp) {
+  try {
+    const query = `
+      SELECT h.geohash, h.longitude, h.latitude, h.count, h.last_updated
+      FROM "Hotspots" h
+      WHERE (h.latitude BETWEEN $3 AND $1
+        AND h.longitude BETWEEN $4 AND $2
+        AND h.last_updated > $5)
+      ORDER BY h.count DESC
+      LIMIT 50;
+    `;
+    
+    const result = await this._pool.query(query, [
+      ne_lat, 
+      ne_long, 
+      sw_lat, 
+      sw_long, 
+      lastUpdateTimestamp
+    ]);
+    
+    return result.rows;
+  } catch (error) {
+    console.error('Error in getUpdatedHotspots:', error);
+    throw error;
+  }
+}
+
 }
 
 // Export a singleton instance

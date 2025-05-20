@@ -1,6 +1,7 @@
 services:
   postgres_db:
     image: postgis/postgis:16-3.5
+    platform: linux/amd64
     restart: unless-stopped
     ports:
       - 5432:5432
