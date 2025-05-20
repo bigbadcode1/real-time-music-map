@@ -262,7 +262,6 @@ $$ LANGUAGE plpgsql;
 
 
 
-
 CREATE OR REPLACE FUNCTION get_users_from_hotspots(hotspot_prefixes text[])
 RETURNS TABLE (
     id TEXT,
