@@ -1,24 +1,4 @@
 include:
   - ./database/compose.yaml
-services:
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    ports:
-      - 8888:8888
-    depends_on:
-      - postgres_db
-    env_file: "./backend/.env"
-    networks:
-      - mapme-network
-    volumes:
-      - /app/node_modules
+  - ./backend/compose.yaml
 
-volumes:
-  music_map_pgdata:
-
-networks:
-  mapme-network:
-    driver: bridge

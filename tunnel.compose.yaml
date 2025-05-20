@@ -1,0 +1,14 @@
+include:
+  - ./database/compose.yaml
+  - ./backend/compose.yaml
+services:
+  tunnel:
+    container_name: mapme-tunnel
+    image: cloudflare/cloudflared
+    restart: unless-stopped
+    command: tunnel run
+    env_file: '.env'
+    environment:
+      TUNNEL_TOKEN: ${CLAUDFLARE_TOKEN}
+    networks:
+      - mapme-tunnel

@@ -1,0 +1,19 @@
+services:
+  mapme-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - 8888:8888
+    env_file: ".env"
+    networks:
+      - mapme-network
+      - mapme-tunnel
+    volumes:
+      - /app/node_modules
+networks:
+  mapme-network:
+    driver: bridge
+  mapme-tunnel:
+    driver: bridge
