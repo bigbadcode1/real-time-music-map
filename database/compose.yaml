@@ -1,10 +1,11 @@
 services:
-  postgres_db:
+  mapme-db:
     image: postgis/postgis:16-3.5
-    platform: linux/amd64
     restart: unless-stopped
     ports:
       - 5432:5432
+    #for mac users 
+    #platform: linux/amd64
     env_file: ".env"
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
@@ -13,5 +14,11 @@ services:
     volumes:
       - music_map_pgdata:/var/lib/postgresql/data
       - ./init:/docker-entrypoint-initdb.d
+    networks:
+      - mapme-network
 volumes:
   music_map_pgdata:
+
+networks:
+  mapme-network:
+    driver: bridge

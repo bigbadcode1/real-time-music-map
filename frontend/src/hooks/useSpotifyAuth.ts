@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import {makeRedirectUri, useAuthRequest, ResponseType, AuthRequestPromptOptions} from 'expo-auth-session';
+import { makeRedirectUri, useAuthRequest, ResponseType, AuthRequestPromptOptions } from 'expo-auth-session';
 import { exchangeCodeForTokens } from '@/src/services/spotifyAuthService';
 import { useAuth } from '@/src/context/AuthContext';
 
@@ -65,6 +65,7 @@ export const useSpotifyAuth = (): UseSpotifyAuthReturn => {
         setIsLoading(false);
       } else if (response.type === 'success') {
         const { code } = response.params;
+
         console.log('[useSpotifyAuth] Authorization code received: ', code);
 
         exchangeCodeForTokens(code, redirectUri).then(async (exchangeResult) => {

@@ -1,3 +1,11 @@
+----------------- EXAMPLE --------------------
+-- SELECT generate_random_active_users(40);
+-- SELECT random_users_exitsing_hotspots(1000);
+
+-- ^ generates 1040 users within max 40 hotspots
+
+
+
 CREATE OR REPLACE FUNCTION generate_random_active_users(num_users INTEGER DEFAULT 10)
 RETURNS VOID AS $$
 DECLARE

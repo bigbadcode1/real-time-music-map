@@ -2,7 +2,7 @@
 
 This repository contains a PostgreSQL database setup for a real-time music map application, along with Docker Compose configuration for easy deployment. The application tracks user locations, their currently playing songs, and creates geographic hotspots of music activity.
 
-### Tables
+## Key Features
 
 #### Hotspots
 - Stores geographic hotspots with activity tracking
@@ -26,32 +26,82 @@ This repository contains a PostgreSQL database setup for a real-time music map a
 - **Fields**:
   - `id` (TEXT): User ID (alphanumeric, max 80 chars)
   - `name` (TEXT): User's display name
+  - `image_url` (TEXT): User's profile image URL
   - `song_id` (TEXT): Currently playing song (references Songs.id)
   - `geohash` (VARCHAR(7)): User's location (references Hotspots.geohash)
   - `expires_at` (TIMESTAMPTZ): Session expiration time (default 1 hour)
 
-#### Auth
-- Manages user authentication tokens
-- **Fields**:
-  - `user_id` (TEXT): References "Active Users".id
-  - `auth_token_hash` (TEXT): Hashed authentication token
-  - `expires_at` (TIMESTAMPTZ): Token expiration time (default 1 hour)
+1. **Hotspots**
+   - Tracks geographic areas with multiple users
+   - `geohash`: 8-character geohash identifier (primary key)
+   - `count`: Number of active users in the area
+   - `last_updated`: Timestamp of last activity
 
-## Key Functions
+
+## Core Functions
 
 ### User Management
-- `upsert_active_user`: Adds or updates a user with their current song and location
-  - Handles authentication
-  - Updates user session expiration
-  - Updates associated hotspot counts
 
-### Hotspot Management
-- `get_hotspots`: Retrieves hotspots within a geographic bounding box
-- `get_users_from_hotspots`: Gets users from specified hotspots with their song information
+#### `add_new_user`
+Registers a new user in the system
+- Parameters:
+  - `p_user_id`: User identifier
+  - `p_name`: Display name
+  - `p_auth_token_hash`: Authentication token (hashed)
+  - `p_token_expires_at`: Token expiration timestamp
+  - `p_geohash`: Optional location geohash
 
-### Triggers
-- Automatic hotspot counting when users are added, moved, or removed
-- Automatic geohash to coordinates conversion using PostGIS
+#### `update_user_info`
+Updates user's current location and/or song
+- Parameters:
+  - `p_user_id`: User identifier
+  - `p_user_token`: Authentication token
+  - `p_geohash`: Optional new location
+  - `p_song_id`: Optional song ID
+  - `p_song_image`: Optional song cover image URL
+  - `p_song_title`: Optional song title
+  - `p_song_artist`: Optional song artist
+
+#### `update_auth_token`
+Refreshes a user's authentication token
+- Parameters:
+  - `p_user_id`: User identifier
+  - `p_old_token`: Current token for verification
+  - `p_new_token_hash`: New token hash
+  - `p_token_expires_at`: New expiration timestamp
+
+### Geospatial Functions
+
+#### `get_hotspots`
+Retrieves hotspots within a geographic bounding box
+- Parameters:
+  - `ne_lat`: Northeast latitude boundary
+  - `ne_long`: Northeast longitude boundary
+  - `sw_lat`: Southwest latitude boundary
+  - `sw_long`: Southwest longitude boundary
+- Returns: Table of hotspots with coordinates and user counts
+
+#### `get_users_from_hotspots`
+Gets users located in specified hotspots
+- Parameters:
+  - `hotspot_prefixes`: Array of geohash prefixes to match
+- Returns: Table of users with their current song information
+
+### Maintenance Functions
+
+#### `cleanup_expired_users`
+Removes inactive users whose sessions have expired
+- Automatically triggers hotspot count updates
+
+## Triggers
+
+The database includes several automatic triggers:
+
+- `update_hotspots_after_user_change`: Updates hotspot counts when users change location
+- `update_hotspot_new_user`: Increments hotspot count when new users are added
+- `decrement_hotspots_on_user_delete`: Decrements hotspot count when users are removed
+- `trigger_update_coordinates`: Calculates longitude and latitude from geohash strings
+
 
 ## Technologies
 - PostgreSQL 16
@@ -60,9 +110,9 @@ This repository contains a PostgreSQL database setup for a real-time music map a
 
 ## Docker Deployment
 
-### Prerequisites
-- Docker
-- Docker Compose
+3. **Songs**
+   - Cache of Spotify song data to reduce API calls
+   - Stores song ID, image URL, title, and artist
 
 ([Docker Desktop](https://www.docker.com/products/docker-desktop/) provides both)
 
