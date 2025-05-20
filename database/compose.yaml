@@ -12,5 +12,11 @@ services:
     volumes:
       - music_map_pgdata:/var/lib/postgresql/data
       - ./init:/docker-entrypoint-initdb.d
+    networks:
+      - mapme-network
 volumes:
   music_map_pgdata:
+
+networks:
+  mapme-network:
+    driver: bridge
