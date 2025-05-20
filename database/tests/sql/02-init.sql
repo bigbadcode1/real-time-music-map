@@ -205,7 +205,8 @@ CREATE OR REPLACE FUNCTION add_new_user(
   p_name TEXT,
   p_auth_token_hash TEXT,
   p_token_expires_at TIMESTAMPTZ,
-  p_geohash VARCHAR(7) DEFAULT NULL
+  p_geohash VARCHAR(7) DEFAULT NULL,
+  p_image_url TEXT DEFAULT NULL
 ) RETURNS VOID AS $$
 DECLARE
   v_transaction_successful BOOLEAN := FALSE;
@@ -228,8 +229,8 @@ BEGIN
 
     
     -- Insert into Active Users with default null song
-    INSERT INTO "Active Users" (id, name, song_id, geohash, expires_at)
-    VALUES (p_user_id, p_name, NULL, p_geohash, NOW() + INTERVAL '1 hour');
+    INSERT INTO "Active Users" (id, name, image_url, song_id, geohash, expires_at)
+    VALUES (p_user_id, p_name, p_image_url, NULL, p_geohash, NOW() + INTERVAL '1 hour');
     
     -- Insert authentication info
     INSERT INTO "Auth" (user_id, auth_token_hash, expires_at)
@@ -266,6 +267,7 @@ CREATE OR REPLACE FUNCTION get_users_from_hotspots(hotspot_prefixes text[])
 RETURNS TABLE (
     id TEXT,
     name TEXT,
+    image TEXT,
     song_id TEXT,
     song_title TEXT,
     song_image TEXT,
@@ -273,7 +275,7 @@ RETURNS TABLE (
 ) AS $$
 BEGIN
     RETURN QUERY
-    SELECT u.id, u.name, u.song_id, s.title, s.image_url, s.artist
+    SELECT u.id, u.image_url, u.name, u.song_id, s.title, s.image_url, s.artist
     FROM "Active Users" u
     JOIN "Hotspots" h ON u.geohash = h.geohash
     JOIN "Songs" s ON u.song_id = s.id 

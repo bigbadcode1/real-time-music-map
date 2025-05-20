@@ -7,7 +7,7 @@ INSERT INTO "Hotspots" (geohash, count, longitude, latitude) VALUES
 
 -- Test Case 1: Basic new user creation
 SELECT lives_ok(
-    $$SELECT add_new_user('user12039812358', 'Test User', 'hash123123421498271', (NOW() + INTERVAL '1 hour'), 'dr72h56')$$,
+    $$SELECT add_new_user('user12039812358', 'Test User', 'hash123123421498271', (NOW() + INTERVAL '1 hour'), 'dr72h56', 'https://example.com/prof_image.jpg')$$,
     'Should successfully add a new user'
 );
 
