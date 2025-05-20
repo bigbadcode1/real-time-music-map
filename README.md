@@ -115,6 +115,23 @@ Run react native app
 cd /frontend
 npx expo start
 ```
+## Run with Docker
+
+#### Run backend + database
+1. Configure `backend/.env` and `database/.env` files based on `backend/.env_sample` and `database/.env.example`
+2. Run:
+```bash
+docker compose up
+```
+
+#### Run backend + database + cloudflare tunnel
+1. Configure `backend/.env` and `database/.env` files based on `backend/.env_sample` and `database/.env.example`
+2. Configure `./.env` file based on `./.env_sample`
+2. Run
+```
+docker compose -f tunnel.compose.yaml up
+```
+
 ## Built Using
 
 - React Native (Expo)
