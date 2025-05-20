@@ -36,8 +36,8 @@ describe('spotifyAuthService', () => {
     const mockRedirectUri = 'exp://test-uri';
     const mockRefreshToken = 'test-refresh-token';
     const mockAccessToken = 'test-access-token';
-    const backendExchangeUrl = 'http://localhost:8888/exchange-token';
-    const backendRefreshUrl = 'http://localhost:8888/refresh-token';
+    const backendExchangeUrl = `${process.env.EXPO_PUBLIC_BACKEND_URL}/exchange-token`;
+    const backendRefreshUrl = `${process.env.EXPO_PUBLIC_BACKEND_URL}/refresh-token`;
 
     beforeEach(() => {
         // Clear mocks before each test

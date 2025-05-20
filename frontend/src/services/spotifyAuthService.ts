@@ -26,7 +26,8 @@ export async function refreshAccessToken(): Promise<{success: boolean; tokens?: 
 
     // Token is expired or about to expire, refresh it
     // *** FIX: Use the correct endpoint ***
-    const backendUrl = 'https://backendtesting-five.vercel.app/refresh-token';
+    const backendUrl = `${process.env.EXPO_PUBLIC_BACKEND_URL}/refresh-token`;
+    
     console.log(`[refreshAccessToken] Refreshing token at ${backendUrl}`);
     const response = await fetch(backendUrl, {
       method: 'POST',
@@ -72,8 +73,7 @@ export async function refreshAccessToken(): Promise<{success: boolean; tokens?: 
 // function only handles the backend communication
 export async function exchangeCodeForTokens(code: string, redirectUri: string): Promise<{success: boolean; tokens?: any; error?: string | AuthError | null}> {
   try {
-    // const backendUrl = 'https://backendtesting-five.vercel.app/exchange-token';
-    const backendUrl = 'http://192.168.0.154:8888/exchange-token';
+    const backendUrl = `${process.env.EXPO_PUBLIC_BACKEND_URL}/exchange-token`;
     console.log(`Exchanging code at ${backendUrl} with redirect URI: ${redirectUri}`);
 
     const response = await fetch(backendUrl, {

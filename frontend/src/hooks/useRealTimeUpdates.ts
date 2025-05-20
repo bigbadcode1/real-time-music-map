@@ -76,7 +76,7 @@ export function useRealTimeUpdates() {
         return null;
       }
 
-      const response = await fetch('https://backendtesting-five.vercel.app/currentTrack', {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}/currentTrack`, {
         headers: {
           'Authorization': `Bearer ${accessToken}`
         }
@@ -106,7 +106,7 @@ export function useRealTimeUpdates() {
         return;
       }
 
-      await fetch('https://backendtesting-five.vercel.app/update-user-location', {
+      await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}/update-user-location`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
