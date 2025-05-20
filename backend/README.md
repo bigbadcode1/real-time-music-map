@@ -45,7 +45,7 @@ DB_PORT=5432
 3. Set up environment variables (see above)
 4. Start the service with Docker:
    ```bash
-   docker-compose up -d
+   docker compose up -d
    ```
 
 ### Manual Startup (Development)
