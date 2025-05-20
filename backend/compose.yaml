@@ -4,6 +4,8 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
+    # for mac users
+    #platform: linux/amd64
     ports:
       - 8888:8888
     env_file: ".env"
