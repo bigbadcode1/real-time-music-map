@@ -72,7 +72,8 @@ export async function refreshAccessToken(): Promise<{success: boolean; tokens?: 
 // function only handles the backend communication
 export async function exchangeCodeForTokens(code: string, redirectUri: string): Promise<{success: boolean; tokens?: any; error?: string | AuthError | null}> {
   try {
-    const backendUrl = 'https://backendtesting-five.vercel.app/exchange-token';
+    // const backendUrl = 'https://backendtesting-five.vercel.app/exchange-token';
+    const backendUrl = 'http://192.168.0.154:8888/exchange-token';
     console.log(`Exchanging code at ${backendUrl} with redirect URI: ${redirectUri}`);
 
     const response = await fetch(backendUrl, {
