@@ -4,6 +4,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { getSpotifyAccessToken } from "./utils/spotify/spotifyAuth.js";
 import { getCurrentlyPlayingTrack } from "./utils/spotify/spotifyPlayer.js";
+import { getUserInfo } from "#utils/spotify/spotifyUserInfo.js";
 import Database from "./database/Postgres.database.js";
 import { hashToken } from "#utils/hashToken.js";
 
@@ -20,7 +21,6 @@ app.use(express.json());
 app.use(cors());
 
 
-// --------------------- SPOTIFY API -------------------------
 app.get('/login', function (req, res) {
   const client_id = process.env.SPOTIFY_CLIENT_ID;
   const redirect_uri = process.env.SPOTIFY_REDIRECT_URI;
@@ -37,8 +37,8 @@ app.get('/login', function (req, res) {
     'playlist-read-collaborative',
     'streaming'
   ].join(' ');
-
-
+  
+  
   res.redirect('https://accounts.spotify.com/authorize?' +
     querystring.stringify({
       response_type: 'code',
@@ -47,21 +47,24 @@ app.get('/login', function (req, res) {
       redirect_uri: redirect_uri,
       state: state
     }));
-});
-
-
-
-
-app.get('/callback', async function (req, res) {
-  console.log("callback")
-  const code = req.query.code;
-  const AccessTokenResponse = await getSpotifyAccessToken(process.env.SPOTIFY_CLIENT_ID, process.env.SPOTIFY_CLIENT_SECRET, code, process.env.SPOTIFY_REDIRECT_URI);
-  const track = await getCurrentlyPlayingTrack(AccessTokenResponse.access_token);
-  console.log(track.track.name);
-
-});
-
-app.get('/currentTrack', async function (req, res) {
+  });
+  
+  
+  
+  app.get('/callback', async function (req, res) {
+    console.log("callback")
+    const code = req.query.code;
+    const AccessTokenResponse = await getSpotifyAccessToken(process.env.SPOTIFY_CLIENT_ID, process.env.SPOTIFY_CLIENT_SECRET, code, process.env.SPOTIFY_REDIRECT_URI);
+    const track = await getCurrentlyPlayingTrack(AccessTokenResponse.access_token);
+    console.log(track.track.name);
+    
+  });
+  
+  
+  
+  // --------------------- SPOTIFY API -------------------------
+  
+  app.get('/currentTrack', async function (req, res) {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -82,9 +85,14 @@ app.get('/currentTrack', async function (req, res) {
   }
 });
 
+
 app.post('/exchange-token', async function (req, res) {
   try {
+    console.log("req.body:", req.body);
+
     const { code } = req.body;
+    
+
     const tokens = await getSpotifyAccessToken(
       process.env.SPOTIFY_CLIENT_ID,
       process.env.SPOTIFY_CLIENT_SECRET,
@@ -97,6 +105,13 @@ app.post('/exchange-token', async function (req, res) {
       throw new Error("Error fetching tokens");
     }
 
+    // fetch profile data for the user and hash token
+    const user = await getUserInfo(tokens.access_token);
+    const token_hash = hashToken(tokens.access_token);
+
+    // add user to the database
+    await Database.addNewUser(user.id, user.name, token_hash);
+    
     res.status(200).json({
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token,
@@ -105,7 +120,7 @@ app.post('/exchange-token', async function (req, res) {
 
 
   } catch (error) {
-    console.error('Error exchanging code for token:', error);
+    console.log('Error exchanging code for token:', error);
     res.status(500).json({ error: 'Failed to exchange code for token' });
   }
 });
@@ -137,8 +152,6 @@ app.post('/refresh-token', async function (req, res) {
     res.status(500).json({ error: 'Failed to refresh token' });
   }
 });
-
-
 
 
 
@@ -178,7 +191,7 @@ app.post('/get_users_from_hotspots', async function (req, res) {
       throw new Error("Invalid hotspots array");
     }
     
-    
+  
     let result = [];
     
     
