@@ -47,8 +47,7 @@ class Database {
 
     return result;    
   }
-
-
+  
   async updateAuthToken(user_id, old_token, new_token, expires_at) {
     const result = await this.query('SELECT update_auth_token($1, $2, $3, $4)', [user_id, old_token, new_token, expires_at]);
 

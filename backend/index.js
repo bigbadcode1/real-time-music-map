@@ -1,5 +1,5 @@
 import express from "express";
-import * as querystring from "node:querystring";
+// import * as querystring from "node:querystring";
 import cors from "cors";
 import dotenv from "dotenv";
 import { getSpotifyAccessToken } from "./utils/spotify/spotifyAuth.js";
@@ -37,8 +37,8 @@ app.use(cors());
 //     'playlist-read-collaborative',
 //     'streaming'
 //   ].join(' ');
-  
-  
+
+
 //   res.redirect('https://accounts.spotify.com/authorize?' +
 //     querystring.stringify({
 //       response_type: 'code',
@@ -48,23 +48,24 @@ app.use(cors());
 //       state: state
 //     }));
 //   });
-  
-  
-  
+
+
+
 //   app.get('/callback', async function (req, res) {
 //     console.log("callback")
 //     const code = req.query.code;
 //     const AccessTokenResponse = await getSpotifyAccessToken(process.env.SPOTIFY_CLIENT_ID, process.env.SPOTIFY_CLIENT_SECRET, code, process.env.SPOTIFY_REDIRECT_URI);
 //     const track = await getCurrentlyPlayingTrack(AccessTokenResponse.access_token);
 //     console.log(track.track.name);
-    
+
 //   });
-  
-  
-  
-  // --------------------- SPOTIFY API -------------------------
-  
-  app.get('/currentTrack', async function (req, res) {
+
+
+
+// --------------------- SPOTIFY API -------------------------
+
+// get currently playing track
+app.get('/currentTrack', async function (req, res) {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -73,27 +74,49 @@ app.use(cors());
 
     const accessToken = authHeader.split(' ')[1];
     const track = await getCurrentlyPlayingTrack(accessToken);
-    
+
     if (!track) {
       return res.status(204).send(); // No track playing
     }
 
-    
 
     res.json(track);
   } catch (error) {
-    console.error('Error in /currentTrack:', error);
+    console.error('[/currentTrack] Error', error);
     res.status(500).json({ error: 'Failed to get current track' });
   }
 });
 
 
+
+// update user location and fetch current song
+app.post('/update-user-info', async function (req, res) {
+  try {
+    const { access_token, user_id, geohash } = req.body;
+
+    if (!user_id || !access_token) {
+      return res.status(400).json({ error: 'Required data is missing' });
+    }
+
+    const hash = hashToken(access_token);
+    const { track } = await getCurrentlyPlayingTrack(access_token);
+
+
+    // update db
+    await Database.updateUserInfo(user_id, hash, geohash, track.id, track.image, track.name, track.artist);
+
+    res.status(200).json({ track });
+  } catch (error) {
+    console.error('[/update-user-info] Error:', error);
+    res.status(500).json({ error: 'Failed to update user info' });
+  }
+});
+
+// exchange token
 app.post('/exchange-token', async function (req, res) {
   try {
-    console.log("req.body:", req.body);
+    const { code } = req.body;
 
-    const { code } = req.body;    
-    
     const tokens = await getSpotifyAccessToken(
       process.env.SPOTIFY_CLIENT_ID,
       process.env.SPOTIFY_CLIENT_SECRET,
@@ -113,24 +136,31 @@ app.post('/exchange-token', async function (req, res) {
     // add user to the database
     await Database.addNewUser(user.id, user.name, token_hash);
 
+
+
     res.status(200).json({
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token,
-      expires_in: tokens.expires_in
+      expires_in: tokens.expires_in,
+      user_id: user.id
     });
 
 
   } catch (error) {
-    console.log('Error exchanging code for token:', error);
+    console.error('[/exchange-token] Error:', error);
     res.status(500).json({ error: 'Failed to exchange code for token' });
   }
 });
 
+// refresh user token after it expired
 app.post('/refresh-token', async function (req, res) {
   try {
-    const { refresh_token } = req.body;
+    //refresh_token + old access_token
+    const { refresh_token, access_token, user_id } = req.body;
 
-    if (!refresh_token) {
+    if (!refresh_token
+      // || !access_token
+    ) {
       return res.status(400).json({ error: 'Refresh token is required' });
     }
 
@@ -141,15 +171,25 @@ app.post('/refresh-token', async function (req, res) {
     );
 
 
+    const old_hash = hashToken(access_token);
+    const new_hash = hashToken(tokens.accessToken);
+
+    // expires_in - int - The time period (in seconds) for which the access token is valid
+
+    // update auth in db
+    await Database.updateAuthToken(user_id, old_hash, new_hash, Date.now() + (expires_in * 1000));
+
+
+    //!!!!!!!  POTENTIAL PROBLEM when spotify api is ok but db fails !!!!!!!!!!!!
+
+
     res.status(200).json({
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token,
       expires_in: tokens.expires_in
     });
-
-
   } catch (error) {
-    console.error('Error refreshing token:', error);
+    console.error('[/refresh-token] Error:', error);
     res.status(500).json({ error: 'Failed to refresh token' });
   }
 });
@@ -176,7 +216,7 @@ app.post('/get_hotspots', async function (req, res) {
 
     res.status(200).json({ "hotspots": result })
   } catch (error) {
-    console.log("Error ", error.code)
+    console.error("[/get_hotspots] Error ", error)
     res.status(500).json({ error: "Failed to get hotspots" });
   }
 });
@@ -184,30 +224,30 @@ app.post('/get_hotspots', async function (req, res) {
 // get users from an array of hotspots (geohashes)
 app.post('/get_users_from_hotspots', async function (req, res) {
   try {
-    
+
     const { hotspots } = req.body;
-    
+
     if (!hotspots || !hotspots.length) {
       throw new Error("Invalid hotspots array");
     }
-    
-  
+
+
     let result = [];
-    
-    
+
+
     // example
     // result = await Database.getUsersFromHotspots(['xj', '4d1q', '6vw', 'd2zuqdt', 'kscwfkb']);
     //
-    
-    
+
+
     if (hotspots.length > 0) {
       result = await Database.getUsersFromHotspots(hotspots);
     }
-    
+
     // console.log("result: ", result);
     res.status(200).json({ "users": result });
   } catch (error) {
-    console.log(error);
+    console.log("[/get_users_from_hotspots] Error: ", error);
     res.status(500).json({ error: "Failed to get users from hotspots" });
   }
 });
@@ -218,10 +258,10 @@ app.post('/get_users_from_hotspots', async function (req, res) {
 
 app.post('/db_test', async function (req, res) {
   try {
-    
+
 
     //add new user test
-    
+
     // now() + 1 hour
     const date = new Date(Date.now() + 60 * 60 * 1000);
     const secret_token = "mysecrettoekn123124";
@@ -233,15 +273,15 @@ app.post('/db_test', async function (req, res) {
       id: "userid1234123",
       name: "User Test 1234",
       token_hash: hash,
-      expires_at: date, 
+      expires_at: date,
       geohash: "eszbfxt"
     };
-    
+
     const result = await Database.addNewUser(...Object.values(user));
-    
+
     res.status(200).send("OK");
   } catch (error) {
-    console.log("error in /db_test -", "Error", error.code)
+    console.log("[/db_test] Error: ", error);
     res.status(500).json({ error: `Error ${error.code}` });
   }
 });
