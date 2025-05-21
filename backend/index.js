@@ -286,5 +286,19 @@ app.post('/db_test', async function (req, res) {
   }
 });
 
+app.get('/test_connection_to_db', async function (req, res) {
+  try {
+    await Database.testConnection();
+
+    res.status(200).send("OK");
+  } catch (error) {
+    console.log("[/test_connection_to_db] Error", error);
+    res.status(500).json({ error: `Error ${error.code}` });
+  }
+});
+
+
+
+
 
 app.listen(process.env.PORT);
