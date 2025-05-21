@@ -45,13 +45,13 @@ type GenreData = {
 export type UserListenerData = {
   id: string;
   name: string;
-  avatar: string; // URL to user's avatar image
+  avatar: string;
   currentTrack: {
     title: string;
     artist: string;
-    albumArt: string; // URL to track's album art
+    albumArt: string;
     isCurrentlyListening: boolean;
-    timestamp: string; // ISO date string
+    timestamp: string;
   };
 };
 
@@ -62,7 +62,7 @@ type HotspotDetailProps = {
   topAlbums: AlbumData[];
   topArtists: ArtistData[];
   topGenres: GenreData[];
-  recentListeners: UserListenerData[]; // Added this prop for the new mode
+  recentListeners: UserListenerData[];
   timestamp: string;
   onClose: () => void;
 };

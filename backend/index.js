@@ -50,7 +50,7 @@ app.use(cors());
   
   
 //   app.get('/callback', async function (req, res) {
-//     console.log("callback")
+//     9("callback")
 //     const code = req.query.code;
 //     const AccessTokenResponse = await getSpotifyAccessToken(process.env.SPOTIFY_CLIENT_ID, process.env.SPOTIFY_CLIENT_SECRET, code, process.env.SPOTIFY_REDIRECT_URI);
 //     const track = await getCurrentlyPlayingTrack(AccessTokenResponse.access_token);
@@ -227,11 +227,8 @@ app.post('/update-user-location', async (req, res) => {
   }
 });
 
-
-// Endpoint to get hotspots based on a given location and radius
-// Your frontend sends latitude, longitude, geohash, and radius.
-// Your getHotspots DB function takes NE_lat, NE_long, SW_lat, SW_long.
-app.post('/nearby-hotspots', async (req, res) => {
+// Create a new endpoint that combines hotspot retrieval with user data
+app.post('/nearby-hotspots-with-users', async (req, res) => {
   try {
     const { latitude, longitude, radius } = req.body; // radius in meters
 
@@ -239,12 +236,9 @@ app.post('/nearby-hotspots', async (req, res) => {
       return res.status(400).json({ error: 'Invalid coordinates or radius' });
     }
 
-    // Calculate bounding box based on center (latitude, longitude) and radius
-    // This is a simplified calculation and might not be perfectly accurate for large radii
-    // More accurate would involve PostGIS ST_Expand or similar geographical calculations.
-    // For smaller radii, this approximation is usually fine.
-    const latDegreesPerKm = 1 / 111.32; // Approx. 1 degree latitude = 111.32 km
-    const longDegreesPerKm = 1 / (111.32 * Math.cos(latitude * (Math.PI / 180))); // Varies with latitude
+    // Calculate bounding box based on center and radius
+    const latDegreesPerKm = 1 / 111.32;
+    const longDegreesPerKm = 1 / (111.32 * Math.cos(latitude * (Math.PI / 180)));
 
     const latDelta = (radius / 1000) * latDegreesPerKm;
     const longDelta = (radius / 1000) * longDegreesPerKm;
@@ -254,36 +248,90 @@ app.post('/nearby-hotspots', async (req, res) => {
     const sw_lat = latitude - latDelta;
     const sw_long = longitude - longDelta;
 
+    // Step 1: Get hotspots in the area
     const hotspots = await Database.getHotspots(ne_lat, ne_long, sw_lat, sw_long);
-    console.log("backend, hotspots: ", hotspots);
-    // Frontend HotspotData has more fields than returned by your getHotspots function.
-    // You'll need to decide how to populate these extra fields ('size', 'activity', etc.)
-    // For now, let's map the basic data.
-    const formattedHotspots = hotspots.map(h => ({
-      id: h.geohash, // Use geohash as ID
-      coordinate: { latitude: h.latitude, longitude: h.longitude },
-      size: 'medium', // Placeholder, calculate based on count
-      activity: 'medium', // Placeholder, calculate based on count/last_updated
-      userCount: h.count,
-      songCount: 0, // Placeholder, requires more data
-      dominantGenre: null, // Placeholder
-      locationName: `Hotspot ${h.geohash}`, // Placeholder
-      geohash: h.geohash,
-      topTracks: [], // Placeholder, fetch with get_users_from_hotspots later
-      topAlbums: [],
-      topArtists: [],
-      topGenres: [],
-      recentListeners: [],
-      timestamp: new Date().toISOString()
-    }));
+    console.log("back: ", hotspots)
+    // Step 2: If we have hotspots, get the users in those hotspots
+    let hotspotUsers = {};
+    if (hotspots && hotspots.length > 0) {
+      const hotspotGeohashes = hotspots.map(h => h.geohash);
+      const users = await Database.getUsersFromHotspots(hotspotGeohashes);
+      
+      // Group users by their hotspot geohash
+      if (users && users.length > 0) {
+        users.forEach(user => {
+          if (!hotspotUsers[user.geohash]) {
+            hotspotUsers[user.geohash] = [];
+          }
+          
+          // Calculate how long ago they were listening based on last_updated
+          const timeAgo = calculateTimeAgo(user.last_updated || new Date());
+          
+          hotspotUsers[user.geohash].push({
+            id: user.id,
+            name: user.name,
+            avatar: user.image_url,
+            currentTrack: {
+              title: user.song_title,
+              artist: user.song_artist,
+              albumArt: user.song_image,
+              isCurrentlyListening: (new Date(user.last_updated) > new Date(Date.now() - 5 * 60 * 1000)),
+              timeAgo: timeAgo
+            }
+          });
+        });
+      }
+    }
 
+    // Step 3: Format hotspots with user data
+    const formattedHotspots = hotspots.map(h => ({
+      id: h.geohash,
+      coordinate: { latitude: h.latitude, longitude: h.longitude },
+      size: getSizeFromCount(h.count),
+      activity: getActivityLevel(h.count, h.last_updated),
+      userCount: h.count,
+      lastUpdated: h.last_updated,
+      locationName: `Hotspot ${h.geohash.substring(0, 5)}`,
+      geohash: h.geohash,
+      listeners: hotspotUsers[h.geohash] || []
+    }));
 
     res.status(200).json({ hotspots: formattedHotspots });
   } catch (error) {
-    console.error('Error in /nearby-hotspots:', error);
-    res.status(500).json({ error: 'Failed to get nearby hotspots' });
+    console.error('Error in /nearby-hotspots-with-users:', error);
+    res.status(500).json({ error: 'Failed to get nearby hotspots with users' });
   }
 });
+
+// Helper function to calculate size based on user count
+function getSizeFromCount(count) {
+  if (count <= 2) return 'small';
+  if (count <= 5) return 'medium';
+  if (count <= 10) return 'large';
+  return 'xlarge';
+}
+
+// Helper function to calculate activity level based on count and last update time
+function getActivityLevel(count, lastUpdated) {
+  const minutesSinceUpdate = (Date.now() - new Date(lastUpdated).getTime()) / (1000 * 60);
+  
+  if (minutesSinceUpdate < 5 && count > 5) return 'trending';
+  if (minutesSinceUpdate < 15) return 'high';
+  if (minutesSinceUpdate < 30) return 'medium';
+  return 'low';
+}
+
+// Helper function to calculate time ago in a human-readable format
+function calculateTimeAgo(timestamp) {
+  const now = new Date();
+  const updatedTime = new Date(timestamp);
+  const diffInSeconds = Math.floor((now - updatedTime) / 1000);
+  
+  if (diffInSeconds < 60) return 'Just now';
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+  return `${Math.floor(diffInSeconds / 86400)} days ago`;
+}
 
 // get hotspots from coordinates (provide two points NE and SW of the view box)
 app.post('/get_hotspots', async function (req, res) {

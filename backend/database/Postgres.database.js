@@ -67,6 +67,7 @@ class Database {
     return result?.rows || [];
   }
 
+
 }
 
 // Export a singleton instance
