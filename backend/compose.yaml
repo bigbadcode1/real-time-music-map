@@ -9,8 +9,9 @@ services:
     ports:
       - 8888:8888
     env_file: ".env"
-    environment:
-      - DB_HOST=mapme-db
+    # when running db + backend
+    # environment:
+    #   - DB_HOST=mapme-db
     networks:
       - mapme-network
       - mapme-tunnel
