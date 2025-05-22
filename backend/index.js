@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { getCurrentlyPlayingTrack } from "./utils/spotify/spotifyPlayer.js";
 import { getSpotifyAccessToken, refreshSpotifyToken } from "./utils/spotify/spotifyAuth.js";
+import { getUserInfo } from "./utils/spotify/spotifyUserInfo.js";
 import Database from "./database/Postgres.database.js";
 import { hashToken } from "#utils/hashToken.js";
 import crypto from 'crypto'
@@ -70,7 +71,7 @@ app.get('/currentTrack', async function (req, res) {
     const track = await getCurrentlyPlayingTrack(accessToken);
 
     if (!track) {
-      return res.status(204).send(); // No track playing
+      return res.status(204).send();
     }
 
 
@@ -90,18 +91,15 @@ app.post('/update-user-info', async function (req, res) {
       return res.status(400).json({ error: 'Required data is missing' });
     }
 
-    // First try to get the current track using the raw access token
     let track;
     try {
       const trackData = await getCurrentlyPlayingTrack(access_token);
       track = trackData.track;
     } catch (error) {
       console.error('[/update-user-info] Error getting current track:', error);
-      // If we can't get the track, we can still update the location
       track = null;
     }
 
-    // Update db with the hashed token
     await Database.updateUserInfo(
       user_id, 
       token_hash, // Use the pre-hashed token from the frontend
@@ -122,71 +120,50 @@ app.post('/update-user-info', async function (req, res) {
 app.post('/exchange-token', async function(req, res) {
     try {
         const { code } = req.body;
-        const spotifyTokens = await getSpotifyAccessToken( // Assuming this function returns { access_token, refresh_token, expires_in }
+        const spotifyTokens = await getSpotifyAccessToken(
           process.env.SPOTIFY_CLIENT_ID,
           process.env.SPOTIFY_CLIENT_SECRET,
           code,
           req.body.redirectUri
         );
 
-        // 1. Fetch Spotify User Profile
-        const userProfile = await getSpotifyUserProfile(spotifyTokens.access_token); // Implement getSpotifyUserProfile
+        const userProfile = await getUserInfo(spotifyTokens.access_token);
         const userId = userProfile.id;
-        const userName = userProfile.display_name || userId; // Or email, etc.
+        const userName = userProfile.name;
 
-        // 2. Generate an application-specific session token
         const appSessionToken = crypto.randomBytes(32).toString('hex');
 
-        // 3. Store/Update user in your database
-        // Assuming hashToken function is available
         const hashedRefreshToken = hashToken(spotifyTokens.refresh_token);
         const expiresAt = Date.now() + spotifyTokens.expires_in * 1000;
 
-        // You might want to check if user exists before adding, or use an upsert function
+        // (check whether user exists before adding / upsert function?)
         try {
             await Database.addNewUser(
                 userId,
                 userName,
-                hashedRefreshToken, // Or hash of refresh token if preferred for longer-term ID
+                hashedRefreshToken,
                 expiresAt,
-                null, // geohash - will be updated later
-                userProfile.images?.[0]?.url // profile image
+                null,
+                userProfile.image_url
             );
             console.log(`[server.js /exchange-token] User ${userId} added/updated in DB.`);
         } catch (dbError) {
             console.error('[server.js /exchange-token] Error saving user to DB:', dbError);
-            // Decide if this is a fatal error for the login process
         }
         
-        // 4. Return all necessary tokens and user ID
         res.json({
           access_token: spotifyTokens.access_token,
           refresh_token: spotifyTokens.refresh_token,
           expires_in: spotifyTokens.expires_in,
-          app_session_token: appSessionToken, // Your app's session token
-          user_id: userId                  // Spotify User ID
+          app_session_token: appSessionToken,
+          user_id: userId
         });
 
     } catch (error) {
         console.error('Error exchanging code for token:', error);
-        // Check if error is from getSpotifyUserProfile or getSpotifyAccessToken to provide better client error
         res.status(500).json({ error: 'Failed to exchange code for token or fetch user profile' });
     }
 });
-
-// Helper function (example using node-fetch, install it: npm install node-fetch)
-async function getSpotifyUserProfile(accessToken) {
-  const fetch = (await import('node-fetch')).default;
-  const response = await fetch('https://api.spotify.com/v1/me', {
-    headers: { 'Authorization': `Bearer ${accessToken}` },
-  });
-  if (!response.ok) {
-    const errorBody = await response.text();
-    console.error(`Spotify API Error (${response.status}): ${errorBody}`);
-    throw new Error(`Failed to fetch Spotify user profile. Status: ${response.status}`);
-  }
-  return await response.json();
-}
 
 app.post('/refresh-token', async function(req, res) {
     try {
