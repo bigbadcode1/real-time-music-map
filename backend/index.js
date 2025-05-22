@@ -2,18 +2,12 @@ import express from "express";
 // import * as querystring from "node:querystring";
 import cors from "cors";
 import dotenv from "dotenv";
-import { getSpotifyAccessToken } from "./utils/spotify/spotifyAuth.js";
 import { getCurrentlyPlayingTrack } from "./utils/spotify/spotifyPlayer.js";
 import { getUserInfo } from "#utils/spotify/spotifyUserInfo.js";
 import Database from "./database/Postgres.database.js";
 import { hashToken } from "#utils/hashToken.js";
 
-
 dotenv.config();
-
-
-
-
 
 var app = express();
 
@@ -76,7 +70,7 @@ app.get('/currentTrack', async function (req, res) {
     const track = await getCurrentlyPlayingTrack(accessToken);
 
     if (!track) {
-      return res.status(204).send(); // No track playing
+      return res.status(204).send();
     }
 
 
@@ -193,7 +187,6 @@ app.post('/refresh-token', async function (req, res) {
     res.status(500).json({ error: 'Failed to refresh token' });
   }
 });
-
 
 
 // ------------------- DATABASE QUERIES -------------------------------

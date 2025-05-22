@@ -81,7 +81,7 @@ export const NowPlayingBar: React.FC<NowPlayingBarProps> = ({ currentTrack }) =>
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    top: 55,
+    top: 60,
     left: 48,
     right: 48,
     zIndex: 1000,

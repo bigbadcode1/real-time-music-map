@@ -59,7 +59,7 @@ class Database {
 
     return result?.rows || [];
   }
-
+  
   async getHotspots(ne_lat, ne_long, sw_lat, sw_long) {
     const result = await this.query('SELECT * FROM get_hotspots($1, $2, $3, $4)', [ne_lat, ne_long, sw_lat, sw_long]);
 
@@ -81,6 +81,7 @@ class Database {
       if (client) client.release();
     }
   }
+
 
 }
 
