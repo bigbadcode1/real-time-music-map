@@ -65,10 +65,8 @@ const MapScreen: React.FC = () => {
   const mapRef = useRef<MapView | null>(null);
   const expoRouter = useRouter();
   
-  // Get auth context values - we no longer need a separate userId state
   const { isLoggedIn, userId } = useAuth();
 
-  // No longer need to pass userId to useRealTimeUpdates
   const { currentLocation, currentTrack, nearbyHotspots, getHotspotDetails } = useRealTimeUpdates();
 
   // Redirect to onboarding if not logged in
@@ -109,7 +107,6 @@ const MapScreen: React.FC = () => {
   const handleHotspotPress = useCallback(async (hotspot: BasicHotspotData) => {
     console.log(`[MapScreen] Hotspot selected: ${hotspot.id}`);
     
-    // 1. Set basic info immediately to show loading state
     setSelectedHotspot({
       ...hotspot,
       songCount: 0,
@@ -122,7 +119,6 @@ const MapScreen: React.FC = () => {
       timestamp: hotspot.lastUpdated,
     });
 
-    // 2. Center map on selected hotspot
     if (mapRef.current) {
       mapRef.current.animateToRegion(
         {
@@ -135,11 +131,9 @@ const MapScreen: React.FC = () => {
       );
     }
 
-    // 3. Fetch detailed listener information
     const listeners = await getHotspotDetails(hotspot.geohash);
     console.log(`[MapScreen] Received ${listeners?.length || 0} listeners for hotspot ${hotspot.id}`);
 
-    // 4. Update selected hotspot with fetched details
     setSelectedHotspot((prevSelectedHotspot) => {
       if (prevSelectedHotspot?.id === hotspot.id && listeners) {
         return {

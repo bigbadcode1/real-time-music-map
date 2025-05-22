@@ -191,9 +191,6 @@ app.post('/refresh-token', async function(req, res) {
   });
 
 
-
-
-
 // ------------------- DATABASE QUERIES -------------------------------
 
 

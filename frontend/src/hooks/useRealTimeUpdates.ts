@@ -48,11 +48,9 @@ export function useRealTimeUpdates() {
   const [currentTrack, setCurrentTrack] = useState<CurrentTrack | null>(null);
   const [nearbyHotspots, setNearbyHotspots] = useState<BasicHotspotData[] | null>(null);
 
-  // Refs for stable access to current state values within useCallback (unchanged)
   const currentTrackRef = useRef(currentTrack);
   const nearbyHotspotsRef = useRef(nearbyHotspots);
 
-  // Keep refs updated with latest state values (unchanged)
   useEffect(() => {
     currentTrackRef.current = currentTrack;
   }, [currentTrack]);
@@ -61,7 +59,6 @@ export function useRealTimeUpdates() {
     nearbyHotspotsRef.current = nearbyHotspots;
   }, [nearbyHotspots]);
 
-  // Use refs to track last update times and update state (unchanged)
   const updateStateRef = useRef({
     isUpdating: false,
     lastTrackUpdate: 0,
@@ -101,9 +98,8 @@ function hashToken(token: string): Promise<string> {
     }
   };
 
-  // Helper to create authenticated headers
   const getAuthHeaders = useCallback(async () => {
-    const token = appSessionToken; // Use the app session token
+    const token = appSessionToken;
     const id = userId;
     
     if (!token || !id) {
@@ -113,46 +109,11 @@ function hashToken(token: string): Promise<string> {
     
     return {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`, // Use app session token here
-      'X-User-Id': id, // Add X-User-Id header
+      'Authorization': `Bearer ${token}`,
+      'X-User-Id': id,
     };
   }, [appSessionToken, userId]);
 
-
-  const getCurrentTrack = async (): Promise<CurrentTrack | null> => {
-    try {
-      const headers = await getAuthHeaders();
-      if (!headers) {
-        console.log('[useRealTimeUpdates] Skipping current track fetch due to missing auth headers.');
-        return null;
-      }
-
-      console.log('[useRealTimeUpdates] Fetching current track from backend...');
-      const response = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}/currentTrack`, {
-        headers: headers, // Use the new authenticated headers
-      });
-
-      console.log(`[useRealTimeUpdates] Current track response status: ${response.status}`);
-
-      if (!response.ok) {
-        if (response.status === 204) {
-          console.log('[useRealTimeUpdates] No current track playing (204)');
-          return { isPlaying: false, track: null };
-        }
-        const errorText = await response.text();
-        console.error(`[useRealTimeUpdates] Failed to fetch current track: ${response.status} - ${errorText}`);
-        // Handle specific error codes if needed (e.g., 401 for re-login)
-        return null;
-      }
-
-      const data = await response.json();
-      console.log('[useRealTimeUpdates] Current track data:', JSON.stringify(data, null, 2));
-      return data;
-    } catch (error) {
-      console.error('[useRealTimeUpdates] Error getting current track:', error);
-      return { isPlaying: false, track: null };
-    }
-  };
 
   const getNearbyHotspotsData = async (location: CurrentLocation): Promise<BasicHotspotData[] | null> => {
     try {
@@ -176,7 +137,7 @@ function hashToken(token: string): Promise<string> {
 
       const response = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}/get_hotspots`, {
         method: 'POST',
-        headers: headers, // Use the new authenticated headers
+        headers: headers,
         body: JSON.stringify({ ne_lat, ne_long, sw_lat, sw_long })
       });
 
@@ -212,7 +173,7 @@ function hashToken(token: string): Promise<string> {
 
       const response = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}/get_users_from_hotspots`, {
         method: 'POST',
-        headers: headers, // Use the new authenticated headers
+        headers: headers,
         body: JSON.stringify({ hotspots: [geohash] })
       });
 
@@ -257,7 +218,6 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
 
     const geohashValue = geohash.encode(location.latitude, location.longitude, 7);
 
-    // Get the refresh token from storage
     const tokensString = await AsyncStorage.getItem('spotifyTokens');
     if (!tokensString) {
       console.log('[useRealTimeUpdates] No Spotify tokens found in storage');
@@ -266,12 +226,11 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
     const tokens = JSON.parse(tokensString);
     const refreshToken = tokens.refresh_token;
 
-    // Hash the refresh token instead of the access token
     const tokenHash = await hashToken(refreshToken);
 
     const requestBody = {
-      access_token: spotifyAccessToken, // Still send the access token for Spotify API calls
-      token_hash: tokenHash, // Send the refresh token hash for authentication
+      access_token: spotifyAccessToken,
+      token_hash: tokenHash,
       user_id: id,
       geohash: geohashValue
     };
@@ -319,9 +278,7 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
   const performUpdate = useCallback(async () => {
     const updateState = updateStateRef.current;
 
-    // CRITICAL: Check all authentication conditions before proceeding
-    // Now also check for appSessionToken presence
-    if (!isLoggedIn || !userId || !appSessionToken || updateState.isUpdating) { // ADD appSessionToken check
+    if (!isLoggedIn || !userId || !appSessionToken || updateState.isUpdating) {
       console.log(`[useRealTimeUpdates] Skipping update: isLoggedIn=${isLoggedIn}, userId=${userId}, appSessionToken=${!!appSessionToken}, isUpdating=${updateState.isUpdating}`);
       return;
     }
@@ -356,14 +313,14 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
     } finally {
       updateState.isUpdating = false;
     }
-  }, [isLoggedIn, userId, appSessionToken, getValidAccessToken]); // ADD appSessionToken to dependencies
+  }, [isLoggedIn, userId, appSessionToken, getValidAccessToken]);
 
 
   useEffect(() => {
     const updateState = updateStateRef.current;
 
-    // CRITICAL: Only start updates when ALL isLoggedIn, userId AND appSessionToken are available
-    if (isLoggedIn && userId && appSessionToken) { // ADD appSessionToken check
+
+    if (isLoggedIn && userId && appSessionToken) {
       if (updateState.updateInterval) {
         clearInterval(updateState.updateInterval);
         console.log('[useRealTimeUpdates] Cleared previous update interval.');
@@ -373,7 +330,7 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
       performUpdate();
 
       updateState.updateInterval = setInterval(() => {
-        if (isLoggedIn && userId && appSessionToken) { // ADD appSessionToken check
+        if (isLoggedIn && userId && appSessionToken) {
           console.log('[useRealTimeUpdates] Interval triggered. Performing update.');
           performUpdate();
         } else {
@@ -383,11 +340,10 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
             updateState.updateInterval = null;
           }
         }
-      }, 30000); // 30 seconds
+      }, 30000);
 
       console.log('[useRealTimeUpdates] Update interval set for every 30 seconds');
     } else {
-      // If not logged in or no userId/appSessionToken, ensure the interval is cleared and states are reset
       if (updateState.updateInterval) {
         clearInterval(updateState.updateInterval);
         updateState.updateInterval = null;
@@ -406,7 +362,7 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
         console.log('[useRealTimeUpdates] Cleanup: Interval cleared on unmount/dependency change.');
       }
     };
-  }, [isLoggedIn, userId, appSessionToken, performUpdate]); // ADD appSessionToken to dependencies
+  }, [isLoggedIn, userId, appSessionToken, performUpdate]);
 
 
   return {
