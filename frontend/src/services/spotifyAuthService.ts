@@ -19,32 +19,8 @@ export const refreshTokens = async (
   userId: string
 ): Promise<RefreshResult> => {
   try {
-<<<<<<< HEAD
-    const storedTokens = await AsyncStorage.getItem('spotifyTokens');
-    if (!storedTokens) {
-      return { success: false, error: 'No stored tokens found' };
-    }
-
-    // Consistently use expires_at
-    const { refresh_token, expires_at } = JSON.parse(storedTokens);
-
-    // Check if we actually need to refresh
-    if (expires_at && !isTokenExpired(expires_at)) {
-      // Token is still valid, return stored tokens
-      console.log('[refreshAccessToken] Token still valid.');
-      return { success: true, tokens: JSON.parse(storedTokens) };
-    }
-
-    // Token is expired or about to expire, refresh it
-    // *** FIX: Use the correct endpoint ***
-    const backendUrl = `${process.env.EXPO_PUBLIC_BACKEND_URL}/refresh-token`;
-    
-    console.log(`[refreshAccessToken] Refreshing token at ${backendUrl}`);
-    const response = await fetch(backendUrl, {
-=======
     console.log('[spotifyAuthService] Refreshing tokens with backend...');
     const response = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}/refresh-token`, {
->>>>>>> origin/jakubstec
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -87,13 +63,8 @@ export const exchangeCodeForTokens = async (
   redirectUri: string
 ): Promise<ExchangeResult> => {
   try {
-<<<<<<< HEAD
-    const backendUrl = `${process.env.EXPO_PUBLIC_BACKEND_URL}/exchange-token`;
-    console.log(`Exchanging code at ${backendUrl} with redirect URI: ${redirectUri}`);
-=======
     console.log('[spotifyAuthService] Exchanging code for tokens with backend...');
     const backendAuthEndpoint = `${process.env.EXPO_PUBLIC_BACKEND_URL}/exchange-token`;
->>>>>>> origin/jakubstec
 
     const response = await fetch(backendAuthEndpoint, {
       method: 'POST',
