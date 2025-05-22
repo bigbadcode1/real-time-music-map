@@ -86,19 +86,57 @@ app.get('/currentTrack', async function (req, res) {
 // update user location and fetch current song
 app.post('/update-user-info', async function (req, res) {
   try {
-    const { access_token, user_id, geohash } = req.body;
+    const { access_token, refresh_token, user_id, geohash } = req.body;
 
-    if (!user_id || !access_token) {
+    console.log('[/update-user-info] Debug - Received request body:', {
+      user_id,
+      access_token: access_token,
+      refresh_token: refresh_token,
+      geohash
+    });
+
+
+    if (!user_id || !access_token || !refresh_token) {
       return res.status(400).json({ error: 'Required data is missing' });
     }
 
-    const hash = hashToken(access_token);
-    const { track } = await getCurrentlyPlayingTrack(access_token);
+    // fetch current song data
+    let track;
+    try {
+      const trackData = await getCurrentlyPlayingTrack(access_token);
+      track = trackData.track;
+    } catch (error) {
+      console.error('[/update-user-info] Error getting current track:', error);
+      track = null;
+    }
+
+    //hash token
+    const tokenHash = hashToken(refresh_token);
+    console.log('[/update-user-info] Debug - Generated token hash:', tokenHash);
 
 
-    // update db
-    await Database.updateUserInfo(user_id, hash, geohash, track.id, track.image, track.name, track.artist);
+    // send user data to db
+    try {
+      await Database.updateUserInfo(
+        user_id,
+        tokenHash,
+        geohash,
+        track?.id || null,
+        track?.image || null,
+        track?.name || null,
+        track?.artist || null
+      );
+      console.log('[/update-user-info] Debug - Successfully updated user info');
+    } catch (dbError) {
+      console.error('[/update-user-info] Debug - Database error:', {
+        error: dbError.message,
+        code: dbError.code,
+        detail: dbError.detail
+      });
+      throw dbError;
+    }
 
+    //return song data
     res.status(200).json({ track });
   } catch (error) {
     console.error('[/update-user-info] Error:', error);
@@ -109,81 +147,96 @@ app.post('/update-user-info', async function (req, res) {
 // exchange token
 app.post('/exchange-token', async function (req, res) {
   try {
+    // get tokens
     const { code } = req.body;
-
-    const tokens = await getSpotifyAccessToken(
+    const spotifyTokens = await getSpotifyAccessToken(
       process.env.SPOTIFY_CLIENT_ID,
       process.env.SPOTIFY_CLIENT_SECRET,
       code,
       req.body.redirectUri
     );
 
-    // undefined check
-    if (!tokens.access_token || !tokens.refresh_token || !tokens.expires_in) {
-      throw new Error("Error fetching tokens");
+
+    // get user profile info
+    const userProfile = await getUserInfo(spotifyTokens.access_token);
+    const userId = userProfile.id;
+    const userName = userProfile.name;
+
+    const appSessionToken = crypto.randomBytes(32).toString('hex');
+
+    const hashedRefreshToken = hashToken(spotifyTokens.refresh_token);
+    const expiresAt = Date.now() + spotifyTokens.expires_in * 1000;
+
+    // (check whether user exists before adding / upsert function?)
+    try {
+      await Database.addNewUser(
+        userId,
+        userName,
+        hashedRefreshToken,
+        expiresAt,
+        null,
+        userProfile.image_url
+      );
+      console.log(`[server.js /exchange-token] User ${userId} added/updated in DB.`);
+    } catch (dbError) {
+      console.error('[server.js /exchange-token] Error saving user to DB:', dbError);
     }
 
-    // fetch profile data for the user and hash token
-    const user = await getUserInfo(tokens.access_token);
-    const token_hash = hashToken(tokens.access_token);
-
-    // add user to the database
-    await Database.addNewUser(user.id, user.name, token_hash);
-
-
-
-    res.status(200).json({
-      access_token: tokens.access_token,
-      refresh_token: tokens.refresh_token,
-      expires_in: tokens.expires_in,
-      user_id: user.id
+    res.json({
+      access_token: spotifyTokens.access_token,
+      refresh_token: spotifyTokens.refresh_token,
+      expires_in: spotifyTokens.expires_in,
+      app_session_token: appSessionToken,
+      user_id: userId
     });
 
-
   } catch (error) {
-    console.error('[/exchange-token] Error:', error);
-    res.status(500).json({ error: 'Failed to exchange code for token' });
+    console.error('Error exchanging code for token:', error);
+    res.status(500).json({ error: 'Failed to exchange code for token or fetch user profile' });
   }
 });
 
 // refresh user token after it expired
 app.post('/refresh-token', async function (req, res) {
   try {
-    //refresh_token + old access_token
-    const { refresh_token, access_token, user_id } = req.body;
+    const { refresh_token, user_id } = req.body;
 
-    if (!refresh_token
-      // || !access_token
-    ) {
+    if (!refresh_token || !user_id) {
       return res.status(400).json({ error: 'Refresh token is required' });
     }
 
+    // get new tokens from spotify
     const tokens = await refreshSpotifyToken(
+      user_id,
       process.env.SPOTIFY_CLIENT_ID,
       process.env.SPOTIFY_CLIENT_SECRET,
       refresh_token
     );
 
 
-    const old_hash = hashToken(access_token);
-    const new_hash = hashToken(tokens.accessToken);
+    // if new refresh_token is returned change data in db 
+    if (tokens.refresh_token) {
+      const newTokenHash = hashToken(tokens.refresh_token);
+      const expiresAt = Date.now() + tokens.expires_in * 1000;
 
-    // expires_in - int - The time period (in seconds) for which the access token is valid
+      await Database.updateAuthToken(
+        user_id,
+        hashToken(refresh_token),
+        newTokenHash,
+        new Date(expiresAt)
+      );
+    } else {
+      console.log('[/refresh-token] tokens.refresh_token == null');
+    }
 
-    // update auth in db
-    await Database.updateAuthToken(user_id, old_hash, new_hash, Date.now() + (expires_in * 1000));
-
-
-    //!!!!!!!  POTENTIAL PROBLEM when spotify api is ok but db fails !!!!!!!!!!!!
-
-
-    res.status(200).json({
+    res.json({
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token,
       expires_in: tokens.expires_in
     });
+    
   } catch (error) {
-    console.error('[/refresh-token] Error:', error);
+    console.error('Error refreshing token:', error);
     res.status(500).json({ error: 'Failed to refresh token' });
   }
 });
