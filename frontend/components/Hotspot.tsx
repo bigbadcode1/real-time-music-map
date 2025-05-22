@@ -1,17 +1,20 @@
+// components/Hotspot.tsx
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
-import { HotspotSize, HotspotActivity, HotspotData } from '../types/dataTypes';
+// Import BasicHotspotData, HotspotSize, HotspotActivity
+import { HotspotSize, HotspotActivity, BasicHotspotData } from '../types/dataTypes';
 
 
 type HotspotProps = {
   size: HotspotSize;
   activity: HotspotActivity;
   userCount: number;
-  songCount: number;
-  dominantGenre?: string;
-  coordinate: HotspotData['coordinate'];
+  // Make these optional since they are not always present on BasicHotspotData
+  songCount?: number; // Made optional
+  dominantGenre?: string; // Already optional, but ensuring it's clear
+  coordinate: BasicHotspotData['coordinate']; // Use BasicHotspotData for coordinate type
   onPress: () => void;
 };
 
@@ -54,6 +57,8 @@ export const Hotspot: React.FC<HotspotProps> = React.memo(({
   activity,
   userCount,
   onPress,
+  // Removed songCount and dominantGenre from destructuring here
+  // as they are now optional and not used in the Hotspot's visual logic directly.
 }) => {
   const pulseAnim = useRef(new Animated.Value(0.8)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;

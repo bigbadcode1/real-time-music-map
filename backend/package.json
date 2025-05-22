@@ -21,7 +21,8 @@
     "dotenv": "^16.4.5",
     "express": "^4.18.2",
     "ngeohash": "^0.6.3",
-    "pg": "^8.15.6"
+    "pg": "^8.15.6",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",

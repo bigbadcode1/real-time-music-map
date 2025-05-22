@@ -1,108 +1,103 @@
+// types/dataTypes.ts
 
-// Represents a musical track.
+// --- Core Data Structures ---
+export type Coordinate = {
+  latitude: number;
+  longitude: number;
+};
+
+// --- Spotify Related Data ---
 export type TrackData = {
   id: string;
   title: string;
   artist: string;
-  albumArt: string; // URL to track's album art
-  listeners: number;
+  albumArt: string;
+  listeners: number; // ADDED: This was missing or inconsistent
 };
 
-// Represents a musical album.
 export type AlbumData = {
   id: string;
   name: string;
   artist: string;
-  albumArt: string; // URL to album's album art
-  listeners: number;
+  albumArt: string;
+  listeners: number; // ADDED: This was missing or inconsistent
 };
 
-// Represents a musical artist.
 export type ArtistData = {
   id: string;
   name: string;
-  image: string; // URL to artist's image
-  listeners: number;
+  image: string;
+  listeners: number; // ADDED: This was missing or inconsistent
 };
 
-// Represents a musical genre with its percentage in a context.
 export type GenreData = {
   name: string;
   percentage: number;
 };
 
-// Represents a user who is listening or has recently listened to music.
 export type UserListenerData = {
   id: string;
   name: string;
-  avatar: string; // URL to user's avatar image
+  avatar: string;
   currentTrack: {
     title: string;
     artist: string;
-    albumArt: string; // URL to track's album art
+    albumArt: string;
     isCurrentlyListening: boolean;
-    timestamp: string; // ISO date string
+    timestamp: string;
   };
 };
 
-// Defines the possible sizes for a hotspot.
+// --- Hotspot Specific Data ---
 export type HotspotSize = 'small' | 'medium' | 'large' | 'xlarge';
-
-// Defines the activity levels for a hotspot.
 export type HotspotActivity = 'low' | 'medium' | 'high' | 'trending';
 
-// Represents all data associated with a hotspot.
-export interface HotspotData {
-  id: string;
-  coordinate: {
-    latitude: number;
-    longitude: number;
-  };
+// Basic Hotspot Data for map display (lightweight)
+export interface BasicHotspotData {
+  id: string; // geohash
+  coordinate: Coordinate;
   size: HotspotSize;
   activity: HotspotActivity;
-  userCount: number;
-  songCount: number;
-  dominantGenre?: string;
-  locationName: string;
-  geohash: string;
-  topTracks: TrackData[];
-  topAlbums: AlbumData[];
-  topArtists: ArtistData[];
-  topGenres: GenreData[];
-  recentListeners: UserListenerData[];
-  timestamp: string; // ISO date string of when the hotspot data was generated
+  userCount: number; // 'count' from DB
+  lastUpdated: string; // 'last_updated' from DB (ISO date string)
+  locationName: string; // Derived on frontend
+  geohash: string; // Raw geohash from DB
 }
 
-// Represents the current geographic location of the user.
+// Detailed Hotspot Data (for the detail panel, extends BasicHotspotData)
+export interface DetailedHotspotData extends BasicHotspotData {
+  songCount: number; // This needs to be fetched or derived
+  dominantGenre?: string; // This needs to be fetched or derived
+  topTracks: TrackData[]; // Uses the centralized TrackData
+  topAlbums: AlbumData[]; // Uses the centralized AlbumData
+  topArtists: ArtistData[]; // Uses the centralized ArtistData
+  topGenres: GenreData[]; // Uses the centralized GenreData
+  recentListeners: UserListenerData[]; // Uses the centralized UserListenerData
+  timestamp: string; // This will be the same as lastUpdated for consistency with your current type
+}
+
+// --- Other App Specific Types ---
 export interface CurrentLocation {
   latitude: number;
   longitude: number;
-  timestamp: number; // Timestamp of the location fix
+  timestamp: number;
 }
 
-// Represents the currently playing track information.
 export interface CurrentTrack {
   isPlaying: boolean;
   track: {
     name: string;
     artist: string;
     album_name: string;
-    image: string; // URL to track's image
-    duration: number; // Duration in ms
-    progress: number; // Progress in ms
-    uri: string; // Spotify track URI
+    image: string;
+    duration: number;
+    progress: number;
+    uri: string;
+    id: string;
   } | null;
 }
 
-// Details of a location obtained from reverse geocoding.
 export interface LocationDetail {
-  name?: string;
-  street?: string;
-  streetNumber?: string;
-  district?: string;
-  city?: string;
-  subregion?: string;
-  region?: string;
-  postalCode?: string;
-  country?: string;
+  name: string;
+  address: string;
 }

@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Text, ActivityIndicator, View, StyleSheet } from 'react-native';
 import MapView, { Marker, Region } from 'react-native-maps';
 import * as Location from 'expo-location';
-// import * as geohash from 'ngeohash';
 import { requestPermissions } from '../../../src/services/locationService';
 import { useRouter } from 'expo-router';
 import { Hotspot } from '@/components/Hotspot';
@@ -12,73 +11,77 @@ import { useAuth } from '@/src/context/AuthContext';
 import { NowPlayingBar } from '@/components/NowPlayingBar';
 import { LocationSearchBar } from '@/components/LocationSearchBar';
 import { CustomBottomNavigationBar, MapMode } from '@/components/CustomBottomNavigationBar';
-import { HotspotData, CurrentLocation, CurrentTrack, LocationDetail, TrackData, AlbumData, ArtistData, GenreData, UserListenerData } from '../../../types/dataTypes'; // Ensure all needed types are here
-
+import {
+  BasicHotspotData,
+  DetailedHotspotData,
+  CurrentLocation,
+  CurrentTrack,
+  UserListenerData
+} from '../../../types/dataTypes';
 
 interface MapContentProps {
-  hotspots: HotspotData[];
-  onHotspotPress: (hotspot: HotspotData) => void;
+  hotspots: BasicHotspotData[];
+  onHotspotPress: (hotspot: BasicHotspotData) => void;
   currentSelectedHotspotId: string | null | undefined;
 }
 
 // Renders the hotspot markers on the map.
-const MapContent: React.FC<MapContentProps> = React.memo(({
-  hotspots,
-  onHotspotPress,
-  currentSelectedHotspotId,
-}) => {
-  return (
-    <>
-      {hotspots.map((hotspot) => (
-        <Marker
-          key={hotspot.id}
-          coordinate={hotspot.coordinate}
-          tracksViewChanges={false}
-          anchor={{ x: 0.5, y: 0.5 }}
-          zIndex={currentSelectedHotspotId === hotspot.id ? 100 : 10}
-        >
-          <Hotspot
-            size={hotspot.size}
-            activity={hotspot.activity}
-            userCount={hotspot.userCount}
-            songCount={hotspot.songCount}
-            dominantGenre={hotspot.dominantGenre}
+const MapContent: React.FC<MapContentProps> = React.memo(
+  ({ hotspots, onHotspotPress, currentSelectedHotspotId }) => {
+    return (
+      <>
+        {hotspots.map((hotspot) => (
+          <Marker
+            key={hotspot.id}
             coordinate={hotspot.coordinate}
-            onPress={() => onHotspotPress(hotspot)}
-          />
-        </Marker>
-      ))}
-    </>
-  );
-}, (prevProps, nextProps) =>
-  prevProps.hotspots === nextProps.hotspots &&
-  prevProps.currentSelectedHotspotId === nextProps.currentSelectedHotspotId 
+            tracksViewChanges={false}
+            anchor={{ x: 0.5, y: 0.5 }}
+            zIndex={currentSelectedHotspotId === hotspot.id ? 100 : 10}
+          >
+            <Hotspot
+              size={hotspot.size}
+              activity={hotspot.activity}
+              userCount={hotspot.userCount}
+              coordinate={hotspot.coordinate}
+              onPress={() => onHotspotPress(hotspot)}
+            />
+          </Marker>
+        ))}
+      </>
+    );
+  },
+  (prevProps, nextProps) =>
+    prevProps.hotspots === nextProps.hotspots &&
+    prevProps.currentSelectedHotspotId === nextProps.currentSelectedHotspotId
 );
 
 const MapScreen: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [currentMapMode, setCurrentMapMode] = useState<MapMode>('discover');
-  const [hotspots, setHotspots] = useState<HotspotData[]>([]);
-  const [selectedHotspot, setSelectedHotspot] = useState<HotspotData | null>(null);
+  const [hotspots, setHotspots] = useState<BasicHotspotData[]>([]);
+  const [selectedHotspot, setSelectedHotspot] = useState<DetailedHotspotData | null>(null);
   const [mapPaddingBottom, setMapPaddingBottom] = useState(1);
 
   const mapRef = useRef<MapView | null>(null);
   const expoRouter = useRouter();
-  const { isLoggedIn } = useAuth();
-  const { currentLocation, currentTrack, nearbyHotspots } = useRealTimeUpdates() as {
-    currentLocation: CurrentLocation | null;
-    currentTrack: CurrentTrack | null;
-    nearbyHotspots: HotspotData[] | null;
-  };
+  
+  // Get auth context values - we no longer need a separate userId state
+  const { isLoggedIn, userId } = useAuth();
 
-  console.log(nearbyHotspots)
+  // No longer need to pass userId to useRealTimeUpdates
+  const { currentLocation, currentTrack, nearbyHotspots, getHotspotDetails } = useRealTimeUpdates();
 
+  // Redirect to onboarding if not logged in
   useEffect(() => {
     if (!isLoggedIn) {
+      console.log("[MapScreen] Not logged in, redirecting to welcome");
       expoRouter.replace('/(onboarding)/welcome');
+    } else {
+      console.log(`[MapScreen] User is logged in with ID: ${userId || 'unknown'}`);
     }
-  }, [isLoggedIn, expoRouter]);
+  }, [isLoggedIn, expoRouter, userId]);
 
+  // Request location permissions on mount
   useEffect(() => {
     const requestLocationAccess = async () => {
       try {
@@ -90,27 +93,63 @@ const MapScreen: React.FC = () => {
     requestLocationAccess();
   }, []);
 
+  // Update hotspots when nearby data changes
   useEffect(() => {
     if (nearbyHotspots) {
+      console.log(`[MapScreen] Received ${nearbyHotspots.length} nearby hotspots`);
       setHotspots(nearbyHotspots);
     }
   }, [nearbyHotspots]);
 
+  // Adjust map padding when a hotspot is selected
   useEffect(() => {
     setMapPaddingBottom(selectedHotspot ? 300 : 1);
   }, [selectedHotspot]);
 
-  const handleHotspotPress = useCallback((hotspot: HotspotData) => {
-    setSelectedHotspot(hotspot);
+  const handleHotspotPress = useCallback(async (hotspot: BasicHotspotData) => {
+    console.log(`[MapScreen] Hotspot selected: ${hotspot.id}`);
+    
+    // 1. Set basic info immediately to show loading state
+    setSelectedHotspot({
+      ...hotspot,
+      songCount: 0,
+      dominantGenre: undefined,
+      topTracks: [],
+      topAlbums: [],
+      topArtists: [],
+      topGenres: [],
+      recentListeners: [],
+      timestamp: hotspot.lastUpdated,
+    });
+
+    // 2. Center map on selected hotspot
     if (mapRef.current) {
-      mapRef.current.animateToRegion({
-        latitude: hotspot.coordinate.latitude,
-        longitude: hotspot.coordinate.longitude,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      }, 300);
+      mapRef.current.animateToRegion(
+        {
+          latitude: hotspot.coordinate.latitude,
+          longitude: hotspot.coordinate.longitude,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        },
+        300
+      );
     }
-  }, []);
+
+    // 3. Fetch detailed listener information
+    const listeners = await getHotspotDetails(hotspot.geohash);
+    console.log(`[MapScreen] Received ${listeners?.length || 0} listeners for hotspot ${hotspot.id}`);
+
+    // 4. Update selected hotspot with fetched details
+    setSelectedHotspot((prevSelectedHotspot) => {
+      if (prevSelectedHotspot?.id === hotspot.id && listeners) {
+        return {
+          ...prevSelectedHotspot,
+          recentListeners: listeners,
+        };
+      }
+      return prevSelectedHotspot;
+    });
+  }, [getHotspotDetails]);
 
   const handleCloseHotspotDetail = useCallback(() => {
     setSelectedHotspot(null);
@@ -120,7 +159,7 @@ const MapScreen: React.FC = () => {
     setCurrentMapMode((prevMode) => (prevMode === 'discover' ? 'analyze' : 'discover'));
   }, []);
 
-
+  // Show error message if location permissions were denied
   if (errorMsg) {
     return (
       <View style={styles.centeredMessageContainer}>
@@ -129,6 +168,7 @@ const MapScreen: React.FC = () => {
     );
   }
 
+  // Show loading indicator while waiting for location
   if (!currentLocation) {
     return (
       <View style={styles.centeredMessageContainer}>

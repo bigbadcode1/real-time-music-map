@@ -1,82 +1,28 @@
-import { AuthError } from 'expo-auth-session';
+// src/services/spotifyAuthService.ts
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// give a 5 minute before actual expiration
-export function isTokenExpired(expirationTime: number): boolean {
-  return Date.now() + 5 * 60 * 1000 > expirationTime;
+interface ExchangeResult {
+  success: boolean;
+  error?: string;
+  appSessionToken?: string;
+  // Other fields if you want to return Spotify tokens directly from this service
+  // spotifyAccessToken?: string;
+  // spotifyRefreshToken?: string;
+  // userId?: string;
 }
 
-// function to refresh the access token
-export async function refreshAccessToken(): Promise<{success: boolean; tokens?: any; error?: string}> {
+export const exchangeCodeForTokens = async (
+  code: string,
+  redirectUri: string
+): Promise<ExchangeResult> => {
   try {
-    const storedTokens = await AsyncStorage.getItem('spotifyTokens');
-    if (!storedTokens) {
-      return { success: false, error: 'No stored tokens found' };
-    }
+    console.log('[spotifyAuthService] Exchanging code for tokens with backend...');
+    const backendAuthEndpoint = `${process.env.EXPO_PUBLIC_BACKEND_URL}/exchange-token`; // <--- UPDATE THIS URL
+    // For example, if your backend handles it at '/api/auth/spotify', use that.
+    // It MUST be an endpoint on your backend that securely exchanges the code.
 
-    // Consistently use expires_at
-    const { refresh_token, expires_at } = JSON.parse(storedTokens);
-
-    // Check if we actually need to refresh
-    if (expires_at && !isTokenExpired(expires_at)) {
-      // Token is still valid, return stored tokens
-      console.log('[refreshAccessToken] Token still valid.');
-      return { success: true, tokens: JSON.parse(storedTokens) };
-    }
-
-    // Token is expired or about to expire, refresh it
-    // *** FIX: Use the correct endpoint ***
-    const backendUrl = `${process.env.EXPO_PUBLIC_BACKEND_URL}/refresh-token`;
-    
-    console.log(`[refreshAccessToken] Refreshing token at ${backendUrl}`);
-    const response = await fetch(backendUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ refresh_token }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Failed to refresh token: ${response.status} - ${errorText}`);
-    }
-
-    const newTokens = await response.json();
-
-    // Calculate expiration time and store it consistently as expires_at
-    const new_expires_at = Date.now() + (newTokens.expires_in * 1000);
-    const tokensToStore = {
-      access_token: newTokens.access_token,
-      refresh_token: newTokens.refresh_token || refresh_token, // Use original if backend doesn't send new one
-      expires_in: newTokens.expires_in,
-      expires_at: new_expires_at // Store consistently
-    };
-
-    // Store the new tokens
-    console.log('[refreshAccessToken] Storing new tokens:', tokensToStore);
-    await AsyncStorage.setItem('spotifyTokens', JSON.stringify(tokensToStore));
-
-    return {
-      success: true,
-      tokens: tokensToStore,
-    };
-  } catch (error: any) {
-    console.error('Token refresh error:', error);
-    return {
-      success: false,
-      error: error.message || "Unknown error during token refresh",
-    };
-  }
-}
-
-// function only handles the backend communication
-export async function exchangeCodeForTokens(code: string, redirectUri: string): Promise<{success: boolean; tokens?: any; error?: string | AuthError | null}> {
-  try {
-    const backendUrl = `${process.env.EXPO_PUBLIC_BACKEND_URL}/exchange-token`;
-    console.log(`Exchanging code at ${backendUrl} with redirect URI: ${redirectUri}`);
-
-    const response = await fetch(backendUrl, {
+    const response = await fetch(backendAuthEndpoint, { // Use the corrected endpoint
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -84,66 +30,44 @@ export async function exchangeCodeForTokens(code: string, redirectUri: string): 
       body: JSON.stringify({ code, redirectUri }),
     });
 
-    if(!response.ok) {
+    if (!response.ok) {
       const errorText = await response.text();
-      console.error("Backend Error Response: ", errorText);
-      throw new Error(`Failed to exchange code: ${response.status} - ${errorText}`);
+      console.error(`[spotifyAuthService] Backend token exchange failed: ${response.status} - ${errorText}`);
+      return { success: false, error: `Backend exchange failed: ${response.status}` };
     }
 
-    const tokens = await response.json();
-    console.log("Tokens received from backend:", tokens);
+    const data = await response.json();
+    console.log('[spotifyAuthService] Backend token exchange response:', data);
 
-    // *** FIX: Calculate and store expires_at ***
-    const expires_at = Date.now() + (tokens.expires_in * 1000);
-    const tokensToStore = {
-        ...tokens,
-        expires_at // Add the calculated expiry timestamp
+    // These fields MUST be returned by your backend's chosen endpoint
+    const { access_token, refresh_token, expires_in, app_session_token, user_id } = data;
+
+    if (!access_token || !refresh_token || !expires_in || !app_session_token || !user_id) {
+        console.error('[spotifyAuthService] Missing required data in backend response.');
+        console.error('Received data:', data); // Log the actual response for debugging
+        return { success: false, error: 'Missing token data from backend.' };
+    }
+
+    // Store Spotify tokens (AuthContext will also store them via setIsLoggedIn, but this ensures immediate persistence)
+    const spotifyTokens = {
+        access_token,
+        refresh_token,
+        expires_in,
+        token_timestamp: Date.now(),
     };
-    console.log("Storing tokens with expiry:", tokensToStore);
-    await AsyncStorage.setItem('spotifyTokens', JSON.stringify(tokensToStore));
+    await AsyncStorage.setItem('spotifyTokens', JSON.stringify(spotifyTokens));
+
 
     return {
       success: true,
-      tokens: tokens, // Return original tokens from backend response as per previous logic
+      appSessionToken: app_session_token,
+      // Optionally return Spotify tokens and user ID here if consumed elsewhere
+      // spotifyAccessToken: access_token,
+      // userId: user_id,
     };
-  } catch (error: any) {
-    console.error('Token exchange error: ', error);
-    return {
-      success: false,
-      error: error.message || "unknown error during token exchange",
-    };
-  }
-}
 
-export async function getValidAccessToken(): Promise<string | null> {
-  try {
-    const storedTokens = await AsyncStorage.getItem('spotifyTokens');
-    
-    if (!storedTokens) {
-      console.error('No stored tokens found');
-      return null;
-    }
-    
-    const parsedTokens = JSON.parse(storedTokens);
-    
-    // Check if token is expired or about to expire
-    if (parsedTokens.expires_at && isTokenExpired(parsedTokens.expires_at)) {
-      // Token needs refreshing
-      console.log('Token expired, refreshing...');
-      const refreshResult = await refreshAccessToken();
-      
-      if (!refreshResult.success) {
-        console.error('Failed to refresh token:', refreshResult.error);
-        return null;
-      }
-      
-      return refreshResult.tokens.access_token;
-    }
-    
-    // Token is still valid
-    return parsedTokens.access_token;
-  } catch (error) {
-    console.error('Error getting valid access token:', error);
-    return null;
+  } catch (error: any) {
+    console.error('[spotifyAuthService] Error during code exchange:', error);
+    return { success: false, error: error.message || 'Unknown error during token exchange.' };
   }
-}
+};

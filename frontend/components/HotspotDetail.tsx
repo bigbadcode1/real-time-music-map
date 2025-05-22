@@ -1,3 +1,4 @@
+// components/HotspotDetail.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
@@ -14,46 +15,17 @@ import { BlurView } from 'expo-blur';
 import FontAwesome from '@expo/vector-icons/build/FontAwesome';
 import { LinearGradient } from 'expo-linear-gradient';
 
-export type TrackData = {
-  id: string;
-  title: string;
-  artist: string;
-  albumArt: string;
-  listeners: number;
-};
+// IMPORT ALL TYPES FROM YOUR CENTRALIZED FILE
+import {
+  TrackData,
+  AlbumData,
+  ArtistData,
+  GenreData,
+  UserListenerData,
+  DetailedHotspotData // Import DetailedHotspotData for props type safety if useful here
+} from '../types/dataTypes'; // Adjust path if necessary
 
-export type AlbumData = {
-  id: string;
-  name: string;
-  artist: string;
-  albumArt: string;
-  listeners: number;
-};
-
-export type ArtistData = {
-  id: string;
-  name: string;
-  image: string;
-  listeners: number;
-};
-
-type GenreData = {
-  name: string;
-  percentage: number;
-};
-
-export type UserListenerData = {
-  id: string;
-  name: string;
-  avatar: string;
-  currentTrack: {
-    title: string;
-    artist: string;
-    albumArt: string;
-    isCurrentlyListening: boolean;
-    timestamp: string;
-  };
-};
+// Remove duplicate type definitions here!
 
 type HotspotDetailProps = {
   locationName: string;
@@ -131,9 +103,9 @@ export const HotspotDetail: React.FC<HotspotDetailProps> = ({
     <View style={styles.trackItem}>
       <Text style={styles.trackRank}>#{index + 1}</Text>
       {item.albumArt ? (
-        <Image 
-          source={{ uri: item.albumArt }} 
-          style={styles.albumArt} 
+        <Image
+          source={{ uri: item.albumArt }}
+          style={styles.albumArt}
           defaultSource={require('../assets/images/remove.png')}
         />
       ) : (
@@ -156,8 +128,8 @@ export const HotspotDetail: React.FC<HotspotDetailProps> = ({
     <View style={styles.trackItem}>
       <Text style={styles.trackRank}>#{index + 1}</Text>
       {item.albumArt ? (
-        <Image 
-          source={{ uri: item.albumArt }} 
+        <Image
+          source={{ uri: item.albumArt }}
           style={styles.albumArt}
           defaultSource={require('../assets/images/remove.png')}
         />
@@ -181,8 +153,8 @@ export const HotspotDetail: React.FC<HotspotDetailProps> = ({
     <View style={styles.trackItem}>
       <Text style={styles.trackRank}>#{index + 1}</Text>
       {item.image ? (
-        <Image 
-          source={{ uri: item.image }} 
+        <Image
+          source={{ uri: item.image }}
           style={[styles.albumArt, styles.artistImage]}
           defaultSource={require('../assets/images/remove.png')}
         />
@@ -203,18 +175,18 @@ export const HotspotDetail: React.FC<HotspotDetailProps> = ({
 
   const renderUserListenerItem = ({ item }: { item: UserListenerData }) => (
     <View style={styles.userListenerItem}>
-      <Image 
-        source={{ uri: item.avatar }} 
+      <Image
+        source={{ uri: item.avatar }}
         style={styles.userAvatar}
         defaultSource={require('../assets/images/remove.png')}
       />
       <View style={styles.userInfo}>
         <Text style={styles.userName} numberOfLines={1}>{item.name}</Text>
         <View style={styles.userTrackContainer}>
-          <FontAwesome 
-            name={item.currentTrack.isCurrentlyListening ? "play-circle" : "history"} 
-            size={14} 
-            color={item.currentTrack.isCurrentlyListening ? "#1DB954" : "#777"} 
+          <FontAwesome
+            name={item.currentTrack.isCurrentlyListening ? "play-circle" : "history"}
+            size={14}
+            color={item.currentTrack.isCurrentlyListening ? "#1DB954" : "#777"}
             style={styles.userTrackIcon}
           />
           <Text style={styles.userTrackText} numberOfLines={1}>
@@ -222,15 +194,15 @@ export const HotspotDetail: React.FC<HotspotDetailProps> = ({
           </Text>
         </View>
         <Text style={styles.userTrackTimestamp}>
-          {item.currentTrack.isCurrentlyListening 
-            ? "Listening now" 
+          {item.currentTrack.isCurrentlyListening
+            ? "Listening now"
             : `Last listened: ${new Date(item.currentTrack.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
         </Text>
       </View>
       {/* Album art for the user's track with fallback */}
       {item.currentTrack.albumArt ? (
-        <Image 
-          source={{ uri: item.currentTrack.albumArt }} 
+        <Image
+          source={{ uri: item.currentTrack.albumArt }}
           style={styles.userTrackAlbumArt}
           defaultSource={require('../assets/images/remove.png')}
         />
@@ -326,7 +298,7 @@ export const HotspotDetail: React.FC<HotspotDetailProps> = ({
                     <Text style={[styles.summaryTabText, summaryTab === 'genres' && styles.summaryTabTextActive]}>Genres</Text>
                   </TouchableOpacity>
                 </View>
-                
+
                 {summaryTab === 'tracks' && (
                   <>
                     <Text style={styles.sectionTitle}>Top Tracks Now</Text>

@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { makeRedirectUri, useAuthRequest, ResponseType, AuthRequestPromptOptions } from 'expo-auth-session';
-import { exchangeCodeForTokens } from '@/src/services/spotifyAuthService';
+// Assume exchangeCodeForTokens is updated to return the app_session_token
+import { exchangeCodeForTokens } from '@/src/services/spotifyAuthService'; // This service needs modification too
 import { useAuth } from '@/src/context/AuthContext';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -34,10 +35,9 @@ interface UseSpotifyAuthReturn {
 export const useSpotifyAuth = (): UseSpotifyAuthReturn => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { setIsLoggedIn } = useAuth();
+  // Destructure the updated setIsLoggedIn
+  const { setIsLoggedIn } = useAuth(); 
 
-  // Use a fixed redirect URI during development for simplicity
-  // TODO: Consider using makeRedirectUri({ scheme: 'your-app-scheme' }) for production builds
   const redirectUri = useMemo(() => process.env.EXPO_PUBLIC_SPOTIFY_REDIRECT_URI || 'exp://192.168.0.101:8081', []);
   useEffect(() => {
     console.log("[useSpotifyAuth] Using redirect URI: ", redirectUri);
@@ -48,7 +48,7 @@ export const useSpotifyAuth = (): UseSpotifyAuthReturn => {
       responseType: ResponseType.Code,
       clientId: process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID || "",
       scopes: SCOPES,
-      usePKCE: false,
+      usePKCE: false, // Spotify's Authorization Code Flow with PKCE is for confidential clients
       redirectUri: redirectUri,
     },
     discovery
@@ -68,11 +68,12 @@ export const useSpotifyAuth = (): UseSpotifyAuthReturn => {
 
         console.log('[useSpotifyAuth] Authorization code received: ', code);
 
+        // exchangeCodeForTokens should now return both Spotify tokens AND app_session_token
         exchangeCodeForTokens(code, redirectUri).then(async (exchangeResult) => {
           if (exchangeResult.success) {
             console.log("[useSpotifyAuth] Token exchange successful");
-            // Token storage is handled within exchangeCodeForTokens
-            setIsLoggedIn(true);
+            // Pass the appSessionToken to setIsLoggedIn
+            await setIsLoggedIn(true, exchangeResult.appSessionToken); 
             setError(null);
             router.replace("/(root)/(tabs)/mapScreen");
           } else {
@@ -121,4 +122,4 @@ export const useSpotifyAuth = (): UseSpotifyAuthReturn => {
     isLoading,
     error,
   };
-}; 
+};
