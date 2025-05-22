@@ -85,9 +85,9 @@ app.get('/currentTrack', async function (req, res) {
 // update user location and fetch current song
 app.post('/update-user-info', async function (req, res) {
   try {
-    const { access_token, token_hash, user_id, geohash } = req.body;
+    const { access_token, refresh_token, user_id, geohash } = req.body;
 
-    if (!user_id || !access_token || !token_hash) {
+    if (!user_id || !access_token || !refresh_token) {
       return res.status(400).json({ error: 'Required data is missing' });
     }
 
@@ -100,9 +100,11 @@ app.post('/update-user-info', async function (req, res) {
       track = null;
     }
 
+    const tokenHash = hashToken(refresh_token);
+
     await Database.updateUserInfo(
       user_id, 
-      token_hash, // Use the pre-hashed token from the frontend
+      tokenHash,
       geohash, 
       track?.id || null, 
       track?.image || null, 

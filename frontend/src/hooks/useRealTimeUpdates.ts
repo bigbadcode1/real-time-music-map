@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import * as Location from 'expo-location';
 import { useAuth } from '@/src/context/AuthContext';
 import * as geohash from 'ngeohash';
-import * as Crypto from 'expo-crypto';
 
 import {
   BasicHotspotData,
@@ -65,14 +64,6 @@ export function useRealTimeUpdates() {
     lastHotspotUpdate: 0,
     updateInterval: null as number | null,
   });
-
-function hashToken(token: string): Promise<string> {
-  return Crypto.digestStringAsync(
-    Crypto.CryptoDigestAlgorithm.SHA256,
-    token,
-    { encoding: Crypto.CryptoEncoding.HEX }
-  );
-}
   
   const getCurrentLocation = async (): Promise<CurrentLocation | null> => {
     try {
@@ -226,11 +217,9 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
     const tokens = JSON.parse(tokensString);
     const refreshToken = tokens.refresh_token;
 
-    const tokenHash = await hashToken(refreshToken);
-
     const requestBody = {
       access_token: spotifyAccessToken,
-      token_hash: tokenHash,
+      refresh_token: refreshToken,
       user_id: id,
       geohash: geohashValue
     };
