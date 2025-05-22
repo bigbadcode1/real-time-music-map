@@ -114,12 +114,6 @@ export function useRealTimeUpdates() {
         return null;
       }
 
-<<<<<<< HEAD
-      const response = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}/currentTrack`, {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
-=======
       const radius = 5000;
       const latDegreesPerKm = 1 / 111.32;
       const longDegreesPerKm = 1 / (111.32 * Math.cos(location.latitude * (Math.PI / 180)));
@@ -136,7 +130,6 @@ export function useRealTimeUpdates() {
         method: 'POST',
         headers: headers,
         body: JSON.stringify({ ne_lat, ne_long, sw_lat, sw_long })
->>>>>>> origin/jakubstec
       });
 
       if (!response.ok) {
