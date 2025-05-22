@@ -87,6 +87,13 @@ app.post('/update-user-info', async function (req, res) {
   try {
     const { access_token, refresh_token, user_id, geohash } = req.body;
 
+    console.log('[/update-user-info] Debug - Received request body:', {
+      user_id,
+      refresh_token: refresh_token,
+      geohash
+    });
+
+
     if (!user_id || !access_token || !refresh_token) {
       return res.status(400).json({ error: 'Required data is missing' });
     }
@@ -101,17 +108,27 @@ app.post('/update-user-info', async function (req, res) {
     }
 
     const tokenHash = hashToken(refresh_token);
+    console.log('[/update-user-info] Debug - Generated token hash:', tokenHash);
 
-    await Database.updateUserInfo(
-      user_id, 
-      tokenHash,
-      geohash, 
-      track?.id || null, 
-      track?.image || null, 
-      track?.name || null, 
-      track?.artist || null
-    );
-
+    try {
+      await Database.updateUserInfo(
+        user_id, 
+        tokenHash,
+        geohash, 
+        track?.id || null, 
+        track?.image || null, 
+        track?.name || null, 
+        track?.artist || null
+      );
+      console.log('[/update-user-info] Debug - Successfully updated user info');
+    } catch (dbError) {
+      console.error('[/update-user-info] Debug - Database error:', {
+        error: dbError.message,
+        code: dbError.code,
+        detail: dbError.detail
+      });
+      throw dbError;
+    }
     res.status(200).json({ track });
   } catch (error) {
     console.error('[/update-user-info] Error:', error);
@@ -169,17 +186,28 @@ app.post('/exchange-token', async function(req, res) {
 
 app.post('/refresh-token', async function(req, res) {
     try {
-      const { refresh_token } = req.body;
+      const { refresh_token, user_id } = req.body;
       
-      if (!refresh_token) {
+      if (!refresh_token || !user_id) {
         return res.status(400).json({ error: 'Refresh token is required' });
       }
       
       const tokens = await refreshSpotifyToken(
+        user_id,
         process.env.SPOTIFY_CLIENT_ID,
         process.env.SPOTIFY_CLIENT_SECRET,
         refresh_token
       );
+
+      await Database.updateAuthToken(
+        user_id,
+        hashToken(refresh_token),
+        newTokenHash,            
+        new Date(expiresAt)
+      );
+
+      const newTokenHash = hashToken(tokens.refresh_token);
+      const expiresAt = Date.now() + tokens.expires_in * 1000;
       
       res.json({
         access_token: tokens.access_token,

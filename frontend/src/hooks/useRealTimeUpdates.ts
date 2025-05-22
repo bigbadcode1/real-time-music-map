@@ -217,6 +217,9 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
     const tokens = JSON.parse(tokensString);
     const refreshToken = tokens.refresh_token;
 
+    console.log('[useRealTimeUpdates] Debug - Refresh Token:', refreshToken);
+    console.log('[useRealTimeUpdates] Debug - User ID:', id);
+
     const requestBody = {
       access_token: spotifyAccessToken,
       refresh_token: refreshToken,
@@ -224,10 +227,7 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
       geohash: geohashValue
     };
 
-    console.log(`[useRealTimeUpdates] Sending update for user ${id}`);
-    console.log(`[useRealTimeUpdates] Request body:`, JSON.stringify(requestBody, null, 2));
-    console.log(`[useRealTimeUpdates] Geohash: ${geohashValue}`);
-    console.log(`[useRealTimeUpdates] Location: lat=${location.latitude}, lng=${location.longitude}`);
+    console.log('[useRealTimeUpdates] Debug - Full Request Body:', JSON.stringify(requestBody, null, 2)); 
     
     const response = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}/update-user-info`, {
       method: 'POST',
