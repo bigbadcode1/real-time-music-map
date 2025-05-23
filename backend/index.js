@@ -344,7 +344,27 @@ app.post('/get_users_from_hotspots', async function (req, res) {
   }
 });
 
+app.post('/logout', async function(req, res) {
+  console.log('[Backend] Received POST request to /logout');
+  try {
+    const { user_id } = req.body;
 
+    if (!user_id) {
+      console.log('[Backend] Logout: User ID is missing');
+      return res.status(400).json({ error: 'User ID is required for logout' });
+    }
+
+    console.log(`[Backend] Logging out user: ${user_id}`);
+    await Database.deleteUserOnLogout(user_id);
+
+    console.log(`[Backend] User ${user_id} successfully logged out and data cleared.`);
+    res.status(200).json({ message: 'Logout successful' });
+
+  } catch (error) {
+    console.error('[Backend] Error in /logout handler:', error);
+    res.status(500).json({ error: 'Internal Server Error during logout.' });
+  }
+});
 
 // ------------------- random testing
 
@@ -378,7 +398,7 @@ app.post('/db_test', async function (req, res) {
   }
 });
 
-app.get('/test_connection_to_db', async function (req, res) {
+app.get('/test', async function (req, res) {
   try {
     await Database.testConnection();
 

@@ -82,6 +82,10 @@ class Database {
     }
   }
 
+  async deleteUserOnLogout(userId) {
+    await this.query('DELETE FROM "Active Users" WHERE id = $1', [userId]);
+    console.log(`[Postgresql.database.js] User ${userId} and their auth token deleted from DB.`);
+  }
 
 }
 
