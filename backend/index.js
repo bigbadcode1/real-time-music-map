@@ -87,7 +87,7 @@ app.get('/currentTrack', async function (req, res) {
 // update user location and fetch current song
 app.post('/update-user-info', async function (req, res) {
   try {
-    const { access_token, refresh_token, user_id, geohash } = req.body;
+    const { access_token, refresh_token, user_id, geohash, expires_in = 3600 } = req.body;
 
     console.log('[/update-user-info] Debug - Received request body:', {
       user_id,
@@ -100,6 +100,7 @@ app.post('/update-user-info', async function (req, res) {
     if (!user_id || !access_token || !refresh_token) {
       return res.status(400).json({ error: 'Required data is missing' });
     }
+
 
     // fetch current song data
     let track;
@@ -118,6 +119,7 @@ app.post('/update-user-info', async function (req, res) {
 
     // send user data to db
     try {
+
       await Database.updateUserInfo(
         user_id,
         tokenHash,
@@ -128,17 +130,44 @@ app.post('/update-user-info', async function (req, res) {
         track?.artist || null
       );
       console.log('[/update-user-info] Debug - Successfully updated user info');
-    } catch (dbError) {
-      console.error('[/update-user-info] Debug - Database error:', {
-        error: dbError.message,
-        code: dbError.code,
-        detail: dbError.detail
-      });
 
-      // user does not exist
-      if (dbError.code == '') {
-          
+    } catch (dbError) {
+      // user does not exist in db
+      // => add user to db
+      if (dbError.code == '23588') {
+
+        // fetch user profile info 
+        const userProfile = await getUserInfo(access_token);
+        const userId = userProfile.id;
+        const userName = userProfile.name;
+
+        const hashedRefreshToken = hashToken(refresh_token);
+        const expiresAt = Date.now() + expires_in * 1000;
+
+        // add user
+        try {
+          await Database.addNewUser(
+            userId,
+            userName,
+            hashedRefreshToken,
+            expiresAt,
+            geohash,
+            userProfile.image_url
+          );
+          console.log(`[/update-user-info] User ${userId} added to DB.`);
+        } catch (dbErrorAdd) {
+          console.error('[/update-user-info] Error adding user to DB:', dbErrorAdd);
+          throw dbErrorAdd;
+        }
+
+      } else {
+        console.error('[/update-user-info] Debug - Database error:', {
+          error: dbError.message,
+          code: dbError.code,
+          detail: dbError.detail
+        });
       }
+
 
       throw dbError;
     }
@@ -150,6 +179,7 @@ app.post('/update-user-info', async function (req, res) {
     res.status(500).json({ error: 'Failed to update user info' });
   }
 });
+
 
 // exchange token
 app.post('/exchange-token', async function (req, res) {
@@ -174,7 +204,7 @@ app.post('/exchange-token', async function (req, res) {
     const hashedRefreshToken = hashToken(spotifyTokens.refresh_token);
     const expiresAt = Date.now() + spotifyTokens.expires_in * 1000;
 
-    // (check whether user exists before adding / upsert function?)
+    // add/update user to db 
     try {
       await Database.addNewUser(
         userId,
@@ -184,10 +214,11 @@ app.post('/exchange-token', async function (req, res) {
         null,
         userProfile.image_url
       );
-      console.log(`[server.js /exchange-token] User ${userId} added/updated in DB.`);
+      console.log(`[/exchange-token] User ${userId} added/updated in DB.`);
     } catch (dbError) {
-      console.error('[server.js /exchange-token] Error saving user to DB:', dbError);
+      console.error('[/exchange-token] Error saving user to DB:', dbError);
     }
+
 
     console.log("object returned: ", {
       access_token: spotifyTokens.access_token,
@@ -196,7 +227,6 @@ app.post('/exchange-token', async function (req, res) {
       app_session_token: appSessionToken,
       user_id: userId
     })
-
 
     res.json({
       access_token: spotifyTokens.access_token,
