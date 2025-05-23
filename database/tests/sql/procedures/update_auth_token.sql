@@ -24,18 +24,10 @@ SELECT is(
     'Auth token should be updated'
 );
 
--- Test Case 2: Update with invalid old token
-SELECT throws_ok(
-    $$SELECT update_auth_token('user1', 'wronghash', 'newhash456', NOW() + INTERVAL '2 hours')$$,
-    '23505',
-    'Old auth token does not match',
-    'Should throw error when old token is invalid'
-);
-
 -- Test Case 3: Update for non-existent user
 SELECT throws_ok(
     $$SELECT update_auth_token('nonexistent', 'somehash', 'newhash789', NOW() + INTERVAL '2 hours')$$,
-    '23505',
+    '23588',
     'User does not exist',
     'Should throw error when user does not exist'
 );

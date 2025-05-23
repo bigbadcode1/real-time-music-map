@@ -1,11 +1,12 @@
 import express from "express";
-// import * as querystring from "node:querystring";
 import cors from "cors";
 import dotenv from "dotenv";
 import { getCurrentlyPlayingTrack } from "./utils/spotify/spotifyPlayer.js";
-import { getUserInfo } from "#utils/spotify/spotifyUserInfo.js";
+import { getSpotifyAccessToken, refreshSpotifyToken } from "./utils/spotify/spotifyAuth.js";
+import { getUserInfo } from "./utils/spotify/spotifyUserInfo.js";
 import Database from "./database/Postgres.database.js";
 import { hashToken } from "#utils/hashToken.js";
+import crypto from 'crypto'
 
 dotenv.config();
 
@@ -133,6 +134,12 @@ app.post('/update-user-info', async function (req, res) {
         code: dbError.code,
         detail: dbError.detail
       });
+
+      // user does not exist
+      if (dbError.code == '') {
+          
+      }
+
       throw dbError;
     }
 
@@ -181,6 +188,15 @@ app.post('/exchange-token', async function (req, res) {
     } catch (dbError) {
       console.error('[server.js /exchange-token] Error saving user to DB:', dbError);
     }
+
+    console.log("object returned: ", {
+      access_token: spotifyTokens.access_token,
+      refresh_token: spotifyTokens.refresh_token,
+      expires_in: spotifyTokens.expires_in,
+      app_session_token: appSessionToken,
+      user_id: userId
+    })
+
 
     res.json({
       access_token: spotifyTokens.access_token,
@@ -234,7 +250,7 @@ app.post('/refresh-token', async function (req, res) {
       refresh_token: tokens.refresh_token,
       expires_in: tokens.expires_in
     });
-    
+
   } catch (error) {
     console.error('Error refreshing token:', error);
     res.status(500).json({ error: 'Failed to refresh token' });
