@@ -11,6 +11,8 @@ import { useAuth } from '@/src/context/AuthContext';
 import { NowPlayingBar } from '@/components/NowPlayingBar';
 import { LocationSearchBar } from '@/components/LocationSearchBar';
 import { CustomBottomNavigationBar, MapMode } from '@/components/CustomBottomNavigationBar';
+import { TouchableOpacity } from 'react-native';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import {
   BasicHotspotData,
   DetailedHotspotData,
@@ -104,6 +106,20 @@ const MapScreen: React.FC = () => {
     setMapPaddingBottom(selectedHotspot ? 300 : 1);
   }, [selectedHotspot]);
 
+  const centerMapOnUser = () => {
+      if (mapRef.current && currentLocation) {
+        mapRef.current.animateToRegion(
+          {
+            latitude: currentLocation.latitude,
+            longitude: currentLocation.longitude,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          },
+          300
+        );
+      }
+    };
+
   const handleHotspotPress = useCallback(async (hotspot: BasicHotspotData) => {
     console.log(`[MapScreen] Hotspot selected: ${hotspot.id}`);
     
@@ -129,7 +145,7 @@ const MapScreen: React.FC = () => {
         },
         300
       );
-    }
+    };
 
     const listeners = await getHotspotDetails(hotspot.geohash);
     console.log(`[MapScreen] Received ${listeners?.length || 0} listeners for hotspot ${hotspot.id}`);
@@ -203,6 +219,13 @@ const MapScreen: React.FC = () => {
 
       <NowPlayingBar currentTrack={currentTrack} />
 
+      <TouchableOpacity
+        style={styles.centerLocationButton}
+        onPress={centerMapOnUser}
+      >
+        <MaterialIcons name="my-location" size={24} color="black" />
+      </TouchableOpacity>
+
       <LocationSearchBar />
       <CustomBottomNavigationBar
         currentMode={currentMapMode}
@@ -250,6 +273,19 @@ const styles = StyleSheet.create({
     color: 'red',
     textAlign: 'center',
   },
+  centerLocationButton: {
+    position: 'absolute',
+    bottom: 225, // poniżej NowPlayingBar (dopasuj do potrzeb)
+    right: 20,
+    backgroundColor: 'rgba(255, 2255, 255, 0.85)',
+    borderRadius: 30,
+    padding: 10,
+    elevation: 3, // cień Android
+    shadowColor: '#000', // cień iOS
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+},
 });
 
 export default React.memo(MapScreen);
