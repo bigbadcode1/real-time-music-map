@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import {makeRedirectUri, useAuthRequest, ResponseType, AuthRequestPromptOptions} from 'expo-auth-session';
+import { makeRedirectUri, useAuthRequest, ResponseType, AuthRequestPromptOptions } from 'expo-auth-session';
 import { exchangeCodeForTokens } from '@/src/services/spotifyAuthService';
 import { useAuth } from '@/src/context/AuthContext';
 
@@ -25,19 +25,11 @@ interface UseSpotifyAuthReturn {
   error: string | null;
 }
 
-/**
- * Custom hook to manage the Spotify authentication flow using Expo's AuthSession.
- *
- * Handles initiating the auth request, processing the response, exchanging the code
- * for tokens via the backend service, and managing loading/error states.
- */
 export const useSpotifyAuth = (): UseSpotifyAuthReturn => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { setIsLoggedIn } = useAuth();
+  const { setIsLoggedIn } = useAuth(); 
 
-  // Use a fixed redirect URI during development for simplicity
-  // TODO: Consider using makeRedirectUri({ scheme: 'your-app-scheme' }) for production builds
   const redirectUri = useMemo(() => process.env.EXPO_PUBLIC_SPOTIFY_REDIRECT_URI || 'exp://192.168.0.101:8081', []);
   useEffect(() => {
     console.log("[useSpotifyAuth] Using redirect URI: ", redirectUri);
@@ -65,13 +57,15 @@ export const useSpotifyAuth = (): UseSpotifyAuthReturn => {
         setIsLoading(false);
       } else if (response.type === 'success') {
         const { code } = response.params;
+
         console.log('[useSpotifyAuth] Authorization code received: ', code);
+
 
         exchangeCodeForTokens(code, redirectUri).then(async (exchangeResult) => {
           if (exchangeResult.success) {
             console.log("[useSpotifyAuth] Token exchange successful");
-            // Token storage is handled within exchangeCodeForTokens
-            setIsLoggedIn(true);
+
+            await setIsLoggedIn(true, exchangeResult.appSessionToken); 
             setError(null);
             router.replace("/(root)/(tabs)/mapScreen");
           } else {
@@ -105,8 +99,6 @@ export const useSpotifyAuth = (): UseSpotifyAuthReturn => {
     try {
       console.log("[useSpotifyAuth] Calling promptAsync...");
       await promptAsync();
-      // Result is handled by the useEffect[response] hook.
-      // isLoading remains true until the useEffect handles the response (success, error, or cancel).
     } catch (err: any) {
       console.error("[useSpotifyAuth] Error calling promptAsync:", err);
       setError(`Failed to start login process: ${err.message}`);
@@ -116,8 +108,8 @@ export const useSpotifyAuth = (): UseSpotifyAuthReturn => {
 
   return {
     signInWithSpotify,
-    isAuthRequestReady: !!request, // Boolean indicating if request is ready
+    isAuthRequestReady: !!request,
     isLoading,
     error,
   };
-}; 
+};
