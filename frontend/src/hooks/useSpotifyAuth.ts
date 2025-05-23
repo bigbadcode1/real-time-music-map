@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef} from 'react';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { makeRedirectUri, useAuthRequest, ResponseType, AuthRequestPromptOptions } from 'expo-auth-session';
@@ -28,9 +28,10 @@ interface UseSpotifyAuthReturn {
 export const useSpotifyAuth = (): UseSpotifyAuthReturn => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { setIsLoggedIn } = useAuth(); 
+  const { setIsLoggedIn } = useAuth();
+  const isProcessingResponse = useRef<boolean>(false);
 
-  const redirectUri = useMemo(() => process.env.EXPO_PUBLIC_SPOTIFY_REDIRECT_URI || 'exp://192.168.0.101:8081', []);
+  const redirectUri = useMemo(() => process.env.EXPO_PUBLIC_SPOTIFY_REDIRECT_URI || 'no redirect uri', []);
   useEffect(() => {
     console.log("[useSpotifyAuth] Using redirect URI: ", redirectUri);
   }, [redirectUri]);
@@ -47,14 +48,17 @@ export const useSpotifyAuth = (): UseSpotifyAuthReturn => {
   );
 
   useEffect(() => {
-    if (response) {
+    if (response && !isProcessingResponse.current) {
+      isProcessingResponse.current = true;
       console.log("[useSpotifyAuth] Auth Response: ", response);
       if (response.type === 'error') {
         setError('Authentication error: ' + (response.params?.error_description || 'Unknown error'));
         setIsLoading(false);
+        isProcessingResponse.current = false;
       } else if (response.type === 'cancel' || response.type === 'dismiss') {
         console.log('[useSpotifyAuth] User cancelled or dismissed login');
         setIsLoading(false);
+        isProcessingResponse.current = false;
       } else if (response.type === 'success') {
         const { code } = response.params;
 
@@ -77,10 +81,14 @@ export const useSpotifyAuth = (): UseSpotifyAuthReturn => {
           console.error("[useSpotifyAuth] Error during token exchange promise: ", err);
           setError(`An unexpected error occurred during token exchange: ${err.message}`);
           setIsLoading(false);
+        }).finally(() => {
+          setIsLoading(false);
+          isProcessingResponse.current = false;
         });
       } else {
         console.warn("[useSpotifyAuth] Unexpected auth response type: ", response.type);
         setIsLoading(false);
+        isProcessingResponse.current = false;
       }
     }
   }, [response, redirectUri, setIsLoggedIn]);
@@ -95,6 +103,7 @@ export const useSpotifyAuth = (): UseSpotifyAuthReturn => {
 
     setError(null);
     setIsLoading(true);
+    isProcessingResponse.current = false;
 
     try {
       console.log("[useSpotifyAuth] Calling promptAsync...");

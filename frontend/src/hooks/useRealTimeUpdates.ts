@@ -194,12 +194,15 @@ export function useRealTimeUpdates() {
 
 const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrack | null) => {
   try {
-    const spotifyAccessToken = await getValidAccessToken(); 
+    const spotifyAccessToken = await getValidAccessToken();
     const appSession = appSessionToken;
     const id = userId;
 
     if (!spotifyAccessToken) {
       console.log('[useRealTimeUpdates] No valid Spotify access token available to send update');
+      // If no Spotify token, it's likely no music is playing or can be updated.
+      // Consider setting currentTrack to null here as well, or let the backend handle it.
+      // For now, we'll rely on the backend response.
       return;
     }
     if (!appSession || !id) {
@@ -212,6 +215,8 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
     const tokensString = await AsyncStorage.getItem('spotifyTokens');
     if (!tokensString) {
       console.log('[useRealTimeUpdates] No Spotify tokens found in storage');
+      // If no Spotify tokens, we can't get current playing track.
+      // Consider setting currentTrack to null here.
       return;
     }
     const tokens = JSON.parse(tokensString);
@@ -227,8 +232,8 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
       geohash: geohashValue
     };
 
-    console.log('[useRealTimeUpdates] Debug - Full Request Body:', JSON.stringify(requestBody, null, 2)); 
-    
+    console.log('[useRealTimeUpdates] Debug - Full Request Body:', JSON.stringify(requestBody, null, 2));
+
     const response = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}/update-user-info`, {
       method: 'POST',
       headers: {
@@ -247,21 +252,30 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
         const errorJson = JSON.parse(errorText);
         console.error(`[useRealTimeUpdates] Error details:`, errorJson);
       } catch (e) {}
+      // On error, it's safer to clear the track state if we can't confirm what's playing
+      setCurrentTrack(null); // <-- Added this for error cases
     } else {
       const responseData = await response.json();
       console.log('[useRealTimeUpdates] Successfully sent update to backend');
       console.log('[useRealTimeUpdates] Backend response:', responseData);
-      
-      if (responseData.track) {
+
+      if (responseData.track !== null && responseData.track !== undefined) { // Check for non-null and non-undefined
         const backendTrack: CurrentTrack = {
-          isPlaying: true,
+          isPlaying: responseData.isPlaying ?? true, // Use backend's isPlaying, default to true if not provided
           track: responseData.track
         };
         setCurrentTrack(backendTrack);
+        console.log('[useRealTimeUpdates] Updated currentTrack to playing song:', responseData.track.name);
+      } else {
+        // If responseData.track is null or undefined, set currentTrack to null
+        setCurrentTrack(null);
+        console.log('[useRealTimeUpdates] Updated currentTrack to NULL (no track playing)');
       }
     }
   } catch (error) {
     console.error('[useRealTimeUpdates] Error sending update to backend:', error);
+    // On any network or parsing error, clear the track state
+    setCurrentTrack(null); 
   }
 };
   const performUpdate = useCallback(async () => {
