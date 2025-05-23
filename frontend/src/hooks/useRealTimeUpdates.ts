@@ -291,42 +291,7 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
         return;
       }
 
-<<<<<<< HEAD
-      await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}/update-user-location`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`
-        },
-        body: JSON.stringify({
-          latitude: location.latitude,
-          longitude: location.longitude,
-          song: track
-        })
-      });
-    } catch (error) {
-      console.error('Error sending update to backend:', error);
-    }
-  };
-
-  // Function to perform a single update
-  const performUpdate = useCallback(async () => {
-    if (!instance || instance.isUpdating || !isLoggedIn) return;
-    
-    try {
-      instance.isUpdating = true;
-      
-      // Get current location
-      const location = await getCurrentLocation();
-      if (location) {
-        setCurrentLocation(location);
-        instance.currentLocation = location;
-      }
-
-      // Get current track with debounce
-=======
       setCurrentLocation(location);
->>>>>>> origin/jakubstec
       const now = Date.now();
 
       await sendUpdateToBackend(location, currentTrackRef.current);
