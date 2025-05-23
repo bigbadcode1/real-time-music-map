@@ -82,60 +82,6 @@ app.get('/currentTrack', async function (req, res) {
   }
 });
 
-// update user location and fetch current song
-app.post('/update-user-info', async function (req, res) {
-  try {
-    const { access_token, refresh_token, user_id, geohash } = req.body;
-
-    console.log('[/update-user-info] Debug - Received request body:', {
-      user_id,
-      refresh_token: refresh_token,
-      geohash
-    });
-
-
-    if (!user_id || !access_token || !refresh_token) {
-      return res.status(400).json({ error: 'Required data is missing' });
-    }
-
-    let track;
-    try {
-      const trackData = await getCurrentlyPlayingTrack(access_token);
-      track = trackData.track;
-    } catch (error) {
-      console.error('[/update-user-info] Error getting current track:', error);
-      track = null;
-    }
-
-    const tokenHash = hashToken(refresh_token);
-    console.log('[/update-user-info] Debug - Generated token hash:', tokenHash);
-
-    try {
-      await Database.updateUserInfo(
-        user_id, 
-        tokenHash,
-        geohash, 
-        track?.id || null, 
-        track?.image || null, 
-        track?.name || null, 
-        track?.artist || null
-      );
-      console.log('[/update-user-info] Debug - Successfully updated user info');
-    } catch (dbError) {
-      console.error('[/update-user-info] Debug - Database error:', {
-        error: dbError.message,
-        code: dbError.code,
-        detail: dbError.detail
-      });
-      throw dbError;
-    }
-    res.status(200).json({ track });
-  } catch (error) {
-    console.error('[/update-user-info] Error:', error);
-    res.status(500).json({ error: 'Failed to update user info' });
-  }
-});
-
 app.post('/exchange-token', async function(req, res) {
     try {
         const { code } = req.body;
@@ -155,12 +101,11 @@ app.post('/exchange-token', async function(req, res) {
         const hashedRefreshToken = hashToken(spotifyTokens.refresh_token);
         const expiresAt = Date.now() + spotifyTokens.expires_in * 1000;
 
-        // (check whether user exists before adding / upsert function?)
         try {
             await Database.addNewUser(
                 userId,
                 userName,
-                hashedRefreshToken,
+                hashedRefreshToken,  
                 expiresAt,
                 null,
                 userProfile.image_url
@@ -172,7 +117,7 @@ app.post('/exchange-token', async function(req, res) {
         
         res.json({
           access_token: spotifyTokens.access_token,
-          refresh_token: spotifyTokens.refresh_token,
+          refresh_token: spotifyTokens.refresh_token,  
           expires_in: spotifyTokens.expires_in,
           app_session_token: appSessionToken,
           user_id: userId
@@ -186,40 +131,33 @@ app.post('/exchange-token', async function(req, res) {
 
 app.post('/refresh-token', async function(req, res) {
     console.log('[Backend] Received POST request to /refresh-token');
-    console.log('[Backend] Request body:', req.body);
     try {
       const { refresh_token, user_id } = req.body;
       
       if (!refresh_token || !user_id) {
-        console.log('[Backend] Missing required fields - refresh_token or user_id');
+        console.log('[Backend] Missing required fields');
         return res.status(400).json({ error: 'Refresh token and user_id are required' });
       }
       
-      console.log('[Backend] Calling refreshSpotifyToken with:', { user_id, refresh_token: refresh_token.substring(0, 20) + '...' });
-      
+      console.log('[Backend] Calling refreshSpotifyToken with plain token');
       const tokens = await refreshSpotifyToken(
         process.env.SPOTIFY_CLIENT_ID,
         process.env.SPOTIFY_CLIENT_SECRET,
         refresh_token
       );
       
-      console.log('[Backend] Received new tokens from Spotify:', { 
-        has_access_token: !!tokens.access_token,
-        has_refresh_token: !!tokens.refresh_token,
-        expires_in: tokens.expires_in 
-      });
-
-      const newTokenHash = hashToken(tokens.refresh_token);
-      const expiresAt = Date.now() + tokens.expires_in * 1000;
+      console.log('[Backend] Received new tokens from Spotify');
 
       const oldTokenHash = hashToken(refresh_token);
+      const newTokenHash = hashToken(tokens.refresh_token);
+      const expiresAt = Date.now() + tokens.expires_in * 1000;
       
       console.log('[Backend] Updating database with new token hash');
       await Database.updateAuthToken(
         user_id,
         oldTokenHash,           
-        newTokenHash,               
-        new Date(expiresAt)   
+        newTokenHash,           
+        new Date(expiresAt)     
       );
       console.log(`[Backend] User ${user_id} auth token updated in DB.`);
       
@@ -233,6 +171,63 @@ app.post('/refresh-token', async function(req, res) {
       res.status(500).json({ error: 'Internal Server Error during token refresh.' });
     }
 });
+
+
+app.post('/update-user-info', async function (req, res) {
+  try {
+    const { access_token, refresh_token, user_id, geohash } = req.body;
+
+    console.log('[/update-user-info] Debug - Received request body:', {
+      user_id,
+      has_refresh_token: !!refresh_token,
+      geohash
+    });
+
+    if (!user_id || !access_token || !refresh_token) {
+      return res.status(400).json({ error: 'Required data is missing' });
+    }
+
+
+    let track;
+    try {
+      const trackData = await getCurrentlyPlayingTrack(access_token);
+      track = trackData?.track || null;
+    } catch (error) {
+      console.error('[/update-user-info] Error getting current track:', error);
+      track = null;
+    }
+
+    const tokenHash = hashToken(refresh_token);
+    console.log('[/update-user-info] Debug - Generated token hash for verification');
+
+    try {
+
+      await Database.updateUserInfo(
+        user_id, 
+        tokenHash,
+        geohash, 
+        track?.id || null, 
+        track?.image || null, 
+        track?.name || null, 
+        track?.artist || null
+      );
+      console.log('[/update-user-info] Debug - Successfully updated user info');
+    } catch (dbError) {
+      console.error('[/update-user-info] Debug - Database error:', {
+        error: dbError.message,
+        code: dbError.code,
+        detail: dbError.detail
+      });
+      throw dbError;
+    }
+    
+    res.status(200).json({ track });
+  } catch (error) {
+    console.error('[/update-user-info] Error:', error);
+    res.status(500).json({ error: 'Failed to update user info' });
+  }
+});
+
 
 
 // ------------------- DATABASE QUERIES -------------------------------
@@ -291,7 +286,27 @@ app.post('/get_users_from_hotspots', async function (req, res) {
   }
 });
 
+app.post('/logout', async function(req, res) {
+  console.log('[Backend] Received POST request to /logout');
+  try {
+    const { user_id } = req.body;
 
+    if (!user_id) {
+      console.log('[Backend] Logout: User ID is missing');
+      return res.status(400).json({ error: 'User ID is required for logout' });
+    }
+
+    console.log(`[Backend] Logging out user: ${user_id}`);
+    await Database.deleteUserOnLogout(user_id);
+
+    console.log(`[Backend] User ${user_id} successfully logged out and data cleared.`);
+    res.status(200).json({ message: 'Logout successful' });
+
+  } catch (error) {
+    console.error('[Backend] Error in /logout handler:', error);
+    res.status(500).json({ error: 'Internal Server Error during logout.' });
+  }
+});
 
 // ------------------- random testing
 

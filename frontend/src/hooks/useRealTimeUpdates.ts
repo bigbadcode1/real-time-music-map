@@ -192,7 +192,7 @@ export function useRealTimeUpdates() {
     }
   };
 
-const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrack | null) => {
+const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrack | null, retryCount = 0) => {
   try {
     const spotifyAccessToken = await getValidAccessToken(); 
     const appSession = appSessionToken;
@@ -200,6 +200,10 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
 
     if (!spotifyAccessToken) {
       console.log('[useRealTimeUpdates] No valid Spotify access token available to send update');
+      if (retryCount < 2) {
+        console.log(`[useRealTimeUpdates] Retrying token refresh (attempt ${retryCount + 1}/2)...`);
+        setTimeout(() => sendUpdateToBackend(location, track, retryCount + 1), 2000);
+      }
       return;
     }
     if (!appSession || !id) {
@@ -262,6 +266,11 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
     }
   } catch (error) {
     console.error('[useRealTimeUpdates] Error sending update to backend:', error);
+    // Retry on network errors
+    if (retryCount < 2) {
+      console.log(`[useRealTimeUpdates] Retrying backend update (attempt ${retryCount + 1}/2)...`);
+      setTimeout(() => sendUpdateToBackend(location, track, retryCount + 1), 2000);
+    }
   }
 };
   const performUpdate = useCallback(async () => {
@@ -351,7 +360,7 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
         console.log('[useRealTimeUpdates] Cleanup: Interval cleared on unmount/dependency change.');
       }
     };
-  }, [isLoggedIn, userId, appSessionToken, performUpdate]);
+  }, [isLoggedIn, userId, appSessionToken]);
 
 
   return {
