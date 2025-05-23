@@ -36,39 +36,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const now = Date.now();
     const tokenAge = (now - tokens.token_timestamp) / 1000;
     return tokenAge >= (tokens.expires_in - 300);
+      // const testExpiryDuration = 20 * 1000; // 20 seconds for testing
+      // const expiresAt = tokens.token_timestamp + testExpiryDuration; // Calculate expiry based on a short test duration
+
+      // const expired = now >= expiresAt;
+      // console.log(`[AuthContext] Token expiry check (TEST MODE): now=${now}, expiresAt=${expiresAt}, expired=${expired}`);
+      // return expired;
   };
 
-  const refreshSpotifyAccessToken = async (refreshToken: string): Promise<SpotifyTokens | null> => {
-    try {
-      console.log('[AuthContext] Refreshing Spotify access token...');
-      const response = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}/refresh-token`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ refresh_token: refreshToken }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Spotify Token refresh failed: ${response.status}`);
-      }
-
-      const newTokens = await response.json();
-      const tokensWithTimestamp = {
-        ...newTokens,
-        token_timestamp: Date.now(),
-      };
-
-      // Store new Spotify tokens
-      await AsyncStorage.setItem('spotifyTokens', JSON.stringify(tokensWithTimestamp));
-      console.log('[AuthContext] Spotify Token refreshed successfully');
-      
-      return tokensWithTimestamp;
-    } catch (error) {
-      console.error('[AuthContext] Error refreshing Spotify token:', error);
+const refreshSpotifyAccessToken = async (refreshToken: string): Promise<SpotifyTokens | null> => {
+  try {
+    console.log(`[AuthContext] Attempting to refresh token`);
+    
+    // Make sure we have userId available
+    if (!userId) {
+      console.error('[AuthContext] Cannot refresh token: userId is null');
       return null;
     }
-  };
+    
+    const response = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}/refresh-token`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        refresh_token: refreshToken,
+        user_id: userId  // Add the missing user_id parameter
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[AuthContext] Spotify Token refresh failed: ${response.status} - ${errorText}`);
+      throw new Error(`Spotify Token refresh failed: ${response.status}`);
+    }
+
+    const newTokens = await response.json();
+    const tokensWithTimestamp = {
+      ...newTokens,
+      token_timestamp: Date.now(),
+    };
+
+    // Store new Spotify tokens
+    await AsyncStorage.setItem('spotifyTokens', JSON.stringify(tokensWithTimestamp));
+    console.log('[AuthContext] Spotify Token refreshed successfully');
+    
+    return tokensWithTimestamp;
+  } catch (error) {
+    console.error('[AuthContext] Error refreshing Spotify token:', error);
+    return null;
+  }
+};
 
   // Get user profile information from Spotify
   const getUserProfile = async (token: string): Promise<string | null> => {

@@ -185,29 +185,43 @@ app.post('/exchange-token', async function(req, res) {
 });
 
 app.post('/refresh-token', async function(req, res) {
+    console.log('[Backend] Received POST request to /refresh-token');
+    console.log('[Backend] Request body:', req.body);
     try {
       const { refresh_token, user_id } = req.body;
       
       if (!refresh_token || !user_id) {
-        return res.status(400).json({ error: 'Refresh token is required' });
+        console.log('[Backend] Missing required fields - refresh_token or user_id');
+        return res.status(400).json({ error: 'Refresh token and user_id are required' });
       }
       
+      console.log('[Backend] Calling refreshSpotifyToken with:', { user_id, refresh_token: refresh_token.substring(0, 20) + '...' });
+      
       const tokens = await refreshSpotifyToken(
-        user_id,
         process.env.SPOTIFY_CLIENT_ID,
         process.env.SPOTIFY_CLIENT_SECRET,
         refresh_token
       );
-
-      await Database.updateAuthToken(
-        user_id,
-        hashToken(refresh_token),
-        newTokenHash,            
-        new Date(expiresAt)
-      );
+      
+      console.log('[Backend] Received new tokens from Spotify:', { 
+        has_access_token: !!tokens.access_token,
+        has_refresh_token: !!tokens.refresh_token,
+        expires_in: tokens.expires_in 
+      });
 
       const newTokenHash = hashToken(tokens.refresh_token);
       const expiresAt = Date.now() + tokens.expires_in * 1000;
+
+      const oldTokenHash = hashToken(refresh_token);
+      
+      console.log('[Backend] Updating database with new token hash');
+      await Database.updateAuthToken(
+        user_id,
+        oldTokenHash,           
+        newTokenHash,               
+        new Date(expiresAt)   
+      );
+      console.log(`[Backend] User ${user_id} auth token updated in DB.`);
       
       res.json({
         access_token: tokens.access_token,
@@ -215,10 +229,10 @@ app.post('/refresh-token', async function(req, res) {
         expires_in: tokens.expires_in
       });
     } catch (error) {
-      console.error('Error refreshing token:', error);
-      res.status(500).json({ error: 'Failed to refresh token' });
+      console.error('[Backend] Error in /refresh-token handler:', error);
+      res.status(500).json({ error: 'Internal Server Error during token refresh.' });
     }
-  });
+});
 
 
 // ------------------- DATABASE QUERIES -------------------------------
