@@ -46,13 +46,6 @@ Real-Time Music Map is a live geosocial platform that visualizes what people are
 - **Hotspots**: Identify areas with high musical activity (popular hangouts or public places).
 - **Geohash precision**: Adjustable location granularity (pinpoint exact or general area).
 
-### 🔐 Privacy & Sharing
-- **Multi-mode visibility**:
-  - 🌍 Public - visible to all users
-  - 👥 Friends-only - share with connections
-  - 👻 Ghost mode - hide location (shows only music data)
-- **Proximity ghosts**: Animated indicators for nearby ghost-mode users.
-
 ### 🎧 Music Integration
 - **Spotify sync**: Display your currently playing track automatically.
 - **Listening history**: Recent plays with timestamps.
@@ -60,18 +53,27 @@ Real-Time Music Map is a live geosocial platform that visualizes what people are
 
 ### 📊 Local Music Analytics
 - **Area trends**: See what's popular in specific zones (hotspots or draw custom areas).
-- **Time filters**: Compare trends by hour/day/week.
 - **Heatmaps**: Visualize musical activity density.
-
-### 🤝 Social Features
-- **Friend system**: Add users or auto-follow option.
-- **Block list**: Manage unwanted interactions.
-- **Playlist sharing**: Recommend tracks to others.
+- **Time filters**: Compare trends by hour/day/week. ( not implemented )
 
 ### ⚙️ Technical Features
 - **Battery-optimized updates**: Smart location refresh intervals.
 - **Cross-platform**: Works on iOS and Android.
 - **Secure auth**: Spotify OAuth2 login with minimal permissions.
+
+### 🤝 Social Features ( not implemented )
+- **Friend system**: Add users or auto-follow option.
+- **Block list**: Manage unwanted interactions.
+- **Playlist sharing**: Recommend tracks to others.
+
+### 🔐 Privacy & Sharing ( not implemented )
+- **Multi-mode visibility**:
+  - 🌍 Public - visible to all users
+  - 👥 Friends-only - share with connections
+  - 👻 Ghost mode - hide location (shows only music data)
+- **Proximity ghosts**: Animated indicators for nearby ghost-mode users.
+- 
+
 
 <p align="center">
   <img src = "https://github.com/user-attachments/assets/c33462e5-ad18-4d1e-944f-2c6a0f6cef06" width=750>
