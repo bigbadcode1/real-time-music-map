@@ -200,10 +200,9 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
 
     if (!spotifyAccessToken) {
       console.log('[useRealTimeUpdates] No valid Spotify access token available to send update');
-      if (retryCount < 2) {
-        console.log(`[useRealTimeUpdates] Retrying token refresh (attempt ${retryCount + 1}/2)...`);
-        setTimeout(() => sendUpdateToBackend(location, track, retryCount + 1), 2000);
-      }
+      // If no Spotify token, it's likely no music is playing or can be updated.
+      // Consider setting currentTrack to null here as well, or let the backend handle it.
+      // For now, we'll rely on the backend response.
       return;
     }
     if (!appSession || !id) {
@@ -275,11 +274,8 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
     }
   } catch (error) {
     console.error('[useRealTimeUpdates] Error sending update to backend:', error);
-    // Retry on network errors
-    if (retryCount < 2) {
-      console.log(`[useRealTimeUpdates] Retrying backend update (attempt ${retryCount + 1}/2)...`);
-      setTimeout(() => sendUpdateToBackend(location, track, retryCount + 1), 2000);
-    }
+    // On any network or parsing error, clear the track state
+    setCurrentTrack(null); 
   }
 };
   const performUpdate = useCallback(async () => {
