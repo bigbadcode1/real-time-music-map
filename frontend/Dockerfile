@@ -1,6 +1,6 @@
 FROM node:23-slim
 WORKDIR /app
 COPY package.json /app
-RUN npm install
+RUN npm install --force
 COPY . /app
-CMD [ "npm", "start"]
+CMD [ "npx", "expo", "start"]

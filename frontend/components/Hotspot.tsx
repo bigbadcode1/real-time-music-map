@@ -1,9 +1,7 @@
-// components/Hotspot.tsx
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
-// Import BasicHotspotData, HotspotSize, HotspotActivity
 import { HotspotSize, HotspotActivity, BasicHotspotData } from '../types/dataTypes';
 
 

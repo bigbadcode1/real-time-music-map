@@ -15,17 +15,15 @@ import { BlurView } from 'expo-blur';
 import FontAwesome from '@expo/vector-icons/build/FontAwesome';
 import { LinearGradient } from 'expo-linear-gradient';
 
-// IMPORT ALL TYPES FROM YOUR CENTRALIZED FILE
 import {
   TrackData,
   AlbumData,
   ArtistData,
   GenreData,
   UserListenerData,
-  DetailedHotspotData // Import DetailedHotspotData for props type safety if useful here
-} from '../types/dataTypes'; // Adjust path if necessary
+  DetailedHotspotData
+} from '../types/dataTypes';
 
-// Remove duplicate type definitions here!
 
 type HotspotDetailProps = {
   locationName: string;
@@ -199,7 +197,6 @@ export const HotspotDetail: React.FC<HotspotDetailProps> = ({
             : `Last listened: ${new Date(item.currentTrack.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
         </Text>
       </View>
-      {/* Album art for the user's track with fallback */}
       {item.currentTrack.albumArt ? (
         <Image
           source={{ uri: item.currentTrack.albumArt }}

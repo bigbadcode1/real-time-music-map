@@ -1,5 +1,5 @@
 services:
-  mapme-backend:
+  mapme-expo:
     build:
       context: .
       dockerfile: Dockerfile
@@ -7,18 +7,12 @@ services:
     # for mac users
     #platform: linux/amd64
     ports:
-      - 8888:8888
+      - 8081:8081
     env_file: ".env"
-    # when running db + backend
-    # environment:
-    #   - DB_HOST=mapme-db
     networks:
       - mapme-network
-      - mapme-tunnel
     volumes:
       - /app/node_modules
 networks:
   mapme-network:
-    driver: bridge
-  mapme-tunnel:
     driver: bridge
