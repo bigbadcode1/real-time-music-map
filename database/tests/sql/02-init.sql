@@ -133,26 +133,23 @@ BEGIN
     SELECT expires_at INTO v_user_expires_at FROM "Active Users" WHERE id = p_user_id;
   
     -- Check if user already exists
-    -- IF FOUND THEN
-    --   IF (v_user_expires_at > NOW()) THEN
-    --     RAISE EXCEPTION 'User already exists' USING ERRCODE = '23569';
-    --   END IF;
-    --   -- Delete user if IS expired
-    --   DELETE FROM "Active Users" WHERE id = p_user_id;
-    -- END IF;
+    IF FOUND THEN
+      -- delete and overwrite with new user
+      DELETE FROM "Active Users" WHERE id = p_user_id;
+    END IF;
   
     
     -- Insert into Active Users with default null song
     INSERT INTO "Active Users" (id, name, image_url, song_id, geohash, expires_at)
-    VALUES (p_user_id, p_name, p_image_url, NULL, p_geohash, NOW() + INTERVAL '1 hour')
-    ON CONFLICT(id) DO UPDATE 
-    SET geohash = p_geohash, expires_at = NOW() + INTERVAL '1 hour'; 
+    VALUES (p_user_id, p_name, p_image_url, NULL, p_geohash, NOW() + INTERVAL '1 hour');
+    -- ON CONFLICT(id) DO UPDATE 
+    -- SET geohash = p_geohash, expires_at = NOW() + INTERVAL '1 hour'; 
     
     -- Insert authentication info
     INSERT INTO "Auth" (user_id, auth_token_hash, expires_at)
-    VALUES (p_user_id, p_auth_token_hash, p_token_expires_at)
-    ON CONFLICT(user_id) DO UPDATE 
-    SET auth_token_hash = p_auth_token_hash, expires_at = p_token_expires_at; 
+    VALUES (p_user_id, p_auth_token_hash, p_token_expires_at);
+    -- ON CONFLICT(user_id) DO UPDATE 
+    -- SET auth_token_hash = p_auth_token_hash, expires_at = p_token_expires_at; 
         
   EXCEPTION
     WHEN OTHERS THEN
@@ -192,7 +189,7 @@ RETURNS TABLE (
 ) AS $$
 BEGIN
     RETURN QUERY
-    SELECT u.id, u.image_url, u.name, u.song_id, s.title, s.image_url, s.artist
+    SELECT u.id, u.name, u.image_url, u.song_id, s.title, s.image_url, s.artist
     FROM "Active Users" u
     JOIN "Hotspots" h ON u.geohash = h.geohash
     JOIN "Songs" s ON u.song_id = s.id 

@@ -32,7 +32,6 @@ class Database {
     }
   }
 
-
   // ---------------- functions for calling db queries
 
   async addNewUser(id, name, token_hash, expires_at = (Date.now() + 60 * 60 * 1000), geohash = null, image_url = null) {
@@ -44,7 +43,7 @@ class Database {
 
   async updateUserInfo(user_id, token, geohash, song_id, song_image, song_title, song_artist) {
     const result = await this.query('SELECT update_user_info($1, $2, $3, $4, $5, $6, $7)', [user_id, token, geohash, song_id, song_image, song_title, song_artist]);
-
+  
     return result;
   }
 
