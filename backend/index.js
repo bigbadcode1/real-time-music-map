@@ -87,22 +87,23 @@ app.get('/currentTrack', async function (req, res) {
 
 // update user location and fetch current song
 app.post('/update-user-info', async function (req, res) {
+  console.log('\n[/update-user-info] Request received');
   try {
     const { access_token, refresh_token, user_id, geohash, expires_in = 3600 } = req.body;
-
+    
     console.log('[/update-user-info] Debug - Received request body:', {
       user_id,
       access_token: access_token,
       refresh_token: refresh_token,
       geohash
     });
-
-
+    
+    
     if (!user_id || !access_token || !refresh_token) {
       return res.status(400).json({ error: 'Required data is missing' });
     }
-
-
+    
+    
     // fetch current song data
     let track;
     try {
@@ -112,15 +113,15 @@ app.post('/update-user-info', async function (req, res) {
       console.error('[/update-user-info] Error getting current track:', error);
       track = null;
     }
-
+    
     //hash token
     const tokenHash = hashToken(refresh_token);
     console.log('[/update-user-info] Debug - Generated token hash:', tokenHash);
-
-
+    
+    
     // send user data to db
     try {
-
+      
       await Database.updateUserInfo(
         user_id,
         tokenHash,
@@ -131,22 +132,20 @@ app.post('/update-user-info', async function (req, res) {
         track?.artist || null
       );
       console.log('[/update-user-info] Debug - Successfully updated user info');
-
+      
     } catch (dbError) {
-      console.log(`huj - error caught with code ===> ${dbError.code}`)
       // user does not exist in db
       // => add user to db
       if (dbError.code === '23588') {
-
         try {
           // fetch user profile info 
           const userProfile = await getUserInfo(access_token);
           const userId = userProfile.id;
           const userName = userProfile.name;
-
+          
           const hashedRefreshToken = hashToken(refresh_token);
           const expiresAt = Date.now() + expires_in * 1000;
-
+          
           // add user
           await Database.addNewUser(
             userId,
@@ -156,24 +155,25 @@ app.post('/update-user-info', async function (req, res) {
             geohash,
             userProfile.image_url
           );
+          
           console.log(`[/update-user-info] User ${userId} added to DB.`);
         } catch (userCreationError) {
           console.error('[/update-user-info] Error adding user to DB:', userCreationError);
           throw userCreationError;
         }
-
+        
       } else {
         console.error('[/update-user-info] Debug - Database error:', {
           error: dbError.message,
           code: dbError.code,
           detail: dbError.detail
         });
-
+        
         throw dbError;
       }
-
+      
     }
-
+    
     //return song data
     res.status(200).json({ track });
   } catch (error) {
@@ -185,6 +185,7 @@ app.post('/update-user-info', async function (req, res) {
 
 // exchange token
 app.post('/exchange-token', async function (req, res) {
+  console.log('\n[/exchange-token] Request received');
   try {
     // get tokens
     const { code } = req.body;
@@ -194,18 +195,18 @@ app.post('/exchange-token', async function (req, res) {
       code,
       req.body.redirectUri
     );
-
-
+    
+    
     // get user profile info
     const userProfile = await getUserInfo(spotifyTokens.access_token);
     const userId = userProfile.id;
     const userName = userProfile.name;
-
+    
     const appSessionToken = crypto.randomBytes(32).toString('hex');
-
+    
     const hashedRefreshToken = hashToken(spotifyTokens.refresh_token);
     const expiresAt = Date.now() + spotifyTokens.expires_in * 1000;
-
+    
     // add/update user to db 
     try {
       await Database.addNewUser(
@@ -220,8 +221,8 @@ app.post('/exchange-token', async function (req, res) {
     } catch (dbError) {
       console.error('[/exchange-token] Error saving user to DB:', dbError);
     }
-
-
+    
+    
     console.log("object returned: ", {
       access_token: spotifyTokens.access_token,
       refresh_token: spotifyTokens.refresh_token,
@@ -229,7 +230,7 @@ app.post('/exchange-token', async function (req, res) {
       app_session_token: appSessionToken,
       user_id: userId
     })
-
+    
     res.json({
       access_token: spotifyTokens.access_token,
       refresh_token: spotifyTokens.refresh_token,
@@ -237,7 +238,7 @@ app.post('/exchange-token', async function (req, res) {
       app_session_token: appSessionToken,
       user_id: userId
     });
-
+    
   } catch (error) {
     console.error('Error exchanging code for token:', error);
     res.status(500).json({ error: 'Failed to exchange code for token or fetch user profile' });
@@ -246,9 +247,10 @@ app.post('/exchange-token', async function (req, res) {
 
 // refresh user token after it expired
 app.post('/refresh-token', async function (req, res) {
+  console.log('\n[/refresh-token] Request received');
   try {
     const { refresh_token, user_id } = req.body;
-
+    
     if (!refresh_token || !user_id) {
       return res.status(400).json({ error: 'Refresh token is required' });
     }
@@ -338,7 +340,7 @@ app.post('/get_users_from_hotspots', async function (req, res) {
       result = await Database.getUsersFromHotspots(hotspots);
     }
 
-    // console.log("result: ", result);
+    // console.log("result: ", result);received
     res.status(200).json({ "users": result });
   } catch (error) {
     console.log("[/get_users_from_hotspots] Error: ", error);

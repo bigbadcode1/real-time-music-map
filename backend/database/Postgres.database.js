@@ -32,8 +32,8 @@ class Database {
     }
   }
 
+  
   // ---------------- functions for calling db queries
-
   async addNewUser(id, name, token_hash, expires_at = (Date.now() + 60 * 60 * 1000), geohash = null, image_url = null) {
     const expires = new Date(expires_at);
     const result = await this.query('SELECT add_new_user($1, $2, $3, $4, $5, $6)', [id, name, token_hash, expires, geohash, image_url]);
