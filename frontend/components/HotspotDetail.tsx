@@ -386,15 +386,6 @@ export const HotspotDetail: React.FC<HotspotDetailProps> = ({
                 />
               </>
             )}
-
-            <View style={styles.footerContainer}>
-              <TouchableOpacity style={styles.footerButton}>
-                <Text style={styles.footerButtonText}>placeholder1</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.footerButton}>
-                <Text style={styles.footerButtonText}>placeholder2</Text>
-              </TouchableOpacity>
-            </View>
           </ScrollView>
         </BlurView>
       </Animated.View>
@@ -718,27 +709,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 20,
     marginBottom: 20,
-  },
-  footerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 20, // Ensure space above footer
-    paddingBottom: 10, // Ensure footer buttons are not cut off
-  },
-  footerButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(29, 185, 84, 0.1)',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(29, 185, 84, 0.3)',
-  },
-  footerButtonText: {
-    color: '#1DB954',
-    fontWeight: '600', // Bolder text
-    marginLeft: 8,
-    fontSize: 13,
   },
 });

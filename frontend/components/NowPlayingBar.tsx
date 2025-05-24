@@ -54,7 +54,7 @@ export const NowPlayingBar: React.FC<NowPlayingBarProps> = ({ currentTrack }) =>
     scrollAnim.setValue(0); // Reset animation value to start
 
     if (shouldAnimate) { // Use the already calculated shouldAnimate
-      const distanceToScroll = textWidth + 20; // text width + gap for seamless loop
+      const distanceToScroll = textWidth + 35; // text width + gap for seamless loop
       const scrollSpeed = 30; // pixels per second. Adjust for faster/slower.
       const scrollDuration = (distanceToScroll / scrollSpeed) * 1000;
 
@@ -115,7 +115,7 @@ export const NowPlayingBar: React.FC<NowPlayingBarProps> = ({ currentTrack }) =>
                         shouldAnimate
                           ? scrollAnim.interpolate({
                               inputRange: [0, 1],
-                              outputRange: [0, -(textWidth + 20)], // scrolls textWidth + gap
+                              outputRange: [0, -(textWidth + 35)], // scrolls textWidth + gap
                             })
                           : 0, // No translation if not animating
                     },
@@ -142,7 +142,7 @@ export const NowPlayingBar: React.FC<NowPlayingBarProps> = ({ currentTrack }) =>
                       {
                         translateX: scrollAnim.interpolate({
                           inputRange: [0, 1],
-                          outputRange: [textWidth + 20, 0], // starts textWidth + gap pixels to the right
+                          outputRange: [textWidth + 35, 0], // starts textWidth + gap pixels to the right
                         }),
                       },
                     ],
