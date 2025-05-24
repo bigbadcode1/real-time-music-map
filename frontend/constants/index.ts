@@ -1,25 +1,22 @@
-import puppy1 from "@/assets/images/puppy1.png"
-import puppy2 from "@/assets/images/puppy2.png"
-import puppy3 from "@/assets/images/puppy3.png"
 import remove from "@/assets/images/remove.png"
 
 export const onboarding = [
     {
         id: 1,
-        title: 'Discover the Music Around You, Live!',
-        description: 'See what everyone\'s listening to in real-time on an interactive map. Connect your Spotify and experience the soundscape of your surroundings!',
+        title: 'Log in to Your Spotify Account',
+        description: 'Connect to start exploring music around you.',
         image: remove,
     },
     {
         id: 2,
-        title: 'Explore Local Music Trends & Connect with Others',
-        description: 'Uncover popular music in your area, identify hotspots of musical activity, and even find fellow listeners. Choose your visibility and share your music vibe!',
+        title: 'Explore a Map of Music Hotspots',
+        description: 'See where music is trending nearby.',
         image: remove,
     },
     {
         id: 3,
-        title: 'Ready to See the Sound Around You?',
-        description: 'Connect your Spotify account to start exploring the live music map and discover what everyone\'s listening to nearby. It\'s time to tune into the world around you!',
+        title: 'Tap to See What Users Are Listening To',
+        description: 'Discover tracks people are playing right now.',
         image: remove,
     }
 ]

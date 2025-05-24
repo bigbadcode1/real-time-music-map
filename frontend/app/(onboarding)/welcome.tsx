@@ -1,4 +1,3 @@
-import { router } from "expo-router";
 import React, { useRef, useState } from "react";
 import { Image, Text, View, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";

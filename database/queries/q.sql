@@ -4,6 +4,7 @@
 SELECT * FROM "Hotspots";
 SELECT * FROM "Active Users";
 SELECT * FROM "Auth";
+SELECT * FROM "Songs";
 
 -- DELETE FROM "Active Users";
 

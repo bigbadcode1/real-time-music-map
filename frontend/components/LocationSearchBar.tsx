@@ -40,8 +40,6 @@ export const LocationSearchBar: React.FC<LocationSearchBarProps> = ({ onSearch }
     }
   };
 
-
-
   const keyboardVerticalOffset = Platform.OS === 'ios' ? 40 : 0;
 
   return (

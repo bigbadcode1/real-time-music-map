@@ -49,19 +49,21 @@ SELECT throws_ok(
     'User with expired token should not be added'
 );
 
--- Test Case 4: Create a duplicate user
-SELECT throws_ok(
-    $$SELECT add_new_user('user12039812358', 'Duplicate User', 'hash999', (NOW() + INTERVAL '1 hour'), NULL)$$,
-    '23505',
-    'User already exists',
-    'Should throw error when adding duplicate user'
+
+-- Test Case 4: Update expired user
+INSERT INTO "Active Users" (id, name, song_id, geohash, expires_at)
+VALUES ('expireduser123', 'Will Expire', NULL, NULL, (NOW() - INTERVAL '1 hour'));
+
+INSERT INTO "Auth" (user_id, auth_token_hash, expires_at)
+VALUES ('expireduser123', 'oldhash', (NOW() + INTERVAL '1 second'));
+
+SELECT lives_ok(
+    $$SELECT add_new_user('expireduser123', 'Renewed User', 'hash101', (NOW() + INTERVAL '1 hour'), NULL)$$,
+    'Should successfully update expired user'
 );
 
--- Test Case 5: Create a user with an expired user record
--- First, manually insert an expired user to simulate the scenario
-INSERT INTO "Active Users" (id, name, song_id, geohash, expires_at)
-VALUES ('expireduser123', 'Will Expire', NULL, NULL, (NOW() - INTERVAL '2 hour'));
 
+-- Test Case 5: Create a user with an expired user record
 SELECT lives_ok(
     $$SELECT add_new_user('expireduser123', 'Renewed User', 'hash101', (NOW() + INTERVAL '1 hour'), NULL)$$,
     'Should successfully add a user replacing an expired user'

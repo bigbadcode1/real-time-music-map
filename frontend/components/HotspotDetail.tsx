@@ -15,17 +15,15 @@ import { BlurView } from 'expo-blur';
 import FontAwesome from '@expo/vector-icons/build/FontAwesome';
 import { LinearGradient } from 'expo-linear-gradient';
 
-// IMPORT ALL TYPES FROM YOUR CENTRALIZED FILE
 import {
   TrackData,
   AlbumData,
   ArtistData,
   GenreData,
   UserListenerData,
-  DetailedHotspotData // Import DetailedHotspotData for props type safety if useful here
-} from '../types/dataTypes'; // Adjust path if necessary
+  DetailedHotspotData
+} from '../types/dataTypes';
 
-// Remove duplicate type definitions here!
 
 type HotspotDetailProps = {
   locationName: string;
@@ -58,7 +56,7 @@ export const HotspotDetail: React.FC<HotspotDetailProps> = ({
 }) => {
   const slideAnim = useRef(new Animated.Value(height)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const [displayMode, setDisplayMode] = useState<DisplayMode>('summary');
+  const [displayMode, setDisplayMode] = useState<DisplayMode>('recentUsers');
   const [summaryTab, setSummaryTab] = useState<SummaryTabType>('tracks');
 
   useEffect(() => {
@@ -190,16 +188,15 @@ export const HotspotDetail: React.FC<HotspotDetailProps> = ({
             style={styles.userTrackIcon}
           />
           <Text style={styles.userTrackText} numberOfLines={1}>
-            {item.currentTrack.title} - {item.currentTrack.artist}
+            {item.currentTrack.artist} - {item.currentTrack.title}
           </Text>
         </View>
-        <Text style={styles.userTrackTimestamp}>
+        {/* <Text style={styles.userTrackTimestamp}>
           {item.currentTrack.isCurrentlyListening
             ? "Listening now"
             : `Last listened: ${new Date(item.currentTrack.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
-        </Text>
+        </Text> */}
       </View>
-      {/* Album art for the user's track with fallback */}
       {item.currentTrack.albumArt ? (
         <Image
           source={{ uri: item.currentTrack.albumArt }}
@@ -240,7 +237,7 @@ export const HotspotDetail: React.FC<HotspotDetailProps> = ({
               <Text style={styles.locationName} numberOfLines={1} ellipsizeMode="tail">{locationName}</Text>
                 <View style={styles.statsRow}>
                   <FontAwesome name="users" size={14} color="#666" style={styles.icon} />
-                  <Text style={styles.statValue}>{userCount} listeners</Text>
+                  <Text style={styles.statValue}>{userCount} {userCount === 1 ? 'listener' : 'listeners'} </Text>
                   <Text style={styles.timestampText}>as of {formattedTime}</Text>
                 </View>
               </View>
@@ -254,18 +251,18 @@ export const HotspotDetail: React.FC<HotspotDetailProps> = ({
             {/* Mode Selector */}
             <View style={styles.modeSelectorContainer}>
               <TouchableOpacity
-                style={[styles.modeButton, displayMode === 'summary' && styles.modeButtonActive]}
-                onPress={() => setDisplayMode('summary')}
-              >
-                <FontAwesome name="bar-chart" size={16} color={displayMode === 'summary' ? '#1DB954' : '#555'} style={styles.modeIcon} />
-                <Text style={[styles.modeButtonText, displayMode === 'summary' && styles.modeButtonTextActive]}>Summary</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
                 style={[styles.modeButton, displayMode === 'recentUsers' && styles.modeButtonActive]}
                 onPress={() => setDisplayMode('recentUsers')}
               >
                 <FontAwesome name="user-o" size={16} color={displayMode === 'recentUsers' ? '#1DB954' : '#555'} style={styles.modeIcon} />
                 <Text style={[styles.modeButtonText, displayMode === 'recentUsers' && styles.modeButtonTextActive]}>Listeners</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modeButton, displayMode === 'summary' && styles.modeButtonActive]}
+                onPress={() => setDisplayMode('summary')}
+              >
+                <FontAwesome name="bar-chart" size={16} color={displayMode === 'summary' ? '#1DB954' : '#555'} style={styles.modeIcon} />
+                <Text style={[styles.modeButtonText, displayMode === 'summary' && styles.modeButtonTextActive]}>Summary</Text>
               </TouchableOpacity>
             </View>
 
@@ -389,15 +386,6 @@ export const HotspotDetail: React.FC<HotspotDetailProps> = ({
                 />
               </>
             )}
-
-            <View style={styles.footerContainer}>
-              <TouchableOpacity style={styles.footerButton}>
-                <Text style={styles.footerButtonText}>placeholder1</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.footerButton}>
-                <Text style={styles.footerButtonText}>placeholder2</Text>
-              </TouchableOpacity>
-            </View>
           </ScrollView>
         </BlurView>
       </Animated.View>
@@ -721,27 +709,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 20,
     marginBottom: 20,
-  },
-  footerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 20, // Ensure space above footer
-    paddingBottom: 10, // Ensure footer buttons are not cut off
-  },
-  footerButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(29, 185, 84, 0.1)',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(29, 185, 84, 0.3)',
-  },
-  footerButtonText: {
-    color: '#1DB954',
-    fontWeight: '600', // Bolder text
-    marginLeft: 8,
-    fontSize: 13,
   },
 });

@@ -128,7 +128,7 @@ export function useRealTimeUpdates() {
 
       const response = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}/get_hotspots`, {
         method: 'POST',
-        headers: headers,
+        headers: headers, 
         body: JSON.stringify({ ne_lat, ne_long, sw_lat, sw_long })
       });
 
@@ -192,7 +192,7 @@ export function useRealTimeUpdates() {
     }
   };
 
-const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrack | null) => {
+const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrack | null, retryCount = 0) => {
   try {
     const spotifyAccessToken = await getValidAccessToken();
     const appSession = appSessionToken;
@@ -365,7 +365,7 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
         console.log('[useRealTimeUpdates] Cleanup: Interval cleared on unmount/dependency change.');
       }
     };
-  }, [isLoggedIn, userId, appSessionToken, performUpdate]);
+  }, [isLoggedIn, userId, appSessionToken]);
 
 
   return {
