@@ -105,13 +105,18 @@ app.post('/update-user-info', async function (req, res) {
     
     
     // fetch current song data
-    let track;
+    let track = null;
+    let isPlaying = false;
     try {
       const trackData = await getCurrentlyPlayingTrack(access_token);
-      track = trackData.track;
+      if(trackData && trackData.track) {
+        track = trackData.track;
+        isPlaying = trackData.isPlaying
+      } else {
+        console.log('[/update-user-info] No track currently playing for user, or track data is empty.');
+      }
     } catch (error) {
       console.error('[/update-user-info] Error getting current track:', error);
-      track = null;
     }
     
     //hash token
@@ -126,10 +131,10 @@ app.post('/update-user-info', async function (req, res) {
         user_id,
         tokenHash,
         geohash,
-        track?.id || null,
-        track?.image || null,
-        track?.name || null,
-        track?.artist || null
+        track ? track.id : null,
+        track ? track.image : null,
+        track ? track.name : null,
+        track ? track.artist : null,
       );
       console.log('[/update-user-info] Debug - Successfully updated user info');
       
@@ -175,7 +180,7 @@ app.post('/update-user-info', async function (req, res) {
     }
     
     //return song data
-    res.status(200).json({ track });
+    res.status(200).json({ track: isPlaying && track ? track : null, isPlaying: isPlaying });
   } catch (error) {
     console.error('[/update-user-info] Error:', error);
     res.status(500).json({ error: 'Failed to update user info' });
