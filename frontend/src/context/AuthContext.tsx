@@ -38,7 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const now = Date.now();
     // const tokenAge = (now - tokens.token_timestamp) / 1000;
     // return tokenAge >= (tokens.expires_in - 300);
-      const testExpiryDuration = 20 * 1000; // 20 seconds for testing
+      const testExpiryDuration = 60 * 60 * 1000; // 20 seconds for testing
       const expiresAt = tokens.token_timestamp + testExpiryDuration; // Calculate expiry based on a short test duration
 
       const expired = now >= expiresAt;

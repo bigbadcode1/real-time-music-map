@@ -7,6 +7,7 @@ import { getUserInfo } from "./utils/spotify/spotifyUserInfo.js";
 import Database from "./database/Postgres.database.js";
 import { hashToken } from "#utils/hashToken.js";
 import crypto from 'crypto'
+import { Console } from "console";
 
 dotenv.config();
 
@@ -132,20 +133,21 @@ app.post('/update-user-info', async function (req, res) {
       console.log('[/update-user-info] Debug - Successfully updated user info');
 
     } catch (dbError) {
+      console.log(`huj - error caught with code ===> ${dbError.code}`)
       // user does not exist in db
       // => add user to db
-      if (dbError.code == '23588') {
+      if (dbError.code === '23588') {
 
-        // fetch user profile info 
-        const userProfile = await getUserInfo(access_token);
-        const userId = userProfile.id;
-        const userName = userProfile.name;
-
-        const hashedRefreshToken = hashToken(refresh_token);
-        const expiresAt = Date.now() + expires_in * 1000;
-
-        // add user
         try {
+          // fetch user profile info 
+          const userProfile = await getUserInfo(access_token);
+          const userId = userProfile.id;
+          const userName = userProfile.name;
+
+          const hashedRefreshToken = hashToken(refresh_token);
+          const expiresAt = Date.now() + expires_in * 1000;
+
+          // add user
           await Database.addNewUser(
             userId,
             userName,
@@ -155,9 +157,9 @@ app.post('/update-user-info', async function (req, res) {
             userProfile.image_url
           );
           console.log(`[/update-user-info] User ${userId} added to DB.`);
-        } catch (dbErrorAdd) {
-          console.error('[/update-user-info] Error adding user to DB:', dbErrorAdd);
-          throw dbErrorAdd;
+        } catch (userCreationError) {
+          console.error('[/update-user-info] Error adding user to DB:', userCreationError);
+          throw userCreationError;
         }
 
       } else {
@@ -166,10 +168,10 @@ app.post('/update-user-info', async function (req, res) {
           code: dbError.code,
           detail: dbError.detail
         });
+
+        throw dbError;
       }
 
-
-      throw dbError;
     }
 
     //return song data
@@ -344,7 +346,7 @@ app.post('/get_users_from_hotspots', async function (req, res) {
   }
 });
 
-app.post('/logout', async function(req, res) {
+app.post('/logout', async function (req, res) {
   console.log('[Backend] Received POST request to /logout');
   try {
     const { user_id } = req.body;
