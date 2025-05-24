@@ -174,10 +174,9 @@ export const HotspotDetail: React.FC<HotspotDetailProps> = ({
 
   const renderUserListenerItem = ({ item }: { item: UserListenerData }) => (
     <View style={styles.userListenerItem}>
-      {/* Conditionally render Image or AntDesign icon */}
-      {item.avatar ? (
+      {item.image ? (
         <Image
-          source={{ uri: item.avatar }}
+          source={{ uri: item.image }}
           style={styles.userAvatar}
         />
       ) : (
