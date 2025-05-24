@@ -13,6 +13,8 @@ import { LocationSearchBar } from '@/components/LocationSearchBar';
 import { CustomBottomNavigationBar, MapMode } from '@/components/CustomBottomNavigationBar';
 import { TouchableOpacity } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+
 import {
   BasicHotspotData,
   DetailedHotspotData,
@@ -25,20 +27,39 @@ interface MapContentProps {
   hotspots: BasicHotspotData[];
   onHotspotPress: (hotspot: BasicHotspotData) => void;
   currentSelectedHotspotId: string | null | undefined;
+  isMapReady: boolean;
 }
 
 // Renders the hotspot markers on the map.
 const MapContent: React.FC<MapContentProps> = React.memo(
-  ({ hotspots, onHotspotPress, currentSelectedHotspotId }) => {
+  ({ hotspots, onHotspotPress, currentSelectedHotspotId, isMapReady }) => {
+    if(!isMapReady) {
+      return null;
+    }
+
+    const validHotspots = hotspots.filter(hotspot => 
+      hotspot.coordinate &&
+      typeof hotspot.coordinate.latitude === 'number' &&
+      typeof hotspot.coordinate.longitude === 'number' &&
+      hotspot.coordinate.latitude >= -90 && 
+      hotspot.coordinate.latitude <= 90 &&
+      hotspot.coordinate.longitude >= -180 && 
+      hotspot.coordinate.longitude <= 180 &&
+      !isNaN(hotspot.coordinate.latitude) &&
+      !isNaN(hotspot.coordinate.longitude)
+    );
+
+
     return (
       <>
-        {hotspots.map((hotspot) => (
+        {validHotspots.map((hotspot) => (
           <Marker
             key={hotspot.id}
             coordinate={hotspot.coordinate}
             tracksViewChanges={false}
             anchor={{ x: 0.5, y: 0.5 }}
             zIndex={currentSelectedHotspotId === hotspot.id ? 100 : 10}
+            flat={true}
           >
             <Hotspot
               size={hotspot.size}
@@ -54,7 +75,7 @@ const MapContent: React.FC<MapContentProps> = React.memo(
   },
   (prevProps, nextProps) =>
     prevProps.hotspots === nextProps.hotspots &&
-    prevProps.currentSelectedHotspotId === nextProps.currentSelectedHotspotId
+    prevProps.currentSelectedHotspotId === nextProps.currentSelectedHotspotId && prevProps.isMapReady === nextProps.isMapReady
 );
 
 const MapScreen: React.FC = () => {
@@ -63,6 +84,8 @@ const MapScreen: React.FC = () => {
   const [hotspots, setHotspots] = useState<BasicHotspotData[]>([]);
   const [selectedHotspot, setSelectedHotspot] = useState<DetailedHotspotData | null>(null);
   const [mapPaddingBottom, setMapPaddingBottom] = useState(1);
+  const [isMapReady, setIsMapReady] = useState(false);
+  const [initialRegion, setInitialRegion] = useState<Region | null>(null);
 
   const mapRef = useRef<MapView | null>(null);
   const expoRouter = useRouter();
@@ -93,18 +116,62 @@ const MapScreen: React.FC = () => {
     requestLocationAccess();
   }, []);
 
+
+  useEffect(() => {
+    if (currentLocation && !initialRegion) {
+      const region: Region = {
+        latitude: currentLocation.latitude,
+        longitude: currentLocation.longitude,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      };
+      setInitialRegion(region);
+      console.log(`[MapScreen] Set initial region:`, region);
+    }
+  }, [currentLocation, initialRegion]);
+
   // Update hotspots when nearby data changes
   useEffect(() => {
-    if (nearbyHotspots) {
+    if (nearbyHotspots && isMapReady) {
       console.log(`[MapScreen] Received ${nearbyHotspots.length} nearby hotspots`);
-      setHotspots(nearbyHotspots);
+      
+      // Validate hotspot coordinates before setting
+      const validatedHotspots = nearbyHotspots.map(hotspot => {
+        if (!hotspot.coordinate || 
+            typeof hotspot.coordinate.latitude !== 'number' || 
+            typeof hotspot.coordinate.longitude !== 'number' ||
+            isNaN(hotspot.coordinate.latitude) ||
+            isNaN(hotspot.coordinate.longitude)) {
+          console.warn(`[MapScreen] Invalid coordinate for hotspot ${hotspot.id}:`, hotspot.coordinate);
+          // Return hotspot with default coordinate if current location is available
+          return {
+            ...hotspot,
+            coordinate: currentLocation ? {
+              latitude: currentLocation.latitude + (Math.random() - 0.5) * 0.005,
+              longitude: currentLocation.longitude + (Math.random() - 0.5) * 0.005,
+            } : { latitude: 0, longitude: 0 }
+          };
+        }
+        return hotspot;
+      }).filter(hotspot => 
+        hotspot.coordinate.latitude !== 0 || hotspot.coordinate.longitude !== 0
+      );
+
+      setHotspots(validatedHotspots);
     }
-  }, [nearbyHotspots]);
+  }, [nearbyHotspots, currentLocation, isMapReady]);
 
   // Adjust map padding when a hotspot is selected
   useEffect(() => {
     setMapPaddingBottom(selectedHotspot ? 300 : 1);
   }, [selectedHotspot]);
+
+
+  const handleMapReady = useCallback(() => {
+    console.log("[MapScreen] Map is ready");
+    setIsMapReady(true);
+  }, []);
+
 
   const centerMapOnUser = () => {
       if (mapRef.current && currentLocation) {
@@ -118,7 +185,7 @@ const MapScreen: React.FC = () => {
           300
         );
       }
-    };
+  };
 
   const handleHotspotPress = useCallback(async (hotspot: BasicHotspotData) => {
     console.log(`[MapScreen] Hotspot selected: ${hotspot.id}`);
@@ -135,17 +202,18 @@ const MapScreen: React.FC = () => {
       timestamp: hotspot.lastUpdated,
     });
 
-    if (mapRef.current) {
-      mapRef.current.animateToRegion(
-        {
-          latitude: hotspot.coordinate.latitude,
-          longitude: hotspot.coordinate.longitude,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        },
-        300
-      );
-    };
+    // hmmmmmmmmm
+    // if (mapRef.current) {
+    //   mapRef.current.animateToRegion(
+    //     {
+    //       latitude: hotspot.coordinate.latitude,
+    //       longitude: hotspot.coordinate.longitude,
+    //       latitudeDelta: 0.01,
+    //       longitudeDelta: 0.01,
+    //     },
+    //     300
+    //   );
+    // };
 
     const listeners = await getHotspotDetails(hotspot.geohash);
     console.log(`[MapScreen] Received ${listeners?.length || 0} listeners for hotspot ${hotspot.id}`);
@@ -179,7 +247,7 @@ const MapScreen: React.FC = () => {
   }
 
   // Show loading indicator while waiting for location
-  if (!currentLocation) {
+  if (!currentLocation && !initialRegion) {
     return (
       <View style={styles.centeredMessageContainer}>
         <ActivityIndicator size="large" color="#1DB954" />
@@ -188,32 +256,28 @@ const MapScreen: React.FC = () => {
     );
   }
 
-  const initialRegion: Region = {
-    latitude: currentLocation.latitude,
-    longitude: currentLocation.longitude,
-    latitudeDelta: 0.01,
-    longitudeDelta: 0.01,
-  };
-
   return (
     <View style={styles.container}>
       <MapView
         ref={mapRef}
         style={styles.map}
-        initialRegion={initialRegion}
+        initialRegion={initialRegion as Region}
         showsUserLocation={true}
         showsCompass={true}
         loadingEnabled={true}
-        maxZoomLevel={20}
-        minZoomLevel={10}
         moveOnMarkerPress={false}
-        paddingAdjustmentBehavior="automatic"
-        mapPadding={{ top: 0, right: 0, bottom: mapPaddingBottom, left: 0 }}
+        onMapReady={handleMapReady}
+        rotateEnabled={true}
+        scrollEnabled={true}
+        zoomEnabled={true}
+        pitchEnabled={false}
+        toolbarEnabled={false}
       >
         <MapContent
           hotspots={hotspots}
           onHotspotPress={handleHotspotPress}
           currentSelectedHotspotId={selectedHotspot?.id}
+          isMapReady={isMapReady}
         />
       </MapView>
 
@@ -223,7 +287,9 @@ const MapScreen: React.FC = () => {
         style={styles.centerLocationButton}
         onPress={centerMapOnUser}
       >
-        <MaterialIcons name="my-location" size={24} color="black" />
+        <MaterialIcons name="my-location" size={24} color="#333" />
+        {/* <FontAwesome5 name="location-arrow" size={20} color="#333" /> */}
+        
       </TouchableOpacity>
 
       <LocationSearchBar />
@@ -275,17 +341,20 @@ const styles = StyleSheet.create({
   },
   centerLocationButton: {
     position: 'absolute',
-    bottom: 225, // poniżej NowPlayingBar (dopasuj do potrzeb)
+    bottom: 225,
     right: 20,
-    backgroundColor: 'rgba(255, 2255, 255, 0.85)',
-    borderRadius: 30,
-    padding: 10,
-    elevation: 3, // cień Android
-    shadowColor: '#000', // cień iOS
+    width: 52,
+    height: 52,
+    backgroundColor: 'rgba(255, 255, 255, 1.00)',
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 3,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
-},
+  },
 });
 
 export default React.memo(MapScreen);

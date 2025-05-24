@@ -14,6 +14,7 @@ import {
 import { BlurView } from 'expo-blur';
 import FontAwesome from '@expo/vector-icons/build/FontAwesome';
 import { LinearGradient } from 'expo-linear-gradient';
+import AntDesign from '@expo/vector-icons/AntDesign';
 
 import {
   TrackData,
@@ -173,11 +174,17 @@ export const HotspotDetail: React.FC<HotspotDetailProps> = ({
 
   const renderUserListenerItem = ({ item }: { item: UserListenerData }) => (
     <View style={styles.userListenerItem}>
-      <Image
-        source={{ uri: item.avatar }}
-        style={styles.userAvatar}
-        defaultSource={require('../assets/images/remove.png')}
-      />
+      {/* Conditionally render Image or AntDesign icon */}
+      {item.avatar ? (
+        <Image
+          source={{ uri: item.avatar }}
+          style={styles.userAvatar}
+        />
+      ) : (
+        <View style={[styles.userAvatar, styles.defaultUserAvatar]}>
+          <AntDesign name="user" size={24} color="#999" />
+        </View>
+      )}
       <View style={styles.userInfo}>
         <Text style={styles.userName} numberOfLines={1}>{item.name}</Text>
         <View style={styles.userTrackContainer}>
@@ -463,13 +470,13 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 14,
-    color: '#555', // Darker for better readability
+    color: '#333', // Darker for better readability
     fontWeight: '500',
     marginRight: 10,
   },
   timestampText: {
     fontSize: 12,
-    color: '#777', // Slightly darker
+    color: '#444', // Slightly darker
     fontStyle: 'italic',
   },
   closeButton: {
@@ -518,7 +525,7 @@ const styles = StyleSheet.create({
   modeButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#555',
+    color: '#333',
   },
   modeButtonTextActive: {
     color: '#1DB954',
@@ -543,7 +550,7 @@ const styles = StyleSheet.create({
   summaryTabText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#666',
+    color: '#333',
   },
   summaryTabTextActive: {
     color: '#1DB954',
@@ -600,7 +607,7 @@ const styles = StyleSheet.create({
   },
   trackArtist: {
     fontSize: 13,
-    color: '#666',
+    color: '#444',
     marginTop: 2,
   },
   listenerCount: {
@@ -613,7 +620,7 @@ const styles = StyleSheet.create({
   },
   listenerText: {
     fontSize: 12,
-    color: '#555',
+    color: '#333',
     marginLeft: 5,
     fontWeight: '500',
   },
@@ -640,7 +647,7 @@ const styles = StyleSheet.create({
   },
   genreName: {
     fontSize: 13,
-    color: '#444',
+    color: '#222',
     fontWeight: '500',
   },
   genrePercentage: {
@@ -705,9 +712,14 @@ const styles = StyleSheet.create({
   },
   emptyListText: {
     textAlign: 'center',
-    color: '#777',
+    color: '#444',
     fontSize: 14,
     marginTop: 20,
     marginBottom: 20,
+  },
+  defaultUserAvatar: { // New style for default user avatar
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
