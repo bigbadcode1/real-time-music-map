@@ -56,7 +56,7 @@ export const HotspotDetail: React.FC<HotspotDetailProps> = ({
 }) => {
   const slideAnim = useRef(new Animated.Value(height)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const [displayMode, setDisplayMode] = useState<DisplayMode>('summary');
+  const [displayMode, setDisplayMode] = useState<DisplayMode>('recentUsers');
   const [summaryTab, setSummaryTab] = useState<SummaryTabType>('tracks');
 
   useEffect(() => {
@@ -188,14 +188,14 @@ export const HotspotDetail: React.FC<HotspotDetailProps> = ({
             style={styles.userTrackIcon}
           />
           <Text style={styles.userTrackText} numberOfLines={1}>
-            {item.currentTrack.title} - {item.currentTrack.artist}
+            {item.currentTrack.artist} - {item.currentTrack.title}
           </Text>
         </View>
-        <Text style={styles.userTrackTimestamp}>
+        {/* <Text style={styles.userTrackTimestamp}>
           {item.currentTrack.isCurrentlyListening
             ? "Listening now"
             : `Last listened: ${new Date(item.currentTrack.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
-        </Text>
+        </Text> */}
       </View>
       {item.currentTrack.albumArt ? (
         <Image
@@ -237,7 +237,7 @@ export const HotspotDetail: React.FC<HotspotDetailProps> = ({
               <Text style={styles.locationName} numberOfLines={1} ellipsizeMode="tail">{locationName}</Text>
                 <View style={styles.statsRow}>
                   <FontAwesome name="users" size={14} color="#666" style={styles.icon} />
-                  <Text style={styles.statValue}>{userCount} listeners</Text>
+                  <Text style={styles.statValue}>{userCount} {userCount === 1 ? 'listener' : 'listeners'} </Text>
                   <Text style={styles.timestampText}>as of {formattedTime}</Text>
                 </View>
               </View>
@@ -251,18 +251,18 @@ export const HotspotDetail: React.FC<HotspotDetailProps> = ({
             {/* Mode Selector */}
             <View style={styles.modeSelectorContainer}>
               <TouchableOpacity
-                style={[styles.modeButton, displayMode === 'summary' && styles.modeButtonActive]}
-                onPress={() => setDisplayMode('summary')}
-              >
-                <FontAwesome name="bar-chart" size={16} color={displayMode === 'summary' ? '#1DB954' : '#555'} style={styles.modeIcon} />
-                <Text style={[styles.modeButtonText, displayMode === 'summary' && styles.modeButtonTextActive]}>Summary</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
                 style={[styles.modeButton, displayMode === 'recentUsers' && styles.modeButtonActive]}
                 onPress={() => setDisplayMode('recentUsers')}
               >
                 <FontAwesome name="user-o" size={16} color={displayMode === 'recentUsers' ? '#1DB954' : '#555'} style={styles.modeIcon} />
                 <Text style={[styles.modeButtonText, displayMode === 'recentUsers' && styles.modeButtonTextActive]}>Listeners</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modeButton, displayMode === 'summary' && styles.modeButtonActive]}
+                onPress={() => setDisplayMode('summary')}
+              >
+                <FontAwesome name="bar-chart" size={16} color={displayMode === 'summary' ? '#1DB954' : '#555'} style={styles.modeIcon} />
+                <Text style={[styles.modeButtonText, displayMode === 'summary' && styles.modeButtonTextActive]}>Summary</Text>
               </TouchableOpacity>
             </View>
 

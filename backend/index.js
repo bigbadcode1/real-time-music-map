@@ -133,7 +133,6 @@ app.post('/update-user-info', async function (req, res) {
       console.log('[/update-user-info] Debug - Successfully updated user info');
 
     } catch (dbError) {
-      console.log(`huj - error caught with code ===> ${dbError.code}`)
       // user does not exist in db
       // => add user to db
       if (dbError.code === '23588') {
