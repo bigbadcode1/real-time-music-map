@@ -128,7 +128,7 @@ export function useRealTimeUpdates() {
 
       const response = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}/get_hotspots`, {
         method: 'POST',
-        headers: headers,
+        headers: headers, 
         body: JSON.stringify({ ne_lat, ne_long, sw_lat, sw_long })
       });
 
