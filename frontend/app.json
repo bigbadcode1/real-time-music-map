@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Real Time Music Map",
-    "slug": "frontend",
+    "slug": "real-time-music-map",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/bbclogo.png",
@@ -12,12 +12,13 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.bigbadcode1.realtimemusicmap",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "This app needs access to your location to show you on the map."
+        "NSLocationWhenInUseUsageDescription": "This app needs access to your location to show you on the map.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/splash-screen-logo.png",
+        "foregroundImage": "./assets/images/bbclogo.png",
         "backgroundColor": "#ffffff"
       },
       "permissions": [
@@ -26,7 +27,6 @@
         "WRITE_EXTERNAL_STORAGE",
         "READ_EXTERNAL_STORAGE"
       ],
-      "backgroundLocation": true,
       "package": "com.bigbadcode1.realtimemusicmap"
     },
     "web": {
@@ -39,7 +39,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/splash-screen-logo.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
@@ -48,6 +48,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "6a3ffa61-5f0c-450d-911c-b034708c6e56"
+      }
+    },
+    "owner": "ogien_bbc"
   }
 }
