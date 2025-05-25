@@ -8,19 +8,32 @@ CREATE OR REPLACE FUNCTION get_hotspots(
 )
 RETURNS TABLE (geohash VARCHAR(7), longitude DOUBLE PRECISION, latitude DOUBLE PRECISION, count int) AS $$
 BEGIN
-    IF NOT (ne_lat BETWEEN -90 AND 90 AND ne_long BETWEEN -180 AND 180) OR NOT (sw_lat BETWEEN -90 AND 90 AND sw_long BETWEEN -180 AND 180) THEN
-        RETURN;
-    END IF;
+  IF NOT (ne_lat BETWEEN -90 AND 90 AND ne_long BETWEEN -180 AND 180) 
+  OR NOT (sw_lat BETWEEN -90 AND 90 AND sw_long BETWEEN -180 AND 180) THEN
+    RETURN;
+  END IF;
 
+  IF sw_long > ne_long THEN
     RETURN QUERY 
-    SELECT h.geohash, h.longitude, h.latitude , h.count
+    SELECT h.geohash, h.longitude, h.latitude, h.count
     FROM "Hotspots" h
-    WHERE (h.latitude BETWEEN sw_lat AND ne_lat
-    AND h.longitude BETWEEN sw_long AND ne_long)
+    WHERE h.latitude BETWEEN sw_lat AND ne_lat
+    AND (h.longitude >= sw_long OR h.longitude <= ne_long)
+    AND h.count >= 1
     ORDER BY h.count DESC
     LIMIT 20;
-    -- for now limited to 20 records for optimization  
-
+  ELSE
+    RETURN QUERY 
+    SELECT h.geohash, h.longitude, h.latitude, h.count
+    FROM "Hotspots" h
+    WHERE h.latitude BETWEEN sw_lat AND ne_lat
+    AND h.longitude BETWEEN sw_long AND ne_long
+    AND h.count >= 1
+    ORDER BY h.count DESC
+    LIMIT 20;
+  END IF;
+  -- temp limit to 20
+  
 END;
 $$ LANGUAGE plpgsql;
 
@@ -38,7 +51,8 @@ CREATE OR REPLACE FUNCTION update_user_info(
   p_song_artist TEXT DEFAULT NULL
 ) RETURNS VOID AS $$
 DECLARE
-  v_old_expires_at TIMESTAMPTZ := NULL;
+  v_old_expires_at TIMESTAMPTZ;
+  v_old_geohash TEXT;
 BEGIN
 
   SELECT expires_at INTO v_old_expires_at FROM "Auth" WHERE user_id = p_user_id;
@@ -48,7 +62,6 @@ BEGIN
     RAISE EXCEPTION 'User does not exist' USING ERRCODE = '23588';
   END IF;
 
-  -- if tokens dont match
     -- if old user expired
     IF (v_old_expires_at < NOW()) THEN
       -- update token to provided one
@@ -64,6 +77,27 @@ BEGIN
       VALUES (p_song_id, p_song_image, p_song_title, p_song_artist)
       ON CONFLICT DO NOTHING;
   END IF;
+
+
+  -- Get current geohash for hotspot management
+  SELECT geohash INTO v_old_geohash 
+  FROM "Active Users" 
+  WHERE id = p_user_id;
+  
+  -- Handle hotspot count change
+  -- if there is a new different hotspot or null to null
+  IF v_old_geohash IS DISTINCT FROM COALESCE(p_geohash, v_old_geohash) THEN
+    -- Decrement old hotspot
+    IF v_old_geohash IS NOT NULL THEN
+      PERFORM manage_hotspot_count(v_old_geohash, -1);
+    END IF;
+    
+    -- Increment new hotspot
+    IF p_geohash IS NOT NULL THEN
+      PERFORM manage_hotspot_count(p_geohash, 1);
+    END IF;
+
+  END IF; 
   
   -- Update user info
   UPDATE "Active Users"
@@ -124,42 +158,74 @@ CREATE OR REPLACE FUNCTION add_new_user(
   p_image_url TEXT DEFAULT NULL
 ) RETURNS VOID AS $$
 DECLARE
-  v_user_expires_at TIMESTAMPTZ;
-  v_user_token TIMESTAMPTZ;
+  v_old_geohash VARCHAR(7);
 BEGIN
   -- Start transaction
-  BEGIN
+  SELECT geohash INTO v_old_geohash
+  FROM "Active Users" 
+  WHERE id = p_user_id;
 
-    SELECT expires_at INTO v_user_expires_at FROM "Active Users" WHERE id = p_user_id;
-  
-    -- Check if user already exists
-    IF FOUND THEN
-      -- delete and overwrite with new user
-      DELETE FROM "Active Users" WHERE id = p_user_id;
+  -- Check if user already exists
+  IF FOUND THEN
+    -- Clean up old user's hotspot count
+    IF v_old_geohash IS NOT NULL THEN
+      PERFORM manage_hotspot_count(v_old_geohash, -1);
     END IF;
+
+    -- delete and overwrite with new user
+    DELETE FROM "Active Users" WHERE id = p_user_id;
+  END IF;
+
   
-    
-    -- Insert into Active Users with default null song
-    INSERT INTO "Active Users" (id, name, image_url, song_id, geohash, expires_at)
-    VALUES (p_user_id, p_name, p_image_url, NULL, p_geohash, NOW() + INTERVAL '1 hour');
-    -- ON CONFLICT(id) DO UPDATE 
-    -- SET geohash = p_geohash, expires_at = NOW() + INTERVAL '1 hour'; 
-    
-    -- Insert authentication info
-    INSERT INTO "Auth" (user_id, auth_token_hash, expires_at)
-    VALUES (p_user_id, p_auth_token_hash, p_token_expires_at);
-    -- ON CONFLICT(user_id) DO UPDATE 
-    -- SET auth_token_hash = p_auth_token_hash, expires_at = p_token_expires_at; 
-        
-  EXCEPTION
-    WHEN OTHERS THEN
-      RAISE;
-  END;
+  -- Insert into Active Users with default null song
+  INSERT INTO "Active Users" (id, name, image_url, song_id, geohash, expires_at)
+  VALUES (p_user_id, p_name, p_image_url, NULL, p_geohash, NOW() + INTERVAL '1 hour');
+  
+  -- Insert authentication info
+  INSERT INTO "Auth" (user_id, auth_token_hash, expires_at)
+  VALUES (p_user_id, p_auth_token_hash, p_token_expires_at);
+
+  -- Increment hotspot count for new location
+  IF p_geohash IS NOT NULL THEN
+    PERFORM manage_hotspot_count(p_geohash, 1);
+  END IF;    
   
 END;
 $$ LANGUAGE plpgsql;
 
 
+-- Atomic hotspot count management function
+CREATE OR REPLACE FUNCTION manage_hotspot_count(
+    p_geohash VARCHAR(7),
+    p_increment INTEGER
+) RETURNS VOID AS $$
+DECLARE
+    v_current_count INTEGER;
+BEGIN
+  -- lock and get current count
+  SELECT count INTO v_current_count
+  FROM "Hotspots"
+  WHERE geohash = p_geohash
+  FOR UPDATE;
+  
+  IF FOUND THEN
+    IF v_current_count + p_increment <= 0 THEN
+      -- delete hotspot if count would be 0 or negative
+      DELETE FROM "Hotspots" WHERE geohash = p_geohash;
+    ELSE
+        -- update count
+      UPDATE "Hotspots"
+      SET count = count + p_increment,
+        last_updated = NOW()
+      WHERE geohash = p_geohash;
+    END IF;
+  ELSIF p_increment > 0 THEN
+    -- create new hotspot with coordinates
+    INSERT INTO "Hotspots" (geohash, count, last_updated)
+    VALUES (p_geohash, p_increment, NOW());
+  END IF;
+END;
+$$ LANGUAGE plpgsql;
 
 
 
@@ -167,165 +233,110 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION cleanup_expired_users() 
 RETURNS VOID AS $$
 DECLARE
-  -- v_expired_user RECORD;
+  v_expired_user RECORD;
 BEGIN
-  -- Loop through expired users
-  DELETE FROM "Active Users" WHERE expires_at < NOW();
+  FOR v_expired_user IN 
+    SELECT id, geohash 
+    FROM "Active Users" 
+    WHERE expires_at < NOW()
+  LOOP
+    -- Decrement hotspot count if user had a location
+    IF v_expired_user.geohash IS NOT NULL THEN
+      PERFORM manage_hotspot_count(v_expired_user.geohash, -1);
+    END IF;
+    
+    -- Delete the user (Auth will be deleted by CASCADE)
+    DELETE FROM "Active Users" WHERE id = v_expired_user.id;
+  END LOOP;
 END;
 $$ LANGUAGE plpgsql;
 
 
 
-
+-- get users from provided geohashes / prefixes
 CREATE OR REPLACE FUNCTION get_users_from_hotspots(hotspot_prefixes text[])
 RETURNS TABLE (
-    id TEXT,
-    name TEXT,
-    image TEXT,
-    song_id TEXT,
-    song_title TEXT,
-    song_image TEXT,
-    song_artist TEXT
+  id TEXT,
+  name TEXT,
+  image TEXT,
+  song_id TEXT,
+  song_title TEXT,
+  song_image TEXT,
+  song_artist TEXT
 ) AS $$
 BEGIN
-    RETURN QUERY
-    SELECT u.id, u.name, u.image_url, u.song_id, s.title, s.image_url, s.artist
-    FROM "Active Users" u
-    JOIN "Hotspots" h ON u.geohash = h.geohash
-    JOIN "Songs" s ON u.song_id = s.id 
-    WHERE (
-        array_length(hotspot_prefixes, 1) IS NULL OR
-        EXISTS (
-            SELECT 1
-            FROM unnest(hotspot_prefixes) AS prefix
-            WHERE h.geohash LIKE (prefix || '%')
-        )
-    );
+  RETURN QUERY
+  SELECT u.id, u.name, u.image_url, u.song_id, s.title, s.image_url, s.artist
+  FROM "Active Users" u
+  JOIN "Hotspots" h ON u.geohash = h.geohash
+  JOIN "Songs" s ON u.song_id = s.id 
+  WHERE (
+    array_length(hotspot_prefixes, 1) IS NULL OR
+    EXISTS (
+      SELECT 1
+      FROM unnest(hotspot_prefixes) AS prefix
+      WHERE h.geohash LIKE (prefix || '%')
+    )
+  );
 END;
 $$ LANGUAGE plpgsql;
 
+
+-- delete user with hotspot count update
+CREATE OR REPLACE FUNCTION delete_user(p_user_id TEXT)
+RETURNS VOID AS $$
+DECLARE
+  v_geohash VARCHAR(7);
+BEGIN
+  SELECT geohash INTO v_geohash FROM "Active Users" WHERE id = p_user_id;
+  IF FOUND THEN
+    DELETE FROM "Active Users" WHERE id = p_user_id;
+    -- update hotspot count
+    IF v_geohash IS NOT NULL THEN
+      PERFORM manage_hotspot_count(v_geohash, -1);
+    END IF;
+  END IF;
+
+END;
+$$ LANGUAGE plpgsql;
+
+-- delete all users with hotspots
+CREATE OR REPLACE FUNCTION delete_all_users()
+RETURNS VOID AS $$
+BEGIN
+  DELETE FROM "Active Users";
+  DELETE FROM "Hotspots";
+END;
+$$ LANGUAGE plpgsql;
 
 
 ---------------------- TRIGGERS -----------------------------
 
-
-
-
-CREATE OR REPLACE FUNCTION update_hotspots_count()
-RETURNS TRIGGER AS $$
-BEGIN
-    IF OLD.geohash IS DISTINCT FROM NEW.geohash THEN
-        -- Decrement count in the old hotspot if it existed
-        IF OLD.geohash IS NOT NULL THEN
-            UPDATE "Hotspots"
-            SET count = count - 1,
-                last_updated = NOW()
-            WHERE geohash = OLD.geohash;
-            
-            -- Delete the hotspot if count reaches 0
-            DELETE FROM "Hotspots"
-            WHERE geohash = OLD.geohash AND count <= 0;
-        END IF;
-
-        -- Increment count in the new hotspot if it exists
-        IF NEW.geohash IS NOT NULL THEN
-            INSERT INTO "Hotspots" (geohash, count, last_updated)
-            VALUES (NEW.geohash, 1, NOW())
-            ON CONFLICT (geohash) DO UPDATE
-            SET count = "Hotspots".count + 1,
-                last_updated = NOW();
-        END IF;
-    END IF;
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- trigger for when acitve user data is updated and hotspots need to update as well
-CREATE OR REPLACE TRIGGER update_hotspots_after_user_change
-BEFORE UPDATE ON "Active Users"
-FOR EACH ROW
-EXECUTE FUNCTION update_hotspots_count();
-
-
--------- ADD USER / CHANGE USER HOTSPOT
-
-CREATE OR REPLACE FUNCTION increment_hotspot()
-RETURNS TRIGGER AS $$
-BEGIN
-    -- Increment count in the new hotspot if it exists
-    IF NEW.geohash IS NOT NULL THEN
-        INSERT INTO "Hotspots" (geohash, count, last_updated)
-        VALUES (NEW.geohash, 1, NOW())
-        ON CONFLICT (geohash) DO UPDATE
-        SET count = "Hotspots".count + 1,
-            last_updated = NOW();
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-
-CREATE OR REPLACE TRIGGER update_hotspot_new_user
-BEFORE INSERT 
-ON "Active Users"
-FOR EACH ROW
-EXECUTE FUNCTION increment_hotspot();
-
-
-
--- ON DELTE USER
-CREATE OR REPLACE FUNCTION decrement_hotspots_on_delete()
-RETURNS TRIGGER AS $$
-BEGIN
-    -- Decrement count in the hotspot when a user is deleted
-    IF OLD.geohash IS NOT NULL THEN
-        UPDATE "Hotspots"
-        SET count = count - 1,
-            last_updated = NOW()
-        WHERE geohash = OLD.geohash;
-        
-        -- Delete the hotspot if count reaches 0
-        DELETE FROM "Hotspots"
-        WHERE geohash = OLD.geohash AND count <= 0;
-    END IF;
-
-    RETURN OLD;
-END;
-$$ LANGUAGE plpgsql;
-
-
-CREATE OR REPLACE TRIGGER decrement_hotspots_on_user_delete
-AFTER DELETE ON "Active Users"
-FOR EACH ROW
-EXECUTE FUNCTION decrement_hotspots_on_delete();
-
-
-
------------------ HOTSPOTS GEOHASH TO LAT AND LONG
-
-
-
-
 -- calculate lat and long from geohash after insert
-
 CREATE OR REPLACE FUNCTION update_coordinates_from_geohash()
 RETURNS TRIGGER AS $$
 DECLARE
     point_geom GEOMETRY;
 BEGIN
+  IF NEW.geohash ~ '^[0123456789bcdefghjkmnpqrstuvwxyz]{7}$' THEN
+    BEGIN
+      point_geom := ST_Centroid(ST_GeomFromGeoHash(NEW.geohash));
+      NEW.longitude := ST_X(point_geom);
+      NEW.latitude := ST_Y(point_geom);
+    EXCEPTION
+      WHEN OTHERS THEN
+        RAISE NOTICE 'Error converting geohash % to coordinates: %', NEW.geohash, SQLERRM;
+        -- Set to NULL if conversion fails
+        NEW.longitude := NULL;
+        NEW.latitude := NULL;
+    END;
+  ELSE
+    -- Invalid geohash format
+    NEW.longitude := NULL;
+    NEW.latitude := NULL;
+  END IF;
 
-    IF NEW.geohash ~ '^[0123456789bcdefghjkmnpqrstuvwxyz]{7}$' THEN
-        point_geom := ST_Centroid(ST_GeomFromGeoHash(NEW.geohash));
-        NEW.longitude := ST_X(point_geom);
-        NEW.latitude := ST_Y(point_geom);
-    END IF;
-
-    RETURN NEW;
-EXCEPTION
-    WHEN OTHERS THEN
-        RAISE NOTICE 'An error occurred in update_coordinates_from_geohash: % %', SQLERRM, SQLSTATE;
-        RETURN NULL;  -- Or RAISE; depending on desired behavior
+  RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
