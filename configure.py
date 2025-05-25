@@ -112,7 +112,7 @@ def main():
         "SPOTIFY_REDIRECT_URI": f"exp://{config["LOCAL_IP"]}:8081",
         # ... other backend specific variables
     }
-    generate_env_file(BACKEND_DIR / ".env2", backend_vars)
+    generate_env_file(BACKEND_DIR / ".env", backend_vars)
 
     frontend_vars = {
         "EXPO_PUBLIC_SPOTIFY_CLIENT_ID": config["SPOTIFY_CLIENT_ID"],
@@ -120,7 +120,7 @@ def main():
         "EXPO_PUBLIC_BACKEND_URL": f"http://{config["LOCAL_IP"]}:{config["BACKEND_PORT"]}",
     }
     
-    generate_env_file(FRONTEND_DIR / ".env2", frontend_vars)
+    generate_env_file(FRONTEND_DIR / ".env", frontend_vars)
 
     # --- Configure Database .env (if applicable for Docker Compose etc.) ---
     database_vars = {
@@ -130,7 +130,7 @@ def main():
         "POSTGRES_HOST_AUTH_METHOD": config["POSTGRES_HOST_AUTH_METHOD"],
     }
 
-    generate_env_file(DATABASE_DIR / ".env2", database_vars)
+    generate_env_file(DATABASE_DIR / ".env", database_vars)
 
     print_green("\nConfiguration complete!")
     print("\nRemember to add Spotify Redirect URI to your spotify api dashboard (at https://developer.spotify.com/dashboard):")
