@@ -98,6 +98,11 @@ npm run install:all
 
 Setup environment variables
 
+to do that you can run:
+```bash
+python3 configure.py
+```
+or:
 ```
 change .env_sample to .env and setup your API/private keys
 ```
