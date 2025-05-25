@@ -56,10 +56,10 @@ const MapContent: React.FC<MapContentProps> = React.memo(
           <Marker
             key={hotspot.id}
             coordinate={hotspot.coordinate}
-            tracksViewChanges={false}
+            tracksViewChanges={true}
             anchor={{ x: 0.5, y: 0.5 }}
             zIndex={currentSelectedHotspotId === hotspot.id ? 100 : 10}
-            flat={true}
+            // flat={true}
           >
             <Hotspot
               size={hotspot.size}

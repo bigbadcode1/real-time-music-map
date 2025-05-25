@@ -4,17 +4,17 @@ config();
 
 // Database class manages database connections and adds an abstraction layer to calling queries
 class Database {
-  // creates connection pool
   constructor() {
+
     this.pool = new Pool({
-      user: process.env.DB_USER,
-      host: process.env.DB_HOST,
-      database: process.env.DB_NAME,
-      password: process.env.DB_PASS,
-      port: process.env.DB_PORT,
+      connectionString: process.env.DATABASE_URL,
+      ssl: {
+        rejectUnauthorized: false // Required for Render's PostgreSQL connections
+      },
       max: 80,
       connectionTimeoutMillis: 5000,
-    });
+      });
+    console.log('[Postgresql.database.js] Using DATABASE_URL for connection.');
   }
 
   // helper function, calls specified query with params 
