@@ -200,14 +200,13 @@ app.post('/refresh-token', async function (req, res) {
       try {
         await Database.updateAuthToken(
           user_id,
-          hashToken(refresh_token), // old token hash
-          newTokenHash,             // new token hash
-          new Date(expiresAt)       // new expiration
+          hashToken(refresh_token),
+          newTokenHash,             
+          new Date(expiresAt)     
         );
         console.log(`[/refresh-token] Updated auth token for user ${user_id}`);
       } catch (dbError) {
         console.error('[/refresh-token] Error updating auth token:', dbError);
-        // Continue anyway since we got valid tokens from Spotify
       }
     } else {
       console.log('[/refresh-token] No new refresh token received from Spotify');
@@ -215,7 +214,7 @@ app.post('/refresh-token', async function (req, res) {
 
     res.json({
       access_token: tokens.access_token,
-      refresh_token: tokens.refresh_token || refresh_token, // fallback to old token
+      refresh_token: tokens.refresh_token || refresh_token,
       expires_in: tokens.expires_in
     });
 
@@ -320,8 +319,8 @@ app.post('/db_test', async function (req, res) {
       id: "userid1234123",
       name: "User Test 1234",
       token_hash: hash,
-      expires_at: date.getTime(), // Use timestamp
-      geohash: "9q8yy", // Valid geohash format
+      expires_at: date.getTime(),
+      geohash: "9q8yy",
       image_url: "https://example.com/image.jpg"
     };
 
@@ -345,7 +344,6 @@ app.get('/test', async function (req, res) {
   }
 });
 
-// Cleanup endpoint (for testing/maintenance)
 app.post('/cleanup', async function (req, res) {
   try {
     await Database.cleanupExpiredUsers();
