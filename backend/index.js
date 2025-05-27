@@ -7,7 +7,6 @@ import { getUserInfo } from "./utils/spotify/spotifyUserInfo.js";
 import Database from "./database/Postgres.database.js";
 import { hashToken } from "#utils/hashToken.js";
 import crypto from 'crypto'
-import { Console } from "console";
 
 dotenv.config();
 
@@ -15,48 +14,6 @@ var app = express();
 
 app.use(express.json());
 app.use(cors());
-
-
-// app.get('/login', function (req, res) {
-//   const client_id = process.env.SPOTIFY_CLIENT_ID;
-//   const redirect_uri = process.env.SPOTIFY_REDIRECT_URI;
-//   const state = "4hdkjhgfjkldasj;l";
-//   const scope = [
-//     'user-read-private',
-//     'user-read-email',
-//     'user-read-currently-playing',
-//     'user-read-playback-state',
-//     'user-modify-playback-state',
-//     'user-read-recently-played',
-//     'user-library-read',
-//     'playlist-read-private',
-//     'playlist-read-collaborative',
-//     'streaming'
-//   ].join(' ');
-
-
-//   res.redirect('https://accounts.spotify.com/authorize?' +
-//     querystring.stringify({
-//       response_type: 'code',
-//       client_id: client_id,
-//       scope: scope,
-//       redirect_uri: redirect_uri,
-//       state: state
-//     }));
-//   });
-
-
-
-//   app.get('/callback', async function (req, res) {
-//     console.log("callback")
-//     const code = req.query.code;
-//     const AccessTokenResponse = await getSpotifyAccessToken(process.env.SPOTIFY_CLIENT_ID, process.env.SPOTIFY_CLIENT_SECRET, code, process.env.SPOTIFY_REDIRECT_URI);
-//     const track = await getCurrentlyPlayingTrack(AccessTokenResponse.access_token);
-//     console.log(track.track.name);
-
-//   });
-
-
 
 // --------------------- SPOTIFY API -------------------------
 
@@ -75,7 +32,6 @@ app.get('/currentTrack', async function (req, res) {
       return res.status(204).send();
     }
 
-
     res.json(track);
   } catch (error) {
     console.error('[/currentTrack] Error', error);
@@ -83,25 +39,14 @@ app.get('/currentTrack', async function (req, res) {
   }
 });
 
-
-
 // update user location and fetch current song
 app.post('/update-user-info', async function (req, res) {
   try {
     const { access_token, refresh_token, user_id, geohash, expires_in = 3600 } = req.body;
 
-    // console.log('[/update-user-info] Debug - Received request body:', {
-    //   user_id,
-    //   access_token: access_token,
-    //   refresh_token: refresh_token,
-    //   geohash
-    // });
-
-
     if (!user_id || !access_token || !refresh_token) {
       return res.status(400).json({ error: 'Required data is missing' });
     }
-
 
     // fetch current song data
     let track = null;
@@ -118,14 +63,11 @@ app.post('/update-user-info', async function (req, res) {
       console.error('[/update-user-info] Error getting current track:', error);
     }
 
-    //hash token
+    // hash token
     const tokenHash = hashToken(refresh_token);
-    // console.log('[/update-user-info] Debug - Generated token hash:', tokenHash);
-
 
     // send user data to db
     try {
-
       await Database.updateUserInfo(
         user_id,
         tokenHash,
@@ -138,10 +80,8 @@ app.post('/update-user-info', async function (req, res) {
       console.log('[/update-user-info] Debug - Successfully updated user info');
 
     } catch (dbError) {
-      // user does not exist in db
-      // => add user to db
-      if (dbError.code === '23588') {
-
+      // Check if user does not exist (error code for user not found)
+      if (dbError.code === '42704') {
         try {
           // fetch user profile info 
           const userProfile = await getUserInfo(access_token);
@@ -165,27 +105,23 @@ app.post('/update-user-info', async function (req, res) {
           console.error('[/update-user-info] Error adding user to DB:', userCreationError);
           throw userCreationError;
         }
-
       } else {
         console.error('[/update-user-info] Debug - Database error:', {
           error: dbError.message,
           code: dbError.code,
           detail: dbError.detail
         });
-
         throw dbError;
       }
-
     }
 
-    //return song data
+    // return song data
     res.status(200).json({ track: isPlaying && track ? track : null, isPlaying: isPlaying });
   } catch (error) {
     console.error('[/update-user-info] Error:', error);
     res.status(500).json({ error: 'Failed to update user info' });
   }
 });
-
 
 // exchange token
 app.post('/exchange-token', async function (req, res) {
@@ -198,7 +134,6 @@ app.post('/exchange-token', async function (req, res) {
       code,
       req.body.redirectUri
     );
-
 
     // get user profile info
     const userProfile = await getUserInfo(spotifyTokens.access_token);
@@ -217,22 +152,14 @@ app.post('/exchange-token', async function (req, res) {
         userName,
         hashedRefreshToken,
         expiresAt,
-        null,
+        null, // no geohash initially
         userProfile.image_url
       );
       console.log(`[/exchange-token] User ${userId} added/updated in DB.`);
     } catch (dbError) {
       console.error('[/exchange-token] Error saving user to DB:', dbError);
+      return res.status(500).json({ error: 'Failed to save user to database' });
     }
-
-
-    // console.log("object returned: ", {
-    //   access_token: spotifyTokens.access_token,
-    //   refresh_token: spotifyTokens.refresh_token,
-    //   expires_in: spotifyTokens.expires_in,
-    //   app_session_token: appSessionToken,
-    //   user_id: userId
-    // })
 
     res.json({
       access_token: spotifyTokens.access_token,
@@ -254,7 +181,7 @@ app.post('/refresh-token', async function (req, res) {
     const { refresh_token, user_id } = req.body;
 
     if (!refresh_token || !user_id) {
-      return res.status(400).json({ error: 'Refresh token is required' });
+      return res.status(400).json({ error: 'Refresh token and user ID are required' });
     }
 
     // get new tokens from spotify
@@ -265,25 +192,30 @@ app.post('/refresh-token', async function (req, res) {
       refresh_token
     );
 
-
-    // if new refresh_token is returned change data in db 
+    // if new refresh_token is returned, update data in db 
     if (tokens.refresh_token) {
       const newTokenHash = hashToken(tokens.refresh_token);
       const expiresAt = Date.now() + tokens.expires_in * 1000;
 
-      await Database.updateAuthToken(
-        user_id,
-        hashToken(refresh_token),
-        newTokenHash,
-        new Date(expiresAt)
-      );
+      try {
+        await Database.updateAuthToken(
+          user_id,
+          hashToken(refresh_token), // old token hash
+          newTokenHash,             // new token hash
+          new Date(expiresAt)       // new expiration
+        );
+        console.log(`[/refresh-token] Updated auth token for user ${user_id}`);
+      } catch (dbError) {
+        console.error('[/refresh-token] Error updating auth token:', dbError);
+        // Continue anyway since we got valid tokens from Spotify
+      }
     } else {
-      console.log('[/refresh-token] tokens.refresh_token == null');
+      console.log('[/refresh-token] No new refresh token received from Spotify');
     }
 
     res.json({
       access_token: tokens.access_token,
-      refresh_token: tokens.refresh_token,
+      refresh_token: tokens.refresh_token || refresh_token, // fallback to old token
       expires_in: tokens.expires_in
     });
 
@@ -293,9 +225,7 @@ app.post('/refresh-token', async function (req, res) {
   }
 });
 
-
 // ------------------- DATABASE QUERIES -------------------------------
-
 
 // get hotspots from coordinates (provide two points NE and SW of the view box)
 app.post('/get_hotspots', async function (req, res) {
@@ -303,12 +233,14 @@ app.post('/get_hotspots', async function (req, res) {
     const { ne_lat, ne_long, sw_lat, sw_long } = req.body;
 
     if (isNaN(ne_lat) || isNaN(ne_long) || isNaN(sw_lat) || isNaN(sw_long)) {
-      throw new Error("isNaN error for coordinates");
+      return res.status(400).json({ error: "Invalid coordinates provided" });
     }
 
-    // test to get all hotspots (limited to top 20)
-    // const result = await Database.getHotspots(90, 180, -90, -180);
-    //
+    // Validate coordinate ranges
+    if (ne_lat < -90 || ne_lat > 90 || sw_lat < -90 || sw_lat > 90 ||
+        ne_long < -180 || ne_long > 180 || sw_long < -180 || sw_long > 180) {
+      return res.status(400).json({ error: "Coordinates out of valid range" });
+    }
 
     const result = await Database.getHotspots(ne_lat, ne_long, sw_lat, sw_long);
 
@@ -322,30 +254,31 @@ app.post('/get_hotspots', async function (req, res) {
 // get users from an array of hotspots (geohashes)
 app.post('/get_users_from_hotspots', async function (req, res) {
   try {
-
     const { hotspots } = req.body;
 
-    if (!hotspots || !hotspots.length) {
-      throw new Error("Invalid hotspots array");
+    if (!hotspots || !Array.isArray(hotspots)) {
+      return res.status(400).json({ error: "Invalid hotspots array" });
     }
-
 
     let result = [];
 
-
-    // example
-    // result = await Database.getUsersFromHotspots(['xj', '4d1q', '6vw', 'd2zuqdt', 'kscwfkb']);
-    //
-
-
     if (hotspots.length > 0) {
-      result = await Database.getUsersFromHotspots(hotspots);
+      // Validate geohash format
+      const validGeohashes = hotspots.filter(geohash => 
+        typeof geohash === 'string' && 
+        geohash.length > 0 && 
+        geohash.length <= 7 &&
+        /^[0123456789bcdefghjkmnpqrstuvwxyz]+$/i.test(geohash)
+      );
+
+      if (validGeohashes.length > 0) {
+        result = await Database.getUsersFromHotspots(validGeohashes);
+      }
     }
 
-    // console.log("result: ", result);
     res.status(200).json({ "users": result });
   } catch (error) {
-    console.log("[/get_users_from_hotspots] Error: ", error);
+    console.error("[/get_users_from_hotspots] Error: ", error);
     res.status(500).json({ error: "Failed to get users from hotspots" });
   }
 });
@@ -361,7 +294,9 @@ app.post('/logout', async function (req, res) {
     }
 
     console.log(`[Backend] Logging out user: ${user_id}`);
-    await Database.deleteUserOnLogout(user_id);
+    
+    // Use the delete_user function which properly handles hotspot cleanup
+    await Database.deleteUser(user_id);
 
     console.log(`[Backend] User ${user_id} successfully logged out and data cleared.`);
     res.status(200).json({ message: 'Logout successful' });
@@ -372,51 +307,55 @@ app.post('/logout', async function (req, res) {
   }
 });
 
-// ------------------- random testing
+// ------------------- TESTING ENDPOINTS
 
 app.post('/db_test', async function (req, res) {
   try {
-
-
-    //add new user test
-
     // now() + 1 hour
     const date = new Date(Date.now() + 60 * 60 * 1000);
-    const secret_token = "mysecrettoekn123124";
-
-
+    const secret_token = "mysecrettoken123124";
     const hash = hashToken(secret_token);
 
     const user = {
       id: "userid1234123",
       name: "User Test 1234",
       token_hash: hash,
-      expires_at: date,
-      geohash: "eszbfxt"
+      expires_at: date.getTime(), // Use timestamp
+      geohash: "9q8yy", // Valid geohash format
+      image_url: "https://example.com/image.jpg"
     };
 
-    const result = await Database.addNewUser(...Object.values(user));
+    await Database.addNewUser(...Object.values(user));
+    console.log('[/db_test] Test user added successfully');
 
-    res.status(200).send("OK");
+    res.status(200).json({ message: "Test user added successfully" });
   } catch (error) {
-    console.log("[/db_test] Error: ", error);
-    res.status(500).json({ error: `Error ${error.code}` });
+    console.error("[/db_test] Error: ", error);
+    res.status(500).json({ error: `Error ${error.code}: ${error.message}` });
   }
 });
 
 app.get('/test', async function (req, res) {
   try {
     await Database.testConnection();
-
-    res.status(200).send("OK");
+    res.status(200).json({ message: "Database connection successful" });
   } catch (error) {
-    console.log("[/test_connection_to_db] Error", error);
-    res.status(500).json({ error: `Error ${error.code}` });
+    console.error("[/test] Database connection error:", error);
+    res.status(500).json({ error: `Database connection failed: ${error.message}` });
   }
 });
 
+// Cleanup endpoint (for testing/maintenance)
+app.post('/cleanup', async function (req, res) {
+  try {
+    await Database.cleanupExpiredUsers();
+    res.status(200).json({ message: "Cleanup completed successfully" });
+  } catch (error) {
+    console.error("[/cleanup] Error:", error);
+    res.status(500).json({ error: "Failed to cleanup expired users" });
+  }
+});
 
-
-
-
-app.listen(process.env.PORT);
+app.listen(process.env.PORT, () => {
+  console.log(`Server running on port ${process.env.PORT}`);
+});
