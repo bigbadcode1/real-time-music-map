@@ -281,11 +281,6 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
   const performUpdate = useCallback(async () => {
     const updateState = updateStateRef.current;
 
-    if (!isLoggedIn || !userId || !appSessionToken || updateState.isUpdating) {
-      // console.log(`[useRealTimeUpdates] Skipping update: isLoggedIn=${isLoggedIn}, userId=${userId}, appSessionToken=${!!appSessionToken}, isUpdating=${updateState.isUpdating}`);
-      return;
-    }
-
     try {
       updateState.isUpdating = true;
       console.log('[useRealTimeUpdates] Starting update cycle...');
@@ -324,12 +319,8 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
 
 
     if (isLoggedIn && userId && appSessionToken) {
-      if (updateState.updateInterval) {
-        clearInterval(updateState.updateInterval);
-        console.log('[useRealTimeUpdates] Cleared previous update interval.');
-      }
+      console.log('[useRealTimeUpdates] User is logged in, setting up update cycle.');
 
-      console.log('[useRealTimeUpdates] User is logged in with userId and app session token. Performing immediate update.');
       performUpdate();
 
       updateState.updateInterval = setInterval(() => {
@@ -365,7 +356,7 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
         console.log('[useRealTimeUpdates] Cleanup: Interval cleared on unmount/dependency change.');
       }
     };
-  }, [isLoggedIn, userId, appSessionToken]);
+  }, [isLoggedIn, userId, appSessionToken, performUpdate]);
 
 
   return {

@@ -25,6 +25,10 @@
         "ACCESS_FINE_LOCATION",
         "ACCESS_BACKGROUND_LOCATION",
         "WRITE_EXTERNAL_STORAGE",
+        "READ_EXTERNAL_STORAGE",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "WRITE_EXTERNAL_STORAGE",
         "READ_EXTERNAL_STORAGE"
       ],
       "package": "com.bigbadcode1.realtimemusicmap"
@@ -55,6 +59,12 @@
         "projectId": "6a3ffa61-5f0c-450d-911c-b034708c6e56"
       }
     },
-    "owner": "ogien_bbc"
+    "owner": "ogien_bbc",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/6a3ffa61-5f0c-450d-911c-b034708c6e56"
+    }
   }
 }
