@@ -90,35 +90,40 @@ app.post('/update-user-info', async function (req, res) {
   console.log('\n[/update-user-info] Request received');
   try {
     const { access_token, refresh_token, user_id, geohash, expires_in = 3600 } = req.body;
-    
-    console.log('[/update-user-info] Debug - Received request body:', {
-      user_id,
-      access_token: access_token,
-      refresh_token: refresh_token,
-      geohash
-    });
-    
-    
+
+    // console.log('[/update-user-info] Debug - Received request body:', {
+    //   user_id,
+    //   access_token: access_token,
+    //   refresh_token: refresh_token,
+    //   geohash
+    // });
+
+
     if (!user_id || !access_token || !refresh_token) {
       return res.status(400).json({ error: 'Required data is missing' });
     }
     
     
     // fetch current song data
-    let track;
+    let track = null;
+    let isPlaying = false;
     try {
       const trackData = await getCurrentlyPlayingTrack(access_token);
-      track = trackData.track;
+      if(trackData && trackData.track) {
+        track = trackData.track;
+        isPlaying = trackData.isPlaying
+      } else {
+        console.log('[/update-user-info] No track currently playing for user, or track data is empty.');
+      }
     } catch (error) {
       console.error('[/update-user-info] Error getting current track:', error);
-      track = null;
     }
     
     //hash token
     const tokenHash = hashToken(refresh_token);
-    console.log('[/update-user-info] Debug - Generated token hash:', tokenHash);
-    
-    
+    // console.log('[/update-user-info] Debug - Generated token hash:', tokenHash);
+
+
     // send user data to db
     try {
       
@@ -126,10 +131,10 @@ app.post('/update-user-info', async function (req, res) {
         user_id,
         tokenHash,
         geohash,
-        track?.id || null,
-        track?.image || null,
-        track?.name || null,
-        track?.artist || null
+        track ? track.id : null,
+        track ? track.image : null,
+        track ? track.name : null,
+        track ? track.artist : null,
       );
       console.log('[/update-user-info] Debug - Successfully updated user info');
       
@@ -175,7 +180,7 @@ app.post('/update-user-info', async function (req, res) {
     }
     
     //return song data
-    res.status(200).json({ track });
+    res.status(200).json({ track: isPlaying && track ? track : null, isPlaying: isPlaying });
   } catch (error) {
     console.error('[/update-user-info] Error:', error);
     res.status(500).json({ error: 'Failed to update user info' });
@@ -221,16 +226,16 @@ app.post('/exchange-token', async function (req, res) {
     } catch (dbError) {
       console.error('[/exchange-token] Error saving user to DB:', dbError);
     }
-    
-    
-    console.log("object returned: ", {
-      access_token: spotifyTokens.access_token,
-      refresh_token: spotifyTokens.refresh_token,
-      expires_in: spotifyTokens.expires_in,
-      app_session_token: appSessionToken,
-      user_id: userId
-    })
-    
+
+
+    // console.log("object returned: ", {
+    //   access_token: spotifyTokens.access_token,
+    //   refresh_token: spotifyTokens.refresh_token,
+    //   expires_in: spotifyTokens.expires_in,
+    //   app_session_token: appSessionToken,
+    //   user_id: userId
+    // })
+
     res.json({
       access_token: spotifyTokens.access_token,
       refresh_token: spotifyTokens.refresh_token,

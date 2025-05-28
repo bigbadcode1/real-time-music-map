@@ -6,7 +6,7 @@ services:
     ports:
       - 5432:5432
     #for mac users 
-    #platform: linux/amd64
+    platform: linux/amd64
     env_file: ".env"
     environment:
       POSTGRES_DB: ${POSTGRES_DB}

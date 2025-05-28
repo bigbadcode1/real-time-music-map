@@ -14,6 +14,7 @@ import {
 import { BlurView } from 'expo-blur';
 import FontAwesome from '@expo/vector-icons/build/FontAwesome';
 import { LinearGradient } from 'expo-linear-gradient';
+import AntDesign from '@expo/vector-icons/AntDesign';
 
 import {
   TrackData,
@@ -56,7 +57,7 @@ export const HotspotDetail: React.FC<HotspotDetailProps> = ({
 }) => {
   const slideAnim = useRef(new Animated.Value(height)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const [displayMode, setDisplayMode] = useState<DisplayMode>('summary');
+  const [displayMode, setDisplayMode] = useState<DisplayMode>('recentUsers');
   const [summaryTab, setSummaryTab] = useState<SummaryTabType>('tracks');
 
   useEffect(() => {
@@ -173,11 +174,16 @@ export const HotspotDetail: React.FC<HotspotDetailProps> = ({
 
   const renderUserListenerItem = ({ item }: { item: UserListenerData }) => (
     <View style={styles.userListenerItem}>
-      <Image
-        source={{ uri: item.avatar }}
-        style={styles.userAvatar}
-        defaultSource={require('../assets/images/remove.png')}
-      />
+      {item.image ? (
+        <Image
+          source={{ uri: item.image }}
+          style={styles.userAvatar}
+        />
+      ) : (
+        <View style={[styles.userAvatar, styles.defaultUserAvatar]}>
+          <AntDesign name="user" size={24} color="#999" />
+        </View>
+      )}
       <View style={styles.userInfo}>
         <Text style={styles.userName} numberOfLines={1}>{item.name}</Text>
         <View style={styles.userTrackContainer}>
@@ -188,14 +194,14 @@ export const HotspotDetail: React.FC<HotspotDetailProps> = ({
             style={styles.userTrackIcon}
           />
           <Text style={styles.userTrackText} numberOfLines={1}>
-            {item.currentTrack.title} - {item.currentTrack.artist}
+            {item.currentTrack.artist} - {item.currentTrack.title}
           </Text>
         </View>
-        <Text style={styles.userTrackTimestamp}>
+        {/* <Text style={styles.userTrackTimestamp}>
           {item.currentTrack.isCurrentlyListening
             ? "Listening now"
             : `Last listened: ${new Date(item.currentTrack.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
-        </Text>
+        </Text> */}
       </View>
       {item.currentTrack.albumArt ? (
         <Image
@@ -237,7 +243,7 @@ export const HotspotDetail: React.FC<HotspotDetailProps> = ({
               <Text style={styles.locationName} numberOfLines={1} ellipsizeMode="tail">{locationName}</Text>
                 <View style={styles.statsRow}>
                   <FontAwesome name="users" size={14} color="#666" style={styles.icon} />
-                  <Text style={styles.statValue}>{userCount} listeners</Text>
+                  <Text style={styles.statValue}>{userCount} {userCount === 1 ? 'listener' : 'listeners'} </Text>
                   <Text style={styles.timestampText}>as of {formattedTime}</Text>
                 </View>
               </View>
@@ -251,18 +257,18 @@ export const HotspotDetail: React.FC<HotspotDetailProps> = ({
             {/* Mode Selector */}
             <View style={styles.modeSelectorContainer}>
               <TouchableOpacity
-                style={[styles.modeButton, displayMode === 'summary' && styles.modeButtonActive]}
-                onPress={() => setDisplayMode('summary')}
-              >
-                <FontAwesome name="bar-chart" size={16} color={displayMode === 'summary' ? '#1DB954' : '#555'} style={styles.modeIcon} />
-                <Text style={[styles.modeButtonText, displayMode === 'summary' && styles.modeButtonTextActive]}>Summary</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
                 style={[styles.modeButton, displayMode === 'recentUsers' && styles.modeButtonActive]}
                 onPress={() => setDisplayMode('recentUsers')}
               >
                 <FontAwesome name="user-o" size={16} color={displayMode === 'recentUsers' ? '#1DB954' : '#555'} style={styles.modeIcon} />
                 <Text style={[styles.modeButtonText, displayMode === 'recentUsers' && styles.modeButtonTextActive]}>Listeners</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modeButton, displayMode === 'summary' && styles.modeButtonActive]}
+                onPress={() => setDisplayMode('summary')}
+              >
+                <FontAwesome name="bar-chart" size={16} color={displayMode === 'summary' ? '#1DB954' : '#555'} style={styles.modeIcon} />
+                <Text style={[styles.modeButtonText, displayMode === 'summary' && styles.modeButtonTextActive]}>Summary</Text>
               </TouchableOpacity>
             </View>
 
@@ -386,15 +392,6 @@ export const HotspotDetail: React.FC<HotspotDetailProps> = ({
                 />
               </>
             )}
-
-            <View style={styles.footerContainer}>
-              <TouchableOpacity style={styles.footerButton}>
-                <Text style={styles.footerButtonText}>placeholder1</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.footerButton}>
-                <Text style={styles.footerButtonText}>placeholder2</Text>
-              </TouchableOpacity>
-            </View>
           </ScrollView>
         </BlurView>
       </Animated.View>
@@ -472,13 +469,13 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 14,
-    color: '#555', // Darker for better readability
+    color: '#333', // Darker for better readability
     fontWeight: '500',
     marginRight: 10,
   },
   timestampText: {
     fontSize: 12,
-    color: '#777', // Slightly darker
+    color: '#444', // Slightly darker
     fontStyle: 'italic',
   },
   closeButton: {
@@ -527,7 +524,7 @@ const styles = StyleSheet.create({
   modeButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#555',
+    color: '#333',
   },
   modeButtonTextActive: {
     color: '#1DB954',
@@ -552,7 +549,7 @@ const styles = StyleSheet.create({
   summaryTabText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#666',
+    color: '#333',
   },
   summaryTabTextActive: {
     color: '#1DB954',
@@ -609,7 +606,7 @@ const styles = StyleSheet.create({
   },
   trackArtist: {
     fontSize: 13,
-    color: '#666',
+    color: '#444',
     marginTop: 2,
   },
   listenerCount: {
@@ -622,7 +619,7 @@ const styles = StyleSheet.create({
   },
   listenerText: {
     fontSize: 12,
-    color: '#555',
+    color: '#333',
     marginLeft: 5,
     fontWeight: '500',
   },
@@ -649,7 +646,7 @@ const styles = StyleSheet.create({
   },
   genreName: {
     fontSize: 13,
-    color: '#444',
+    color: '#222',
     fontWeight: '500',
   },
   genrePercentage: {
@@ -714,31 +711,14 @@ const styles = StyleSheet.create({
   },
   emptyListText: {
     textAlign: 'center',
-    color: '#777',
+    color: '#444',
     fontSize: 14,
     marginTop: 20,
     marginBottom: 20,
   },
-  footerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 20, // Ensure space above footer
-    paddingBottom: 10, // Ensure footer buttons are not cut off
-  },
-  footerButton: {
-    flexDirection: 'row',
+  defaultUserAvatar: { // New style for default user avatar
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(29, 185, 84, 0.1)',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(29, 185, 84, 0.3)',
-  },
-  footerButtonText: {
-    color: '#1DB954',
-    fontWeight: '600', // Bolder text
-    marginLeft: 8,
-    fontSize: 13,
   },
 });
