@@ -176,6 +176,10 @@ BEGIN
     DELETE FROM "Active Users" WHERE id = p_user_id;
   END IF;
 
+  -- Increment hotspot count for new location
+  IF p_geohash IS NOT NULL THEN
+    PERFORM manage_hotspot_count(p_geohash, 1);
+  END IF;    
   
   -- Insert into Active Users with default null song
   INSERT INTO "Active Users" (id, name, image_url, song_id, geohash, expires_at)
@@ -184,11 +188,6 @@ BEGIN
   -- Insert authentication info
   INSERT INTO "Auth" (user_id, auth_token_hash, expires_at)
   VALUES (p_user_id, p_auth_token_hash, p_token_expires_at);
-
-  -- Increment hotspot count for new location
-  IF p_geohash IS NOT NULL THEN
-    PERFORM manage_hotspot_count(p_geohash, 1);
-  END IF;    
   
 END;
 $$ LANGUAGE plpgsql;
@@ -308,7 +307,6 @@ BEGIN
   DELETE FROM "Hotspots";
 END;
 $$ LANGUAGE plpgsql;
-
 
 ---------------------- TRIGGERS -----------------------------
 

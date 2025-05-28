@@ -4,15 +4,27 @@
 
 -- ^ generates 1040 users within max 40 hotspots
 
+----------------- EXAMPLE --------------------
+-- Krakow prefix
+
+-- SELECT generate_random_active_users(15, 'u2yht');
+-- SELECT random_users_exitsing_hotspots(500);
 
 
-CREATE OR REPLACE FUNCTION generate_random_active_users(num_users INTEGER DEFAULT 10)
+
+
+
+CREATE OR REPLACE FUNCTION generate_random_active_users(
+    num_users INTEGER DEFAULT 10,
+    geohash_prefix VARCHAR(7) DEFAULT ''
+)
 RETURNS VOID AS $$
 DECLARE
     user_id TEXT;
     song_id TEXT;
     user_name TEXT;
     geohash VARCHAR(7);
+    remaining_length INTEGER;
     token_hash TEXT;
     expires_at TIMESTAMP;
     chars TEXT := '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -20,6 +32,17 @@ DECLARE
     i INTEGER;
     song_counter INTEGER;
 BEGIN
+    -- Ensure the prefix is valid
+    IF geohash_prefix ~ '[^0123456789bcdefghjkmnpqrstuvwxyz]' THEN
+        RAISE EXCEPTION 'Geohash prefix contains invalid characters. Only characters from "0123456789bcdefghjkmnpqrstuvwxyz" are allowed.';
+    END IF;
+    
+    -- Calculate remaining length needed for the geohash
+    remaining_length := 7 - LENGTH(geohash_prefix);
+    IF remaining_length < 0 THEN
+        RAISE EXCEPTION 'Geohash prefix cannot be longer than 7 characters';
+    END IF;
+    
     -- Ensure we have some songs in the database
     FOR song_counter IN 1..10 LOOP
         -- Generate 22 character Spotify-like ID
@@ -49,9 +72,13 @@ BEGIN
         -- Select a random song ID
         SELECT id INTO song_id FROM temp_songs ORDER BY random() LIMIT 1;
         
-        -- Generate random geohash (7 characters)
-        SELECT string_agg(substring(geohash_chars, ceil(random() * length(geohash_chars))::integer, 1), '') INTO geohash
-        FROM generate_series(1,7);
+        -- Generate random geohash with the specified prefix
+        IF remaining_length > 0 THEN
+            SELECT geohash_prefix || string_agg(substring(geohash_chars, ceil(random() * length(geohash_chars))::integer, 1), '') INTO geohash
+            FROM generate_series(1, remaining_length);
+        ELSE
+            geohash := geohash_prefix;
+        END IF;
         
         -- Generate random token hash
         token_hash := md5(user_id || now()::text || random()::text);
@@ -70,7 +97,7 @@ BEGIN
     
     DROP TABLE IF EXISTS temp_songs;
     
-    RAISE NOTICE 'Successfully generated % random active users', num_users;
+    RAISE NOTICE 'Successfully generated % random active users with geohash prefix "%"', num_users, geohash_prefix;
 END;
 $$ LANGUAGE plpgsql;
 
