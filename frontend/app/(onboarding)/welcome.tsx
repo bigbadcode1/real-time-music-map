@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import { Image, Text, View, Alert, Platform } from "react-native";
+import { Image, Text, View, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Swiper from "react-native-swiper";
 import CustomButton from "@/components/CustomButton";
@@ -25,7 +25,7 @@ const Onboarding = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <View className={`flex-1 ${Platform.OS === 'android' ? 'pt-20' : 'pt-40'}`}>
+      <View className="flex-1 pt-40">
         <Swiper
           ref={swiperRef}
           loop={false}
@@ -41,15 +41,15 @@ const Onboarding = () => {
             <View key={item.id} className="flex items-center justify-center px-5">
               <Image
                 source={item.image}
-                className={`w-full ${Platform.OS === 'android' ? 'h-[250px]' : 'h-[300px]'}`}
+                className="w-full h-[300px]"
                 resizeMode="contain"
               />
-              <View className="flex flex-row items-center justify-center w-full mt-6">
-                <Text className="text-black text-2xl font-bold mx-8 text-center">
+              <View className="flex flex-row items-center justify-center w-full mt-10">
+                <Text className="text-black text-3xl font-bold mx-10 text-center">
                   {item.title}
                 </Text>
               </View>
-              <Text className="text-md text-center text-[#858585] mx-8 mt-2">
+              <Text className="text-md text-center text-[#858585] mx-10 mt-3">
                 {item.description}
               </Text>
             </View>
@@ -59,16 +59,16 @@ const Onboarding = () => {
 
       {/* todo: change to alert popup*/}
       {error && (
-         <View className="px-8 mb-2">
+         <View className="px-10 mb-2">
            <Text className="text-red-600 text-center">Error: {error}</Text>
          </View>
       )}
 
-      <View className="pb-5 px-8 w-full items-center">
+      <View className="pb-5 px-10 w-full items-center">
         <CustomButton
             title={isLastSlide ? "Log in with Spotify" : "Next"}
             onPress={handleButtonPress}
-            className="w-[85%] h-12 mt-6"
+            className="w-[75%] h-12 mt-10"
             disabled={isLoading || (isLastSlide && !isAuthRequestReady)}
             isLoading={isLoading}
             IconLeft={isLastSlide ? () => (
