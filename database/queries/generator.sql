@@ -52,7 +52,7 @@ BEGIN
         INSERT INTO "Songs" (id, image_url, title, artist)
         VALUES (
             song_id,
-            'https://example.com/image/' || song_counter || '.jpg',
+            'https://i.scdn.co/image/ab67616d00001e02ff9ca10b55ce82ae553c8228',
             'Song Title ' || song_counter,
             'Artist ' || song_counter
         )

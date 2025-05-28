@@ -6,10 +6,6 @@
 -- SELECT * FROM "Auth";
 -- SELECT * FROM "Songs";
 
-SELECT trigger_name, event_manipulation, event_object_table, action_statement 
-FROM information_schema.triggers 
-WHERE event_object_table = 'Active Users';
-
 -- DELETE FROM "Active Users";
 
 -- Function 3: Add new user with auth token
