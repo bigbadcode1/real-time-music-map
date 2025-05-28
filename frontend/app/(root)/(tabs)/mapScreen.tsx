@@ -9,11 +9,13 @@ import { HotspotDetail } from '@/components/HotspotDetail';
 import { useRealTimeUpdates } from '@/src/hooks/useRealTimeUpdates';
 import { useAuth } from '@/src/context/AuthContext';
 import { NowPlayingBar } from '@/components/NowPlayingBar';
-import { LocationSearchBar } from '@/components/LocationSearchBar';
+// import { LocationSearchBar } from '@/components/LocationSearchBar';
 import { CustomBottomNavigationBar, MapMode } from '@/components/CustomBottomNavigationBar';
 import { TouchableOpacity } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import { HotspotSearchButton } from '@/components/HotspotSearchButton'
+
 
 import {
   BasicHotspotData,
@@ -61,7 +63,7 @@ const MapContent: React.FC<MapContentProps> = React.memo(
               zIndex={currentSelectedHotspotId === hotspot.id ? 100 : 10}
               // flat={true}
               onPress={() => onHotspotPress(hotspot)}
-              >
+            >
               <Hotspot
                 size={hotspot.size}
                 activity={hotspot.activity}
@@ -128,6 +130,7 @@ const MapScreen: React.FC = () => {
     }
   }, [isLoggedIn, expoRouter, userId]);
 
+
   // Request location permissions on mount
   useEffect(() => {
     const requestLocationAccess = async () => {
@@ -153,6 +156,7 @@ const MapScreen: React.FC = () => {
       console.log(`[MapScreen] Set initial region:`, region);
     }
   }, [currentLocation, initialRegion]);
+
 
   // Update hotspots when nearby data changes
   useEffect(() => {
@@ -185,6 +189,7 @@ const MapScreen: React.FC = () => {
     }
   }, [nearbyHotspots, currentLocation, isMapReady]);
 
+
   // Adjust map padding when a hotspot is selected
   // useEffect(() => {
   //   setMapPaddingBottom(selectedHotspot ? 300 : 1);
@@ -210,6 +215,7 @@ const MapScreen: React.FC = () => {
       );
     }
   };
+
 
   const handleHotspotPress = useCallback(async (hotspot: BasicHotspotData) => {
     console.log(`[MapScreen] Hotspot selected: ${hotspot.id}`);
@@ -253,13 +259,16 @@ const MapScreen: React.FC = () => {
     });
   }, [getHotspotDetails]);
 
+
   const handleCloseHotspotDetail = useCallback(() => {
     setSelectedHotspot(null);
   }, []);
 
+
   const toggleMode = useCallback(() => {
     setCurrentMapMode((prevMode) => (prevMode === 'discover' ? 'analyze' : 'discover'));
   }, []);
+
 
   // Show error message if location permissions were denied
   if (errorMsg) {
@@ -280,6 +289,7 @@ const MapScreen: React.FC = () => {
     );
   }
 
+
   return (
     <View style={styles.container}>
       <MapView
@@ -287,7 +297,8 @@ const MapScreen: React.FC = () => {
         style={styles.map}
         initialRegion={initialRegion as Region}
         showsUserLocation={true}
-        showsCompass={true}
+        showsMyLocationButton={false} // android no location button
+        showsCompass={false}
         loadingEnabled={true}
         moveOnMarkerPress={false}
         onMapReady={handleMapReady}
@@ -306,6 +317,11 @@ const MapScreen: React.FC = () => {
       </MapView>
 
       <NowPlayingBar currentTrack={currentTrack} />
+      
+      <HotspotSearchButton 
+        isLoadingHotspots={false}
+        onPress={() => (1)}
+      />
 
       <TouchableOpacity
         style={styles.centerLocationButton}
@@ -316,7 +332,9 @@ const MapScreen: React.FC = () => {
 
       </TouchableOpacity>
 
-      <LocationSearchBar />
+
+
+      {/* <LocationSearchBar /> */}
       <CustomBottomNavigationBar
         currentMode={currentMapMode}
         onToggleMode={toggleMode}
