@@ -269,7 +269,7 @@ BEGIN
   SELECT u.id, u.name, u.image_url, u.song_id, s.title, s.image_url, s.artist
   FROM "Active Users" u
   JOIN "Hotspots" h ON u.geohash = h.geohash
-  JOIN "Songs" s ON u.song_id = s.id 
+  LEFT JOIN "Songs" s ON u.song_id = s.id 
   WHERE (
     array_length(hotspot_prefixes, 1) IS NULL OR
     EXISTS (
