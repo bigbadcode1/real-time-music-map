@@ -5,7 +5,6 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { AuthProvider } from '@/src/context/AuthContext';
 import 'react-native-reanimated';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 SplashScreen.preventAutoHideAsync();
 

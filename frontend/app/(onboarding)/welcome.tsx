@@ -70,6 +70,7 @@ const Onboarding = () => {
             onPress={handleButtonPress}
             className="w-[75%] h-12 mt-10"
             disabled={isLoading || (isLastSlide && !isAuthRequestReady)}
+            isLoading={isLoading}
             IconLeft={isLastSlide ? () => (
               <Image 
                   source={spotifyLogo} 

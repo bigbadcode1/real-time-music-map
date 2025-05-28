@@ -9,7 +9,8 @@ import {
   Image,
   Animated,
   Dimensions,
-  FlatList
+  FlatList,
+  ActivityIndicator
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import FontAwesome from '@expo/vector-icons/build/FontAwesome';
@@ -36,6 +37,9 @@ type HotspotDetailProps = {
   recentListeners: UserListenerData[];
   timestamp: string;
   onClose: () => void;
+  isLoading: boolean;
+  error: string | null;
+  onRetry: () => void;
 };
 
 type DisplayMode = 'summary' | 'recentUsers';
@@ -54,6 +58,9 @@ export const HotspotDetail: React.FC<HotspotDetailProps> = ({
   recentListeners,
   timestamp,
   onClose,
+  isLoading,
+  error,
+  onRetry
 }) => {
   const slideAnim = useRef(new Animated.Value(height)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -272,6 +279,20 @@ export const HotspotDetail: React.FC<HotspotDetailProps> = ({
               </TouchableOpacity>
             </View>
 
+              {isLoading ? (
+                <View style={styles.centeredMessage}>
+                  <ActivityIndicator size="large" color="#1DB954" />
+                  <Text style={styles.messageText}>Loading hotspot details...</Text>
+                </View>
+              ) : error ? (
+                <View style={styles.centeredMessage}>
+                  <Text style={styles.errorMessage}>{error}</Text>
+                  <TouchableOpacity style={styles.retryButton} onPress={onRetry}>
+                    <Text style={styles.retryButtonText}>Retry</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+            <>
             {displayMode === 'summary' ? (
               <>
                 {/* Summary Tab Selector */}
@@ -392,6 +413,8 @@ export const HotspotDetail: React.FC<HotspotDetailProps> = ({
                 />
               </>
             )}
+            </>
+          )}
           </ScrollView>
         </BlurView>
       </Animated.View>
@@ -716,9 +739,40 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 20,
   },
-  defaultUserAvatar: { // New style for default user avatar
+  defaultUserAvatar: { 
     backgroundColor: 'rgba(0, 0, 0, 0.05)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  centeredMessage: { 
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 30,
+    minHeight: 150,
+  },
+  messageText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#333',
+    textAlign: 'center',
+  },
+  errorMessage: {
+    fontSize: 16,
+    color: 'red',
+    textAlign: 'center',
+    marginBottom: 15,
+  },
+  retryButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    marginTop: 10,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

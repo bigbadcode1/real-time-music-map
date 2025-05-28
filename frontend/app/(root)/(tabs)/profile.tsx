@@ -1,46 +1,21 @@
-import { View, Text, TouchableOpacity, ActivityIndicator, Alert } from 'react-native'; // Import Alert and ActivityIndicator
+import { View, Text, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useAuth } from '@/src/context/AuthContext';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import React, { useState } from 'react'; // Import useState
+import React, { useState } from 'react';
 
 export default function ProfileScreen() {
-    const { logout, isLoggedIn, getValidAccessToken, accessToken, userId } = useAuth(); // Destructure getValidAccessToken, accessToken, userId
+    const { logout, isLoggedIn, getValidAccessToken, accessToken, userId } = useAuth();
     const router = useRouter();
-    const [isRefreshing, setIsRefreshing] = useState(false); // New state for loading indicator
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
     const handleLogout = async () => {
         try {
             await logout();
-            router.replace('/(onboarding)/welcome'); // Redirect to welcome screen
+            router.replace('/(onboarding)/welcome');
         } catch (error) {
             console.error('Error logging out:', error);
             Alert.alert('Logout Error', 'Failed to log out. Please try again.');
-        }
-    };
-
-    const handleRefreshToken = async () => {
-        if (!isLoggedIn) {
-            Alert.alert('Not Logged In', 'You must be logged in to refresh your token.');
-            return;
-        }
-
-        setIsRefreshing(true); // Start loading
-        try {
-            console.log("[ProfileScreen] Attempting to manually refresh token...");
-            const newAccessToken = await getValidAccessToken(); // This will trigger refresh if needed
-            if (newAccessToken) {
-                console.log("[ProfileScreen] Token refresh successful. New access token:", newAccessToken);
-                Alert.alert('Success', 'Spotify access token refreshed successfully!');
-            } else {
-                console.warn("[ProfileScreen] Token refresh failed or no valid token obtained.");
-                Alert.alert('Refresh Failed', 'Failed to refresh Spotify access token. You might need to log in again.');
-            }
-        } catch (error) {
-            console.error("[ProfileScreen] Error during manual token refresh:", error);
-            Alert.alert('Error', `An unexpected error occurred during token refresh: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        } finally {
-            setIsRefreshing(false); // Stop loading
         }
     };
 
@@ -58,7 +33,6 @@ export default function ProfileScreen() {
                         </Text>
                     </View>
 
-                    {/* Display User ID and Access Token (for debugging) */}
                     {isLoggedIn && (
                         <>
                             <View className="bg-gray-100 p-4 rounded-lg">
@@ -75,22 +49,6 @@ export default function ProfileScreen() {
                         </>
                     )}
 
-                    {/* Refresh Token Button */}
-                    {isLoggedIn && ( // Only show if logged in
-                        <TouchableOpacity
-                            onPress={handleRefreshToken}
-                            className="bg-blue-500 p-4 rounded-lg flex-row justify-center items-center"
-                            disabled={isRefreshing} // Disable while refreshing
-                        >
-                            {isRefreshing ? (
-                                <ActivityIndicator color="#fff" />
-                            ) : (
-                                <Text className="text-white text-center font-semibold">
-                                    Refresh Spotify Token
-                                </Text>
-                            )}
-                        </TouchableOpacity>
-                    )}
 
                     {/* Logout Button */}
                     <TouchableOpacity

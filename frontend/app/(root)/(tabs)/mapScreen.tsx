@@ -87,6 +87,9 @@ const MapScreen: React.FC = () => {
   const [isMapReady, setIsMapReady] = useState(false);
   const [initialRegion, setInitialRegion] = useState<Region | null>(null);
 
+  const [isLoadingHotspotDetails, setIsLoadingHotspotDetails] = useState<boolean>(false);
+  const [hotspotDetailsError, setHotspotDetailsError] = useState<string | null>(null);
+
   const mapRef = useRef<MapView | null>(null);
   const expoRouter = useRouter();
   
@@ -187,6 +190,40 @@ const MapScreen: React.FC = () => {
       }
   };
 
+  const fetchAndSetHotspotDetails = useCallback(async (hotspotToFetch: BasicHotspotData) => {
+    setIsLoadingHotspotDetails(true);
+    setHotspotDetailsError(null);
+
+    try {
+      const listeners = await getHotspotDetails(hotspotToFetch.geohash);
+      console.log(`[MapScreen] Received ${listeners?.length || 0} listeners for hotspot ${hotspotToFetch.id}`);
+
+    setSelectedHotspot((prevSelectedHotspot) => {
+      if (prevSelectedHotspot?.id === hotspotToFetch.id && listeners) {
+        return {
+          ...prevSelectedHotspot,
+          recentListeners: listeners || [],
+        };
+      }
+      return prevSelectedHotspot;
+    });
+    } catch (error: any) {
+      console.error(`[MapScreen] Error fetching hotspot details for ${hotspotToFetch.id}:`, error);
+      setHotspotDetailsError(error.message || 'Failed to load hotspot details. Please try again.');
+      setSelectedHotspot((prevSelectedHotspot) => {
+        if (prevSelectedHotspot?.id === hotspotToFetch.id) {
+          return {
+            ...prevSelectedHotspot,
+            recentListeners: [],
+          };
+        }
+        return prevSelectedHotspot;
+    });
+  } finally {
+    setIsLoadingHotspotDetails(false);
+  }
+  }, [getHotspotDetails]);
+
   const handleHotspotPress = useCallback(async (hotspot: BasicHotspotData) => {
     console.log(`[MapScreen] Hotspot selected: ${hotspot.id}`);
     
@@ -202,7 +239,7 @@ const MapScreen: React.FC = () => {
       timestamp: hotspot.lastUpdated,
     });
 
-    // hmmmmmmmmm
+    // hmmmmmmmmm it moves a map to the hotspot center but idk
     // if (mapRef.current) {
     //   mapRef.current.animateToRegion(
     //     {
@@ -214,20 +251,8 @@ const MapScreen: React.FC = () => {
     //     300
     //   );
     // };
-
-    const listeners = await getHotspotDetails(hotspot.geohash);
-    console.log(`[MapScreen] Received ${listeners?.length || 0} listeners for hotspot ${hotspot.id}`);
-
-    setSelectedHotspot((prevSelectedHotspot) => {
-      if (prevSelectedHotspot?.id === hotspot.id && listeners) {
-        return {
-          ...prevSelectedHotspot,
-          recentListeners: listeners,
-        };
-      }
-      return prevSelectedHotspot;
-    });
-  }, [getHotspotDetails]);
+    fetchAndSetHotspotDetails(hotspot);
+  }, [fetchAndSetHotspotDetails]);
 
   const handleCloseHotspotDetail = useCallback(() => {
     setSelectedHotspot(null);
@@ -309,6 +334,9 @@ const MapScreen: React.FC = () => {
           recentListeners={selectedHotspot.recentListeners || []}
           timestamp={selectedHotspot.timestamp || new Date().toISOString()}
           onClose={handleCloseHotspotDetail}
+          isLoading={isLoadingHotspotDetails}
+          error={hotspotDetailsError}
+          onRetry={() => selectedHotspot && fetchAndSetHotspotDetails(selectedHotspot)}
         />
       )}
     </View>
