@@ -17,6 +17,7 @@
       }
     },
     "android": {
+      "jsEngine": "hermes",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/bbclogo.png",
         "backgroundColor": "#ffffff"

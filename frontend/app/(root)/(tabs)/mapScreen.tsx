@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { Text, ActivityIndicator, View, StyleSheet } from 'react-native';
+import { Text, ActivityIndicator, View, StyleSheet, Platform } from 'react-native';
 import MapView, { Marker, Region } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { requestPermissions } from '../../../src/services/locationService';
@@ -227,7 +227,8 @@ const MapScreen: React.FC = () => {
   const handleHotspotPress = useCallback(async (hotspot: BasicHotspotData) => {
     console.log(`[MapScreen] Hotspot selected: ${hotspot.id}`);
     
-    setSelectedHotspot({
+    // Set initial hotspot data
+    const initialHotspotData: DetailedHotspotData = {
       ...hotspot,
       songCount: 0,
       dominantGenre: undefined,
@@ -237,22 +238,39 @@ const MapScreen: React.FC = () => {
       topGenres: [],
       recentListeners: [],
       timestamp: hotspot.lastUpdated,
-    });
+    };
+    
+    setSelectedHotspot(initialHotspotData);
 
-    // hmmmmmmmmm it moves a map to the hotspot center but idk
-    // if (mapRef.current) {
-    //   mapRef.current.animateToRegion(
-    //     {
-    //       latitude: hotspot.coordinate.latitude,
-    //       longitude: hotspot.coordinate.longitude,
-    //       latitudeDelta: 0.01,
-    //       longitudeDelta: 0.01,
-    //     },
-    //     300
-    //   );
-    // };
-    fetchAndSetHotspotDetails(hotspot);
-  }, [fetchAndSetHotspotDetails]);
+    try {
+      const listeners = await getHotspotDetails(hotspot.geohash);
+      console.log(`[MapScreen] Received ${listeners?.length || 0} listeners for hotspot ${hotspot.id}`);
+
+      // Update hotspot with listeners data
+      setSelectedHotspot(prevSelectedHotspot => {
+        if (prevSelectedHotspot?.id === hotspot.id) {
+          return {
+            ...prevSelectedHotspot,
+            recentListeners: listeners || [],
+          };
+        }
+        return prevSelectedHotspot;
+      });
+    } catch (error: any) {
+      console.error(`[MapScreen] Error fetching hotspot details for ${hotspot.id}:`, error);
+      setHotspotDetailsError(error.message || 'Failed to load hotspot details. Please try again.');
+      // Keep the hotspot selected even if there's an error
+      setSelectedHotspot(prevSelectedHotspot => {
+        if (prevSelectedHotspot?.id === hotspot.id) {
+          return {
+            ...prevSelectedHotspot,
+            recentListeners: [],
+          };
+        }
+        return prevSelectedHotspot;
+      });
+    }
+  }, [getHotspotDetails]);
 
   const handleCloseHotspotDetail = useCallback(() => {
     setSelectedHotspot(null);
@@ -377,11 +395,17 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
   },
 });
 
