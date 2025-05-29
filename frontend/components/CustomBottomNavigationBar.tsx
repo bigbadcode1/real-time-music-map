@@ -16,9 +16,18 @@ export const CustomBottomNavigationBar: React.FC<CustomBottomNavigationBarProps>
   const expoRouter = useRouter();
 
   return (
-    <View style={styles.navBarContainer}>
-      <TouchableOpacity
-        onPress={onToggleMode}
+    // <View style={styles.navBarContainer}>
+    //   <TouchableOpacity
+    //     onPress={onToggleMode}
+    //     style={[
+    //       styles.modeButton,
+    //       currentMode === 'discover' ? styles.modeButtonActiveDiscover : styles.modeButtonActiveAnalyze,
+    //     ]}
+    //   >
+      <View style={styles.navBarContainer}>
+        <TouchableOpacity
+        onPress={() => {}}
+        disabled
         style={[
           styles.modeButton,
           currentMode === 'discover' ? styles.modeButtonActiveDiscover : styles.modeButtonActiveAnalyze,
@@ -36,15 +45,22 @@ export const CustomBottomNavigationBar: React.FC<CustomBottomNavigationBarProps>
       </TouchableOpacity>
 
       <View style={styles.navButtonsGroup}>
-        <TouchableOpacity onPress={() => expoRouter.push('/friends')} style={styles.navButton}>
+        {/* <TouchableOpacity onPress={() => expoRouter.push('/friends')} style={styles.navButton}> */}
+        <TouchableOpacity disabled style={styles.navButton}>
           <FontAwesome name="users" size={24} color="#333" />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => expoRouter.push('/saved')} style={styles.navButton}>
+        {/* <TouchableOpacity onPress={() => expoRouter.push('/saved')} style={styles.navButton}> */}
+        <TouchableOpacity disabled style={styles.navButton}>
           <FontAwesome name="bookmark" size={24} color="#333" />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => expoRouter.push('/profile')} style={styles.navButton}>
+        {/* <TouchableOpacity onPress={() => expoRouter.push('/profile')} style={styles.navButton}> */}
+        <TouchableOpacity disabled style={styles.navButton}>
           <FontAwesome name="user" size={24} color="#333" />
         </TouchableOpacity>
+
+      </View>
+        <View style={styles.demoOverlay}>
+          <Text style={styles.demoText}>Not available</Text>
       </View>
     </View>
   );
@@ -103,5 +119,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 10,
+  },
+  demoOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 35,
+    zIndex: 10,
+  },
+  demoText: {
+    fontSize: 24,
+    fontWeight: '500',
+    color: '#333',
   },
 });

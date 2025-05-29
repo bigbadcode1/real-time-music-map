@@ -9,7 +9,8 @@ import {
   Image,
   Animated,
   Dimensions,
-  FlatList
+  FlatList,
+  Easing
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import FontAwesome from '@expo/vector-icons/build/FontAwesome';
@@ -174,14 +175,14 @@ export const HotspotDetail: React.FC<HotspotDetailProps> = ({
 
   const renderUserListenerItem = ({ item }: { item: UserListenerData }) => (
     <View style={styles.userListenerItem}>
-      {item.image ? (
+      {item.avatar ? (
         <Image
-          source={{ uri: item.image }}
+          source={{ uri: item.avatar }}
           style={styles.userAvatar}
         />
       ) : (
         <View style={[styles.userAvatar, styles.defaultUserAvatar]}>
-          <AntDesign name="user" size={24} color="#999" />
+          {/* <AntDesign name="user" size={24} color="#999" /> */}
         </View>
       )}
       <View style={styles.userInfo}>
