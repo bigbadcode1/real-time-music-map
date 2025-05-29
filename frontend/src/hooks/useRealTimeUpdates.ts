@@ -173,6 +173,8 @@ export function useRealTimeUpdates() {
         return null;
       }
 
+
+
       const data = await response.json();
       return data.users.map((user: any) => ({
         id: user.id,

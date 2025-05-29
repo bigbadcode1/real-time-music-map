@@ -15,6 +15,7 @@ import { TouchableOpacity } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { HotspotSearchButton } from '@/components/HotspotSearchButton'
+import { getNameFromCoordinates } from '@/src/utils/getNameFromCoordinates'
 
 
 import {
@@ -219,6 +220,10 @@ const MapScreen: React.FC = () => {
 
   const handleHotspotPress = useCallback(async (hotspot: BasicHotspotData) => {
     console.log(`[MapScreen] Hotspot selected: ${hotspot.id}`);
+    
+    //get hotspot name (region name) from coordinates
+    const locationName = await getNameFromCoordinates({latitude: hotspot.coordinate.latitude, longitude: hotspot.coordinate.longitude});
+    
 
     setSelectedHotspot({
       ...hotspot,
@@ -230,6 +235,7 @@ const MapScreen: React.FC = () => {
       topGenres: [],
       recentListeners: [],
       timestamp: hotspot.lastUpdated,
+      locationName: locationName || hotspot.id,
     });
 
     // hmmmmmmmmm
