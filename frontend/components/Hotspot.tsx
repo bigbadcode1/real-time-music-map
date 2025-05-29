@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Animated, TouchableOpacity, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { HotspotSize, HotspotActivity, BasicHotspotData } from '../types/dataTypes';
@@ -28,7 +28,8 @@ const COLORS = {
 // Dynamic size calculation based on user count
 const getDynamicSize = (userCount: number): number => {
   const baseSize = 45;
-  const maxSize = 120;
+
+  const maxSize = Platform.OS === 'android' ? 27 : 120; // small hostpost for android temp fix
   const scaleFactor = Math.log(userCount + 1) * 12;
   return Math.min(baseSize + scaleFactor, maxSize);
 };

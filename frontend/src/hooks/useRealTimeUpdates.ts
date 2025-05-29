@@ -222,8 +222,8 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
     const tokens = JSON.parse(tokensString);
     const refreshToken = tokens.refresh_token;
 
-    console.log('[useRealTimeUpdates] Debug - Refresh Token:', refreshToken);
-    console.log('[useRealTimeUpdates] Debug - User ID:', id);
+    // console.log('[useRealTimeUpdates] Debug - Refresh Token:', refreshToken);
+    // console.log('[useRealTimeUpdates] Debug - User ID:', id);
 
     const requestBody = {
       access_token: spotifyAccessToken,
@@ -232,7 +232,7 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
       geohash: geohashValue
     };
 
-    console.log('[useRealTimeUpdates] Debug - Full Request Body:', JSON.stringify(requestBody, null, 2));
+    // console.log('[useRealTimeUpdates] Debug - Full Request Body:', JSON.stringify(requestBody, null, 2));
 
     const response = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}/update-user-info`, {
       method: 'POST',
@@ -257,7 +257,7 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
     } else {
       const responseData = await response.json();
       console.log('[useRealTimeUpdates] Successfully sent update to backend');
-      console.log('[useRealTimeUpdates] Backend response:', responseData);
+      // console.log('[useRealTimeUpdates] Backend response:', responseData);
 
       if (responseData.track !== null && responseData.track !== undefined) { // Check for non-null and non-undefined
         const backendTrack: CurrentTrack = {
@@ -265,7 +265,7 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
           track: responseData.track
         };
         setCurrentTrack(backendTrack);
-        console.log('[useRealTimeUpdates] Updated currentTrack to playing song:', responseData.track.name);
+        // console.log('[useRealTimeUpdates] Updated currentTrack to playing song:', responseData.track.name);
       } else {
         // If responseData.track is null or undefined, set currentTrack to null
         setCurrentTrack(null);
@@ -282,7 +282,7 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
     const updateState = updateStateRef.current;
 
     if (!isLoggedIn || !userId || !appSessionToken || updateState.isUpdating) {
-      console.log(`[useRealTimeUpdates] Skipping update: isLoggedIn=${isLoggedIn}, userId=${userId}, appSessionToken=${!!appSessionToken}, isUpdating=${updateState.isUpdating}`);
+      // console.log(`[useRealTimeUpdates] Skipping update: isLoggedIn=${isLoggedIn}, userId=${userId}, appSessionToken=${!!appSessionToken}, isUpdating=${updateState.isUpdating}`);
       return;
     }
 

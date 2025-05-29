@@ -1,10 +1,10 @@
 -- SELECT generate_random_active_users(40);
 -- SELECT random_users_exitsing_hotspots(1000);
 
-SELECT * FROM "Hotspots";
-SELECT * FROM "Active Users";
-SELECT * FROM "Auth";
-SELECT * FROM "Songs";
+-- SELECT * FROM "Hotspots";
+-- SELECT * FROM "Active Users";
+-- SELECT * FROM "Auth";
+-- SELECT * FROM "Songs";
 
 -- DELETE FROM "Active Users";
 

@@ -31,9 +31,23 @@ export const useSpotifyAuth = (): UseSpotifyAuthReturn => {
   const { setIsLoggedIn } = useAuth();
   const isProcessingResponse = useRef<boolean>(false);
 
-  const redirectUri = useMemo(() => process.env.EXPO_PUBLIC_SPOTIFY_REDIRECT_URI || 'no redirect uri', []);
+  // PROD
+  const redirectUri = useMemo(() => {
+    const scheme = "myapp"
+    return makeRedirectUri({
+      scheme: scheme,
+    });
+  }, []);
+
+  // DEV
+  // const redirectUri = useMemo(() => process.env.EXPO_PUBLIC_SPOTIFY_REDIRECT_URI || 'no redirect uri', []);
+  // useEffect(() => {
+  //   console.log("[useSpotifyAuth] Using redirect URI: ", redirectUri);
+  // }, [redirectUri]);
+
   useEffect(() => {
     console.log("[useSpotifyAuth] Using redirect URI: ", redirectUri);
+    console.log("[useSpotifyAuth] Spotify Client ID (first few chars): ", process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID?.substring(0, 5) + '...');
   }, [redirectUri]);
 
   const [request, response, promptAsync] = useAuthRequest(

@@ -90,15 +90,13 @@ app.post('/update-user-info', async function (req, res) {
   console.log('\n[/update-user-info] Request received');
   try {
     const { access_token, refresh_token, user_id, geohash, expires_in = 3600 } = req.body;
-    
-    console.log('[/update-user-info] Debug - Received request body:', {
-      user_id,
-      access_token: access_token,
-      refresh_token: refresh_token,
-      geohash
-    });
-    
-    
+
+    // console.log('[/update-user-info] Debug - Received request body:', {
+    //   user_id,
+    //   access_token: access_token,
+    //   refresh_token: refresh_token,
+    //   geohash
+    // });
     if (!user_id || !access_token || !refresh_token) {
       return res.status(400).json({ error: 'Required data is missing' });
     }
@@ -121,9 +119,9 @@ app.post('/update-user-info', async function (req, res) {
     
     //hash token
     const tokenHash = hashToken(refresh_token);
-    console.log('[/update-user-info] Debug - Generated token hash:', tokenHash);
-    
-    
+    // console.log('[/update-user-info] Debug - Generated token hash:', tokenHash);
+
+  
     // send user data to db
     try {
       
@@ -226,16 +224,16 @@ app.post('/exchange-token', async function (req, res) {
     } catch (dbError) {
       console.error('[/exchange-token] Error saving user to DB:', dbError);
     }
-    
-    
-    console.log("object returned: ", {
-      access_token: spotifyTokens.access_token,
-      refresh_token: spotifyTokens.refresh_token,
-      expires_in: spotifyTokens.expires_in,
-      app_session_token: appSessionToken,
-      user_id: userId
-    })
-    
+
+    // console.log("object returned: ", {
+    //   access_token: spotifyTokens.access_token,
+    //   refresh_token: spotifyTokens.refresh_token,
+    //   expires_in: spotifyTokens.expires_in,
+    //   app_session_token: appSessionToken,
+    //   user_id: userId
+    // })
+
+
     res.json({
       access_token: spotifyTokens.access_token,
       refresh_token: spotifyTokens.refresh_token,

@@ -28,7 +28,7 @@ CREATE TABLE "Active Users" (
 CREATE TABLE "Auth" (
   user_id TEXT PRIMARY KEY REFERENCES "Active Users"(id) ON DELETE CASCADE,
   auth_token_hash TEXT NOT NULL,  -- Hashed version
-  expires_at TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '1 hour') CHECK(expires_at > NOW())
+  expires_at TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '1 hour') CHECK(expires_at >= NOW())
 );
 
 

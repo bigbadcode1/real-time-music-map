@@ -4,8 +4,17 @@ config();
 
 // Database class manages database connections and adds an abstraction layer to calling queries
 class Database {
-  // creates connection pool
   constructor() {
+
+    //   this.pool = new Pool({
+    //     connectionString: process.env.DATABASE_URL,
+    //     ssl: {
+    //       rejectUnauthorized: false // Required for Render's PostgreSQL connections
+    //     },
+    //     max: 80,
+    //     connectionTimeoutMillis: 5000,
+    //     });
+
     this.pool = new Pool({
       user: process.env.DB_USER,
       host: process.env.DB_HOST,
@@ -32,7 +41,6 @@ class Database {
     }
   }
 
-  
   // ---------------- functions for calling db queries
   async addNewUser(id, name, token_hash, expires_at = (Date.now() + 60 * 60 * 1000), geohash = null, image_url = null) {
     const expires = new Date(expires_at);
@@ -43,7 +51,7 @@ class Database {
 
   async updateUserInfo(user_id, token, geohash, song_id, song_image, song_title, song_artist) {
     const result = await this.query('SELECT update_user_info($1, $2, $3, $4, $5, $6, $7)', [user_id, token, geohash, song_id, song_image, song_title, song_artist]);
-  
+
     return result;
   }
 
@@ -58,7 +66,7 @@ class Database {
 
     return result?.rows || [];
   }
-  
+
   async getHotspots(ne_lat, ne_long, sw_lat, sw_long) {
     const result = await this.query('SELECT * FROM get_hotspots($1, $2, $3, $4)', [ne_lat, ne_long, sw_lat, sw_long]);
 
@@ -70,11 +78,11 @@ class Database {
     try {
       // Get a client from the pool
       client = await this.pool.connect();
-      
+
       return true;
     } catch (error) {
       console.error('Database connection failed:', error);
-      
+
       throw new Error(error);
     } finally {
       if (client) client.release();
