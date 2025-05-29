@@ -7,8 +7,8 @@
 ----------------- EXAMPLE --------------------
 -- Krakow/ruczaj prefix
 
--- SELECT generate_random_active_users(15, 'u2yht');
--- SELECT random_users_exitsing_hotspots(500);
+-- SELECT generate_random_active_users(30, 'u2yht');
+-- SELECT random_users_exitsing_hotspots(200);
 
 
 
