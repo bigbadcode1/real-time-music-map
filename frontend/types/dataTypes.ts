@@ -38,7 +38,7 @@ export type GenreData = {
 export type UserListenerData = {
   id: string;
   name: string;
-  image: string;
+  avatar: string;
   currentTrack: {
     title: string;
     artist: string;

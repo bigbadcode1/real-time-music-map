@@ -40,15 +40,27 @@ function calculateTimeAgo(timestamp: string): string {
   return `${Math.floor(diffInSeconds / 86400)} days ago`;
 }
 
+interface MapRegion {
+  latitude: number;
+  longitude: number;
+  latitudeDelta: number;
+  longitudeDelta: number;
+}
+
 export function useRealTimeUpdates() {
   const { userId, isLoggedIn, getValidAccessToken, appSessionToken } = useAuth();
 
   const [currentLocation, setCurrentLocation] = useState<CurrentLocation | null>(null);
   const [currentTrack, setCurrentTrack] = useState<CurrentTrack | null>(null);
   const [nearbyHotspots, setNearbyHotspots] = useState<BasicHotspotData[] | null>(null);
+  const [nextUpdateCountdown, setNextUpdateCountdown] = useState<number>(0); 
 
   const currentTrackRef = useRef(currentTrack);
   const nearbyHotspotsRef = useRef(nearbyHotspots);
+  // Add ref to track the current map region
+  const currentMapRegionRef = useRef<MapRegion | null>(null);
+
+  const UPDATE_INTERVAL_MS = 30000; // 30 seconds
 
   useEffect(() => {
     currentTrackRef.current = currentTrack;
@@ -63,7 +75,13 @@ export function useRealTimeUpdates() {
     lastTrackUpdate: 0,
     lastHotspotUpdate: 0,
     updateInterval: null as number | null,
+    countdownInterval: null as number | null,
   });
+  
+  // Add method to update the map region reference
+  const setMapRegionForUpdates = useCallback((region: MapRegion | null) => {
+    currentMapRegionRef.current = region;
+  }, []);
   
   const getCurrentLocation = async (): Promise<CurrentLocation | null> => {
     try {
@@ -106,53 +124,73 @@ export function useRealTimeUpdates() {
   }, [appSessionToken, userId]);
 
 
-  const getNearbyHotspotsData = async (location: CurrentLocation): Promise<BasicHotspotData[] | null> => {
-    try {
-      const headers = await getAuthHeaders();
-      if (!headers) {
-        console.log('[useRealTimeUpdates] Skipping nearby hotspots fetch due to missing auth headers.');
-        return null;
-      }
-
-      const radius = 5000;
-      const latDegreesPerKm = 1 / 111.32;
-      const longDegreesPerKm = 1 / (111.32 * Math.cos(location.latitude * (Math.PI / 180)));
-
-      const latDelta = (radius / 1000) * latDegreesPerKm;
-      const longDelta = (radius / 1000) * longDegreesPerKm;
-
-      const ne_lat = location.latitude + latDelta;
-      const ne_long = location.longitude + longDelta;
-      const sw_lat = location.latitude - latDelta;
-      const sw_long = location.longitude - longDelta;
-
-      const response = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}/get_hotspots`, {
-        method: 'POST',
-        headers: headers, 
-        body: JSON.stringify({ ne_lat, ne_long, sw_lat, sw_long })
-      });
-
-      if (!response.ok) {
-        console.error(`[useRealTimeUpdates] Failed to fetch nearby hotspots data: ${response.status}`);
-        return null;
-      }
-
-      const data = await response.json();
-      return data.hotspots.map((h: any) => ({
-        id: h.geohash,
-        coordinate: { latitude: h.latitude, longitude: h.longitude },
-        size: getSizeFromCount(h.count),
-        activity: getActivityLevel(h.count, h.last_updated),
-        userCount: h.count,
-        lastUpdated: h.last_updated,
-        locationName: `Hotspot ${h.geohash.substring(0, 5)}`,
-        geohash: h.geohash,
-      }));
-    } catch (error) {
-      console.error('[useRealTimeUpdates] Error getting nearby hotspots data:', error);
+const getNearbyHotspotsData = async (region: MapRegion): Promise<BasicHotspotData[] | null> => {
+  try {
+    const headers = await getAuthHeaders();
+    if (!headers) {
+      console.log('[useRealTimeUpdates] Skipping map region hotspots fetch due to missing auth headers.');
       return null;
     }
-  };
+
+
+    const latPadding = region.latitudeDelta * 0.1;
+    const lngPadding = region.longitudeDelta * 0.1;
+    
+    const ne_lat = region.latitude + (region.latitudeDelta / 2) + latPadding;
+    const ne_long = region.longitude + (region.longitudeDelta / 2) + lngPadding;
+    const sw_lat = region.latitude - (region.latitudeDelta / 2) - latPadding;
+    const sw_long = region.longitude - (region.longitudeDelta / 2) - lngPadding;
+
+    const normalizedNeLong = ne_long > 180 ? ne_long - 360 : ne_long;
+    const normalizedSwLong = sw_long < -180 ? sw_long + 360 : sw_long;
+
+    console.log(`[useRealTimeUpdates] Searching hotspots in map region: NE(${ne_lat.toFixed(4)}, ${normalizedNeLong.toFixed(4)}) SW(${sw_lat.toFixed(4)}, ${normalizedSwLong.toFixed(4)})`);
+
+    const response = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}/get_hotspots`, {
+      method: 'POST',
+      headers: headers, 
+      body: JSON.stringify({ 
+        ne_lat: ne_lat, 
+        ne_long: normalizedNeLong, 
+        sw_lat: sw_lat, 
+        sw_long: normalizedSwLong 
+      })
+    });
+
+    if (!response.ok) {
+      console.error(`[useRealTimeUpdates] Failed to fetch map region hotspots data: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      console.error(`[useRealTimeUpdates] Error response:`, errorText);
+      return null;
+    }
+
+    const data = await response.json();
+    
+    if (!data || !Array.isArray(data.hotspots)) {
+      console.error('[useRealTimeUpdates] Invalid response structure from hotspots API');
+      return null;
+    }
+
+    console.log(`[useRealTimeUpdates] Found ${data.hotspots.length} hotspots in region`);
+
+    return data.hotspots.map((h: any) => ({
+      id: h.geohash,
+      coordinate: { 
+        latitude: parseFloat(h.latitude), 
+        longitude: parseFloat(h.longitude) 
+      },
+      size: getSizeFromCount(h.count),
+      activity: getActivityLevel(h.count, h.last_updated),
+      userCount: h.count,
+      lastUpdated: h.last_updated,
+      locationName: `Hotspot ${h.geohash.substring(0, 5)}`,
+      geohash: h.geohash,
+    }));
+  } catch (error) {
+    console.error('[useRealTimeUpdates] Error getting map region hotspots data:', error);
+    return null;
+  }
+};
 
   const getHotspotDetails = async (geohash: string): Promise<UserListenerData[] | null> => {
     try {
@@ -177,7 +215,7 @@ export function useRealTimeUpdates() {
       return data.users.map((user: any) => ({
         id: user.id,
         name: user.name,
-        avatar: user.image_url,
+        avatar: user.image,
         currentTrack: {
           title: user.song_title,
           artist: user.song_artist,
@@ -200,9 +238,6 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
 
     if (!spotifyAccessToken) {
       console.log('[useRealTimeUpdates] No valid Spotify access token available to send update');
-      // If no Spotify token, it's likely no music is playing or can be updated.
-      // Consider setting currentTrack to null here as well, or let the backend handle it.
-      // For now, we'll rely on the backend response.
       return;
     }
     if (!appSession || !id) {
@@ -215,15 +250,10 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
     const tokensString = await AsyncStorage.getItem('spotifyTokens');
     if (!tokensString) {
       console.log('[useRealTimeUpdates] No Spotify tokens found in storage');
-      // If no Spotify tokens, we can't get current playing track.
-      // Consider setting currentTrack to null here.
       return;
     }
     const tokens = JSON.parse(tokensString);
     const refreshToken = tokens.refresh_token;
-
-    // console.log('[useRealTimeUpdates] Debug - Refresh Token:', refreshToken);
-    // console.log('[useRealTimeUpdates] Debug - User ID:', id);
 
     const requestBody = {
       access_token: spotifyAccessToken,
@@ -231,8 +261,6 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
       user_id: id,
       geohash: geohashValue
     };
-
-    // console.log('[useRealTimeUpdates] Debug - Full Request Body:', JSON.stringify(requestBody, null, 2));
 
     const response = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}/update-user-info`, {
       method: 'POST',
@@ -252,37 +280,32 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
         const errorJson = JSON.parse(errorText);
         console.error(`[useRealTimeUpdates] Error details:`, errorJson);
       } catch (e) {}
-      // On error, it's safer to clear the track state if we can't confirm what's playing
-      setCurrentTrack(null); // <-- Added this for error cases
+      setCurrentTrack(null);
     } else {
       const responseData = await response.json();
       console.log('[useRealTimeUpdates] Successfully sent update to backend');
-      // console.log('[useRealTimeUpdates] Backend response:', responseData);
 
-      if (responseData.track !== null && responseData.track !== undefined) { // Check for non-null and non-undefined
+      if (responseData.track !== null && responseData.track !== undefined) {
         const backendTrack: CurrentTrack = {
-          isPlaying: responseData.isPlaying ?? true, // Use backend's isPlaying, default to true if not provided
+          isPlaying: responseData.isPlaying ?? true,
           track: responseData.track
         };
         setCurrentTrack(backendTrack);
-        // console.log('[useRealTimeUpdates] Updated currentTrack to playing song:', responseData.track.name);
       } else {
-        // If responseData.track is null or undefined, set currentTrack to null
         setCurrentTrack(null);
         console.log('[useRealTimeUpdates] Updated currentTrack to NULL (no track playing)');
       }
     }
   } catch (error) {
     console.error('[useRealTimeUpdates] Error sending update to backend:', error);
-    // On any network or parsing error, clear the track state
     setCurrentTrack(null); 
   }
 };
+
   const performUpdate = useCallback(async () => {
     const updateState = updateStateRef.current;
 
     if (!isLoggedIn || !userId || !appSessionToken || updateState.isUpdating) {
-      // console.log(`[useRealTimeUpdates] Skipping update: isLoggedIn=${isLoggedIn}, userId=${userId}, appSessionToken=${!!appSessionToken}, isUpdating=${updateState.isUpdating}`);
       return;
     }
 
@@ -303,7 +326,23 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
 
       if (!updateState.lastHotspotUpdate || now - updateState.lastHotspotUpdate > 20000) {
         console.log('[useRealTimeUpdates] Fetching nearby hotspots...');
-        const hotspots = await getNearbyHotspotsData(location);
+        
+        // Use current map region if available, otherwise fall back to user location
+        let regionToSearch: MapRegion;
+        if (currentMapRegionRef.current) {
+          regionToSearch = currentMapRegionRef.current;
+          console.log('[useRealTimeUpdates] Using current map region for hotspot search');
+        } else {
+          regionToSearch = {
+            latitude: location.latitude,
+            longitude: location.longitude,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          };
+          console.log('[useRealTimeUpdates] Using user location for hotspot search (no map region set)');
+        }
+        
+        const hotspots = await getNearbyHotspotsData(regionToSearch);
         if (hotspots) {
           setNearbyHotspots(hotspots);
           updateState.lastHotspotUpdate = now;
@@ -315,6 +354,7 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
       console.error('[useRealTimeUpdates] Error in update cycle:', error);
     } finally {
       updateState.isUpdating = false;
+      setNextUpdateCountdown(UPDATE_INTERVAL_MS / 1000); 
     }
   }, [isLoggedIn, userId, appSessionToken, getValidAccessToken]);
 
@@ -322,15 +362,22 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
   useEffect(() => {
     const updateState = updateStateRef.current;
 
-
     if (isLoggedIn && userId && appSessionToken) {
       if (updateState.updateInterval) {
         clearInterval(updateState.updateInterval);
         console.log('[useRealTimeUpdates] Cleared previous update interval.');
       }
+      if (updateState.countdownInterval) {
+        clearInterval(updateState.countdownInterval);
+      }
 
       console.log('[useRealTimeUpdates] User is logged in with userId and app session token. Performing immediate update.');
       performUpdate();
+
+      setNextUpdateCountdown(UPDATE_INTERVAL_MS / 1000);
+      updateState.countdownInterval = setInterval(() => {
+        setNextUpdateCountdown(prev => (prev > 0 ? prev - 1 : 0));
+      }, 1000);
 
       updateState.updateInterval = setInterval(() => {
         if (isLoggedIn && userId && appSessionToken) {
@@ -342,19 +389,28 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
             clearInterval(updateState.updateInterval);
             updateState.updateInterval = null;
           }
+           if (updateState.countdownInterval) {
+            clearInterval(updateState.countdownInterval);
+            updateState.countdownInterval = null;
+          }
         }
-      }, 30000);
+      }, UPDATE_INTERVAL_MS);
 
-      console.log('[useRealTimeUpdates] Update interval set for every 30 seconds');
+      console.log(`[useRealTimeUpdates] Update interval set for every ${UPDATE_INTERVAL_MS / 1000} seconds`);
     } else {
       if (updateState.updateInterval) {
         clearInterval(updateState.updateInterval);
         updateState.updateInterval = null;
         console.log('[useRealTimeUpdates] Not fully authenticated. Cleared update interval.');
       }
+      if (updateState.countdownInterval) {
+        clearInterval(updateState.countdownInterval);
+        updateState.countdownInterval = null;
+      }
       setCurrentLocation(null);
       setCurrentTrack(null);
       setNearbyHotspots(null);
+      setNextUpdateCountdown(0);
       console.log('[useRealTimeUpdates] Cleared all local states due to incomplete authentication.');
     }
 
@@ -364,8 +420,12 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
         updateState.updateInterval = null;
         console.log('[useRealTimeUpdates] Cleanup: Interval cleared on unmount/dependency change.');
       }
+      if (updateState.countdownInterval) {
+        clearInterval(updateState.countdownInterval);
+        updateState.countdownInterval = null;
+      }
     };
-  }, [isLoggedIn, userId, appSessionToken]);
+  }, [isLoggedIn, userId, appSessionToken, performUpdate]);
 
 
   return {
@@ -373,6 +433,8 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
     currentTrack,
     nearbyHotspots,
     getHotspotDetails,
+    getNearbyHotspotsData,
+    setMapRegionForUpdates,
     startUpdates: performUpdate,
     stopUpdates: () => {
       const updateState = updateStateRef.current;
@@ -381,6 +443,12 @@ const sendUpdateToBackend = async (location: CurrentLocation, track: CurrentTrac
         updateState.updateInterval = null;
         console.log('[useRealTimeUpdates] Manual stop: Interval cleared.');
       }
+      if (updateState.countdownInterval) {
+        clearInterval(updateState.countdownInterval);
+        updateState.countdownInterval = null;
+      }
+      setNextUpdateCountdown(0);
     },
+    nextUpdateCountdown,
   };
 }

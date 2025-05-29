@@ -3,19 +3,19 @@ import { Text, ActivityIndicator, View, StyleSheet, Platform } from 'react-nativ
 import MapView, { Marker, Region } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { requestPermissions } from '../../../src/services/locationService';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Hotspot } from '@/components/Hotspot';
 import { HotspotDetail } from '@/components/HotspotDetail';
 import { useRealTimeUpdates } from '@/src/hooks/useRealTimeUpdates';
 import { useAuth } from '@/src/context/AuthContext';
 import { NowPlayingBar } from '@/components/NowPlayingBar';
+import { TutorialModal } from '@/components/TutorialModal';
 // import { LocationSearchBar } from '@/components/LocationSearchBar';
 import { CustomBottomNavigationBar, MapMode } from '@/components/CustomBottomNavigationBar';
 import { TouchableOpacity } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { HotspotSearchButton } from '@/components/HotspotSearchButton'
-
+import Feather from '@expo/vector-icons/Feather';
 
 import {
   BasicHotspotData,
@@ -24,6 +24,13 @@ import {
   CurrentTrack,
   UserListenerData
 } from '../../../types/dataTypes';
+
+interface MapRegion {
+  latitude: number;
+  longitude: number;
+  latitudeDelta: number;
+  longitudeDelta: number;
+}
 
 interface MapContentProps {
   hotspots: BasicHotspotData[];
@@ -112,13 +119,25 @@ const MapScreen: React.FC = () => {
   // const [mapPaddingBottom, setMapPaddingBottom] = useState(1);
   const [isMapReady, setIsMapReady] = useState(false);
   const [initialRegion, setInitialRegion] = useState<Region | null>(null);
-
+  const [isSearchingHotspots, setIsSearchingHotspots] = useState(false);
+  const [lastHotspotUpdateTime, setLastHotspotUpdateTime] = useState(0);
+  const [showTutorialState, setShowTutorialState] = useState(false);
+  const [mapRegion, setMapRegion] = useState<MapRegion | null>(null);
+  
   const mapRef = useRef<MapView | null>(null);
   const expoRouter = useRouter();
 
   const { isLoggedIn, userId } = useAuth();
 
-  const { currentLocation, currentTrack, nearbyHotspots, getHotspotDetails } = useRealTimeUpdates();
+  const { showTutorial } = useLocalSearchParams();
+
+  const { currentLocation, currentTrack, nearbyHotspots, getNearbyHotspotsData, getHotspotDetails, nextUpdateCountdown, setMapRegionForUpdates } = useRealTimeUpdates();
+
+  useEffect(() => {
+    if (showTutorial === "true") {
+      setShowTutorialState(true);
+    }
+  }, [showTutorial]);
 
   // Redirect to onboarding if not logged in
   useEffect(() => {
@@ -129,7 +148,6 @@ const MapScreen: React.FC = () => {
       console.log(`[MapScreen] User is logged in with ID: ${userId || 'unknown'}`);
     }
   }, [isLoggedIn, expoRouter, userId]);
-
 
   // Request location permissions on mount
   useEffect(() => {
@@ -143,6 +161,93 @@ const MapScreen: React.FC = () => {
     requestLocationAccess();
   }, []);
 
+  // Handle map region changes
+  const handleRegionChange = useCallback((region: MapRegion) => {
+    setMapRegion(region);
+    setMapRegionForUpdates(region); // Add this line
+  }, [setMapRegionForUpdates]);
+
+
+  // Handle when user stops moving the map
+  const handleRegionChangeComplete = useCallback((region: MapRegion) => {
+    setMapRegion(region);
+    setMapRegionForUpdates(region);
+    // Uncomment if we want auto-search when user stops moving the map
+    // hell nah dont uncomment its lagging like crazy
+    // handleSearchHotspots();
+  }, []);
+
+  const handleSearchHotspots = useCallback(async () => {
+    let searchRegion: MapRegion;
+    
+    if (mapRegion) {
+      searchRegion = mapRegion;
+    } else if (currentLocation) {
+      searchRegion = {
+        latitude: currentLocation.latitude,
+        longitude: currentLocation.longitude,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      };
+    } else {
+      console.log('[MapScreen] Cannot search hotspots: no map region or current location');
+      return;
+    }
+
+    if (isSearchingHotspots) {
+      console.log('[MapScreen] Already searching for hotspots');
+      return;
+    }
+
+    const COOLDOWN_MS = 3000; // 3 seconds
+    const timeSinceLastUpdate = Date.now() - lastHotspotUpdateTime;
+    
+    if (timeSinceLastUpdate < COOLDOWN_MS) {
+      const remainingSeconds = Math.ceil((COOLDOWN_MS - timeSinceLastUpdate) / 1000);
+      console.log(`[MapScreen] Cooldown active, ${remainingSeconds}s remaining`);
+      return;
+    }
+
+    try {
+      setIsSearchingHotspots(true);
+      setLastHotspotUpdateTime(Date.now());
+      console.log('[MapScreen] Manually searching for hotspots in current map view...');
+      console.log('[MapScreen] Search region:', searchRegion);
+      
+      const hotspots = await getNearbyHotspotsData(searchRegion);
+      if (hotspots) {
+        console.log(`[MapScreen] Found ${hotspots.length} hotspots in search area`);
+        
+        const validatedHotspots = hotspots.map(hotspot => {
+          if (!hotspot.coordinate ||
+            typeof hotspot.coordinate.latitude !== 'number' ||
+            typeof hotspot.coordinate.longitude !== 'number' ||
+            isNaN(hotspot.coordinate.latitude) ||
+            isNaN(hotspot.coordinate.longitude)) {
+            console.warn(`[MapScreen] Invalid coordinate for hotspot ${hotspot.id}:`, hotspot.coordinate);
+            return {
+              ...hotspot,
+              coordinate: searchRegion ? {
+                latitude: searchRegion.latitude + (Math.random() - 0.5) * 0.005,
+                longitude: searchRegion.longitude + (Math.random() - 0.5) * 0.005,
+              } : { latitude: 0, longitude: 0 }
+            };
+          }
+          return hotspot;
+        }).filter(hotspot =>
+          hotspot.coordinate.latitude !== 0 || hotspot.coordinate.longitude !== 0
+        );
+
+        setHotspots(validatedHotspots);
+      } else {
+        console.log('[MapScreen] No hotspots found in search area');
+      }
+    } catch (error) {
+      console.error('[MapScreen] Error searching for hotspots:', error);
+    } finally {
+      setIsSearchingHotspots(false);
+    }
+  }, [mapRegion, currentLocation, getNearbyHotspotsData, isSearchingHotspots, lastHotspotUpdateTime]);
 
   useEffect(() => {
     if (currentLocation && !initialRegion) {
@@ -153,15 +258,16 @@ const MapScreen: React.FC = () => {
         longitudeDelta: 0.01,
       };
       setInitialRegion(region);
+      setMapRegion(region);
       console.log(`[MapScreen] Set initial region:`, region);
     }
   }, [currentLocation, initialRegion]);
-
 
   // Update hotspots when nearby data changes
   useEffect(() => {
     if (nearbyHotspots && isMapReady) {
       console.log(`[MapScreen] Received ${nearbyHotspots.length} nearby hotspots`);
+      setLastHotspotUpdateTime(Date.now());
 
       // Validate hotspot coordinates before setting
       const validatedHotspots = nearbyHotspots.map(hotspot => {
@@ -185,37 +291,40 @@ const MapScreen: React.FC = () => {
         hotspot.coordinate.latitude !== 0 || hotspot.coordinate.longitude !== 0
       );
 
-      setHotspots(validatedHotspots);
+      setHotspots((prevHotspots) => {
+      const existingById = new Map(prevHotspots.map(h => [h.id, h]));
+      validatedHotspots.forEach(h => existingById.set(h.id, h));
+      return Array.from(existingById.values());
+    });
     }
   }, [nearbyHotspots, currentLocation, isMapReady]);
-
 
   // Adjust map padding when a hotspot is selected
   // useEffect(() => {
   //   setMapPaddingBottom(selectedHotspot ? 300 : 1);
   // }, [selectedHotspot]);
 
-
   const handleMapReady = useCallback(() => {
     console.log("[MapScreen] Map is ready");
     setIsMapReady(true);
   }, []);
 
+  const getInfo = () => {
+    setShowTutorialState(true);
+  };
 
   const centerMapOnUser = () => {
     if (mapRef.current && currentLocation) {
-      mapRef.current.animateToRegion(
-        {
-          latitude: currentLocation.latitude,
-          longitude: currentLocation.longitude,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        },
-        300
-      );
+      const newRegion = {
+        latitude: currentLocation.latitude,
+        longitude: currentLocation.longitude,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      };
+      mapRef.current.animateToRegion(newRegion, 300);
+      setMapRegion(newRegion); // Update mapRegion when centering on user
     }
   };
-
 
   const handleHotspotPress = useCallback(async (hotspot: BasicHotspotData) => {
     console.log(`[MapScreen] Hotspot selected: ${hotspot.id}`);
@@ -259,16 +368,13 @@ const MapScreen: React.FC = () => {
     });
   }, [getHotspotDetails]);
 
-
   const handleCloseHotspotDetail = useCallback(() => {
     setSelectedHotspot(null);
   }, []);
 
-
   const toggleMode = useCallback(() => {
     setCurrentMapMode((prevMode) => (prevMode === 'discover' ? 'analyze' : 'discover'));
   }, []);
-
 
   // Show error message if location permissions were denied
   if (errorMsg) {
@@ -289,7 +395,6 @@ const MapScreen: React.FC = () => {
     );
   }
 
-
   return (
     <View style={styles.container}>
       <MapView
@@ -302,6 +407,8 @@ const MapScreen: React.FC = () => {
         loadingEnabled={true}
         moveOnMarkerPress={false}
         onMapReady={handleMapReady}
+        onRegionChange={handleRegionChange}
+        onRegionChangeComplete={handleRegionChangeComplete}
         rotateEnabled={true}
         scrollEnabled={true}
         zoomEnabled={true}
@@ -318,21 +425,35 @@ const MapScreen: React.FC = () => {
 
       <NowPlayingBar currentTrack={currentTrack} />
       
-      <HotspotSearchButton 
-        isLoadingHotspots={false}
-        onPress={() => (1)}
+      <HotspotSearchButton
+        isLoadingHotspots={isSearchingHotspots}
+        lastUpdateTime={lastHotspotUpdateTime}
+        onPress={handleSearchHotspots}
+        cooldownMs={3000}
       />
+
+      <View style={styles.updateTimerContainer}>
+        <Text style={styles.updateTimerText}>
+          {nextUpdateCountdown > 0
+            ? `Next update in: ${nextUpdateCountdown}s`
+            : `Updating...`}
+        </Text>
+      </View>
+
+      <TouchableOpacity
+        style={styles.getInfo}
+        onPress={getInfo}
+      >
+        <Feather name="help-circle" size={20} color="#333" />
+      </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.centerLocationButton}
         onPress={centerMapOnUser}
       >
-        <MaterialIcons name="my-location" size={24} color="#333" />
+        <MaterialIcons name="my-location" size={20} color="#333" />
         {/* <FontAwesome5 name="location-arrow" size={20} color="#333" /> */}
-
       </TouchableOpacity>
-
-
 
       {/* <LocationSearchBar /> */}
       <CustomBottomNavigationBar
@@ -353,6 +474,7 @@ const MapScreen: React.FC = () => {
           onClose={handleCloseHotspotDetail}
         />
       )}
+      <TutorialModal visible={showTutorialState} onClose={() => setShowTutorialState(false)} />
     </View>
   );
 };
@@ -385,8 +507,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 225,
     right: 20,
-    width: 52,
-    height: 52,
+    width: 48,
+    height: 48,
     backgroundColor: 'rgba(255, 255, 255, 1.00)',
     borderRadius: 28,
     justifyContent: 'center',
@@ -396,6 +518,49 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
+  },
+
+  getInfo: {
+    position: 'absolute',
+    top: 180,
+    right: 20,
+    width: 48,
+    height: 48,
+    backgroundColor: 'rgba(255, 255, 255, 1.00)',
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+
+  updateTimerContainer: {
+    position: 'absolute',
+    top: 135,
+    right: 20,
+    minWidth: 140,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    opacity: 0.8
+  },
+
+  updateTimerText: {
+    color: '#333',
+    fontSize: 13,
+    fontWeight: '500',
+    textAlign: 'center',
   },
 });
 

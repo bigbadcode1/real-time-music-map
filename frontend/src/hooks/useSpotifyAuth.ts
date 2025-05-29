@@ -85,7 +85,7 @@ export const useSpotifyAuth = (): UseSpotifyAuthReturn => {
 
             await setIsLoggedIn(true, exchangeResult.appSessionToken); 
             setError(null);
-            router.replace("/(root)/(tabs)/mapScreen");
+            router.replace({ pathname: "/(root)/(tabs)/mapScreen", params: { showTutorial: "true" } });
           } else {
             console.error("[useSpotifyAuth] Token exchange failed: ", exchangeResult.error);
             setError(`Login failed during token exchange: ${exchangeResult.error}`);
