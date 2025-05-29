@@ -41,7 +41,6 @@ class Database {
     }
   }
 
-
   // ---------------- functions for calling db queries
   async addNewUser(id, name, token_hash, expires_at = (Date.now() + 60 * 60 * 1000), geohash = null, image_url = null) {
     const expires = new Date(expires_at);
