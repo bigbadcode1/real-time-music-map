@@ -10,6 +10,7 @@ import {
   Animated,
   Dimensions,
   FlatList,
+  Linking
   Easing
 } from 'react-native';
 import { BlurView } from 'expo-blur';
@@ -94,6 +95,20 @@ export const HotspotDetail: React.FC<HotspotDetailProps> = ({
     });
   };
 
+  // press on user => redirect to user profile on spotify
+  const handlePressUser = (userId : string) => {
+    Linking.openURL(`http://open.spotify.com/user/${userId}`).catch(err =>
+      console.error("Failed to open URL:", err)
+    );
+  };
+
+  // press on song => redirect to song on spotify 
+  const handlePressSong = (songId : string) => {
+    Linking.openURL(`http://open.spotify.com/track/${songId}`).catch(err =>
+      console.error("Failed to open URL:", err)
+    );
+  };
+
   const formattedTime = new Date(timestamp).toLocaleTimeString([], {
     hour: '2-digit',
     minute: '2-digit'
@@ -175,46 +190,61 @@ export const HotspotDetail: React.FC<HotspotDetailProps> = ({
 
   const renderUserListenerItem = ({ item }: { item: UserListenerData }) => (
     <View style={styles.userListenerItem}>
-      {item.avatar ? (
-        <Image
-          source={{ uri: item.avatar }}
-          style={styles.userAvatar}
-        />
-      ) : (
-        <View style={[styles.userAvatar, styles.defaultUserAvatar]}>
-          {/* <AntDesign name="user" size={24} color="#999" /> */}
-        </View>
-      )}
-      <View style={styles.userInfo}>
-        <Text style={styles.userName} numberOfLines={1}>{item.name}</Text>
-        <View style={styles.userTrackContainer}>
-          <FontAwesome
-            name={item.currentTrack.isCurrentlyListening ? "play-circle" : "history"}
-            size={14}
-            color={item.currentTrack.isCurrentlyListening ? "#1DB954" : "#777"}
-            style={styles.userTrackIcon}
+      <TouchableOpacity 
+        onPress={() => handlePressUser(item.id)}
+        activeOpacity={0.7}
+      >
+        {item.avatar ? (
+          <Image
+            source={{ uri: item.avatar }}
+            style={styles.userAvatar}
           />
-          <Text style={styles.userTrackText} numberOfLines={1}>
-            {item.currentTrack.artist} - {item.currentTrack.title}
-          </Text>
-        </View>
-        {/* <Text style={styles.userTrackTimestamp}>
-          {item.currentTrack.isCurrentlyListening
-            ? "Listening now"
-            : `Last listened: ${new Date(item.currentTrack.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
-        </Text> */}
+        ) : (
+          <View style={[styles.userAvatar, styles.defaultUserAvatar]}>
+            <AntDesign name="user" size={24} color="#999" />
+          </View>
+        )}
+      </TouchableOpacity>
+      <View style={styles.userInfo}>
+        <TouchableOpacity 
+          onPress={() => handlePressUser(item.id)}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.userName} numberOfLines={1}>{item.name}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          onPress={() => handlePressSong(item.currentTrack.id)}
+          activeOpacity={0.7}
+        >
+          <View style={styles.userTrackContainer}>
+            <FontAwesome
+              name={item.currentTrack.isCurrentlyListening ? "play-circle" : "history"}
+              size={14}
+              color={item.currentTrack.isCurrentlyListening ? "#1DB954" : "#777"}
+              style={styles.userTrackIcon}
+            />
+            <Text style={styles.userTrackText} numberOfLines={1}>
+              {item.currentTrack.artist} - {item.currentTrack.title}
+            </Text>
+          </View>
+        </TouchableOpacity>
       </View>
-      {item.currentTrack.albumArt ? (
-        <Image
-          source={{ uri: item.currentTrack.albumArt }}
-          style={styles.userTrackAlbumArt}
-          defaultSource={require('../assets/images/remove.png')}
-        />
-      ) : (
-        <View style={[styles.userTrackAlbumArt, styles.defaultAlbumArt]}>
-          <FontAwesome name="music" size={16} color="#999" />
-        </View>
-      )}
+      <TouchableOpacity 
+        onPress={() => handlePressSong(item.currentTrack.id)}
+        activeOpacity={0.7}
+      >
+        {item.currentTrack.albumArt ? (
+          <Image
+            source={{ uri: item.currentTrack.albumArt }}
+            style={styles.userTrackAlbumArt}
+            defaultSource={require('../assets/images/remove.png')}
+          />
+        ) : (
+          <View style={[styles.userTrackAlbumArt, styles.defaultAlbumArt]}>
+            <FontAwesome name="music" size={16} color="#999" />
+          </View>
+        )}
+      </TouchableOpacity>
     </View>
   );
 

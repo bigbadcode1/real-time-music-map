@@ -40,6 +40,7 @@ export type UserListenerData = {
   name: string;
   avatar: string;
   currentTrack: {
+    id: string;
     title: string;
     artist: string;
     albumArt: string;

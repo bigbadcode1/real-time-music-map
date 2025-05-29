@@ -5,10 +5,10 @@
 -- ^ generates 1040 users within max 40 hotspots
 
 ----------------- EXAMPLE --------------------
--- Krakow prefix
+-- Krakow/ruczaj prefix
 
--- SELECT generate_random_active_users(15, 'u2yht');
--- SELECT random_users_exitsing_hotspots(500);
+-- SELECT generate_random_active_users(30, 'u2yht');
+-- SELECT random_users_exitsing_hotspots(200);
 
 
 
@@ -27,7 +27,7 @@ DECLARE
     remaining_length INTEGER;
     token_hash TEXT;
     expires_at TIMESTAMP;
-    chars TEXT := '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    chars TEXT := '0123456789abcdefghijklmnxopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
     geohash_chars TEXT := '0123456789bcdefghjkmnpqrstuvwxyz';
     i INTEGER;
     song_counter INTEGER;

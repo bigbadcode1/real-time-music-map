@@ -211,12 +211,15 @@ const getNearbyHotspotsData = async (region: MapRegion): Promise<BasicHotspotDat
         return null;
       }
 
+      
       const data = await response.json();
+      console.log("data user song id:", data.users[0].song_id)
       return data.users.map((user: any) => ({
         id: user.id,
         name: user.name,
         avatar: user.image,
         currentTrack: {
+          id: user.song_id,
           title: user.song_title,
           artist: user.song_artist,
           albumArt: user.song_image,
