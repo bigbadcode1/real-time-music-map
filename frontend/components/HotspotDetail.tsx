@@ -10,7 +10,7 @@ import {
   Animated,
   Dimensions,
   FlatList,
-  Linking
+  Linking,
   Easing
 } from 'react-native';
 import { BlurView } from 'expo-blur';
