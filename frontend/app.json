@@ -6,8 +6,8 @@
     "orientation": "portrait",
     "icon": "./assets/images/bbclogo.png",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "scheme": "myapp",
+    "newArchEnabled": false,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.bigbadcode1.realtimemusicmap",
@@ -27,7 +27,8 @@
         "WRITE_EXTERNAL_STORAGE",
         "READ_EXTERNAL_STORAGE"
       ],
-      "package": "com.bigbadcode1.realtimemusicmap"
+      "package": "com.bigbadcode1.realtimemusicmap",
+      "newArchEnabled": false
     },
     "web": {
       "bundler": "metro",
