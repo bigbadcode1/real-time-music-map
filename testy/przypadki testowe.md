@@ -159,8 +159,8 @@ Screenshoty do testów są w tym samym folderze co przypadki testowe. Zdjęcia n
 **Oczekiwany rezultat: Aktualna lokalizacja użytkownika jest poprawnie wyświetlona na mapie.**
 <br>**Rzeczywisty rezultat: [zdjęcie]**
 <p float="left">
-<img src="TC009 - 1.png width="300""/>
-<img src="TC009 - 2.png width="300""/>
+<img src="TC009 - 1.png" width="300"/>
+<img src="TC009 - 2.png" width="300"/>
 </p>
 <br>**Status testu: ZALICZONY**
 <br>**Warunki końcowe: Użytkownik widzi swoją pozycję na mapie. Lokalizacja jest aktualna.**
@@ -346,7 +346,7 @@ Screenshoty do testów są w tym samym folderze co przypadki testowe. Zdjęcia n
 **Oczekiwany rezultat: Stabilne działanie przez cały czas testowania. Rozsądne zużycie zasobów urządzenia.**
 <br>**Rzeczywisty rezultat: Telefon w trakcie testu rozładował się [zdjęcie]**
 <p float="left">
-<img src="TC019 - 1.png" width="300"/>
+<img src="TC019 - 1.jpg" width="300"/>
 </p>
 <br>**Status testu: NIEZALICZONY**
 <br>**Warunki końcowe: Aplikacja nadal działa płynnie po długotrwałym użytkowaniu oraz zużyła niewielkie ilości baterii.**
