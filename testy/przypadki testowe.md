@@ -1,5 +1,7 @@
 # Przypadki testowe - Aplikacja Real Time Music Map
 
+Screenshoty do testów są w tym samym folderze co przypadki testowe. Zdjęcia noszą nazwy przypadków testowych do których się donoszą
+
 ## 1. ONBOARDING - SLAJDY WPROWADZAJĄCE
 
 ### TC001
@@ -14,8 +16,11 @@
 
 
 **Oczekiwany rezultat: Wyświetlenie pierwszego slajdu z opisem działania aplikacji, prawidłową grafiką i czytelnym tekstem.**
-<br>**Rzeczywisty rezultat: [PLACEHOLDER - opisz co faktycznie się wydarzyło podczas testu]**
-<br>**Status testu: [ZALICZONY / NIEZALICZONY]**
+<br>**Rzeczywisty rezultat: [zdjęcie]**
+<p float="left">
+<img src="TC001 - 1.png" width="300"/>
+</p>
+<br>**Status testu: NIEZALICZONY**
 <br>**Warunki końcowe: Pierwszy slajd onboardingu jest widoczny. Użytkownik może przejść do kolejnego slajdu.**
 
 ### TC002
@@ -30,8 +35,8 @@
 
 
 **Oczekiwany rezultat: Płynne przechodzenie między wszystkimi trzema slajdami. Każdy slajd wyświetla się poprawnie.**
-<br>**Rzeczywisty rezultat: [PLACEHOLDER - opisz co faktycznie się wydarzyło podczas testu]**
-<br>**Status testu: [ZALICZONY / NIEZALICZONY]**
+<br>**Rzeczywisty rezultat: Płynne przejście do 3 slajdu**
+<br>**Status testu: ZALICZONY**
 <br>**Warunki końcowe: Użytkownik znajduje się na trzecim slajdzie z przyciskiem logowania.**
 
 ### TC003
@@ -46,8 +51,9 @@
 
 
 **Oczekiwany rezultat: Możliwość powrotu do poprzednich slajdów. Zawartość slajdów wyświetla się poprawnie.**
-<br>**Rzeczywisty rezultat: [PLACEHOLDER - opisz co faktycznie się wydarzyło podczas testu]**
-<br>**Status testu: [ZALICZONY / NIEZALICZONY]**
+<br>**Rzeczywisty rezultat: Możliwość powrotu do poprzednich slajdów. Zawartość slajdów wyświetla się poprawnie. [zdjęcie]**
+<img src="TC003 - 1.png"
+<br>**Status testu: ZALICZONY**
 <br>**Warunki końcowe: Użytkownik może swobodnie nawigować między slajdami.**
 
 ## 2. AUTORYZACJA SPOTIFY
@@ -66,8 +72,8 @@
 
 
 **Oczekiwany rezultat: Pomyślne zalogowanie i przekierowanie do ekranu głównego z mapą.**
-<br>**Rzeczywisty rezultat: [PLACEHOLDER - opisz co faktycznie się wydarzyło podczas testu]**
-<br>**Status testu: [ZALICZONY / NIEZALICZONY]**
+<br>**Rzeczywisty rezultat: Po zatwierdzeniu autoryzacji, użytkownik został przeniesiony na ekran główny aplikacji**
+<br>**Status testu: ZALICZONY**
 <br>**Warunki końcowe: Użytkownik zalogowany. Widoczny ekran z mapą, hotspotami i obecnie odtwarzaną muzyką nad mapą**
 
 ### TC005
@@ -83,8 +89,11 @@
 
 
 **Oczekiwany rezultat: Wyświetlenie komunikatu o błędnych danych logowania. Pozostanie na ekranie logowania Spotify.**
-<br>**Rzeczywisty rezultat: [PLACEHOLDER - opisz co faktycznie się wydarzyło podczas testu]**
-<br>**Status testu: [ZALICZONY / NIEZALICZONY]**
+<br>**Rzeczywisty rezultat: [Zdjęcie]**
+<p float="left">
+<img src="TC007 - 1.png" width="300"/>
+</p>
+<br>**Status testu: ZALICZONY**
 <br>**Warunki końcowe: Użytkownik nadal niezalogowany. Możliwość ponownej próby logowania.**
 
 ### TC006
@@ -97,8 +106,8 @@
 
 
 **Oczekiwany rezultat: Powrót do trzeciego slajdu onboardingu z przyciskiem logowania.**
-<br>**Rzeczywisty rezultat: [PLACEHOLDER - opisz co faktycznie się wydarzyło podczas testu]**
-<br>**Status testu: [ZALICZONY / NIEZALICZONY]**
+<br>**Rzeczywisty rezultat: trzeci slajd onboardingu**
+<br>**Status testu: ZALICZONY**
 <br>**Warunki końcowe: Użytkownik niezalogowany. Widoczny trzeci slajd onboardingu.**
 
 ### TC007
@@ -111,8 +120,8 @@
 
 
 **Oczekiwany rezultat: Wyświetlenie komunikatu o braku połączenia internetowego.**
-<br>**Rzeczywisty rezultat: [PLACEHOLDER - opisz co faktycznie się wydarzyło podczas testu]**
-<br>**Status testu: [ZALICZONY / NIEZALICZONY]**
+<br>**Rzeczywisty rezultat: [zdjęcie]**
+<br>**Status testu: ZALICZONY**
 <br>**Warunki końcowe: Użytkownik niezalogowany. Widoczny komunikat o problemie z połączeniem.**
 
 ## 3. MAPA I HOTSPOTY
@@ -129,8 +138,11 @@
 
 
 **Oczekiwany rezultat: Mapa ładuje się poprawnie z widocznymi hotspotami oznaczonymi numerkami.**
-<br>**Rzeczywisty rezultat: [PLACEHOLDER - opisz co faktycznie się wydarzyło podczas testu]**
-<br>**Status testu: [ZALICZONY / NIEZALICZONY]**
+<br>**Rzeczywisty rezultat: [zdjęcie]**
+<p float="left">
+<img src="TC008 - 1.png" width="300"/>
+</p>
+<br>**Status testu: ZALICZONY**
 <br>**Warunki końcowe: Widoczna mapa z hotspotami. Użytkownik może interakcjonować z mapą.**
 
 ### TC009
@@ -145,8 +157,12 @@
 
 
 **Oczekiwany rezultat: Aktualna lokalizacja użytkownika jest poprawnie wyświetlona na mapie.**
-<br>**Rzeczywisty rezultat: [PLACEHOLDER - opisz co faktycznie się wydarzyło podczas testu]**
-<br>**Status testu: [ZALICZONY / NIEZALICZONY]**
+<br>**Rzeczywisty rezultat: [zdjęcie]**
+<p float="left">
+<img src="TC009 - 1.png" width="300"/>
+<img src="TC009 - 2.png" width="300"/>
+</p>
+<br>**Status testu: ZALICZONY**
 <br>**Warunki końcowe: Użytkownik widzi swoją pozycję na mapie. Lokalizacja jest aktualna.**
 
 ### TC010
@@ -161,8 +177,11 @@
 
 
 **Oczekiwany rezultat: Płynne przybliżanie i oddalanie mapy. Hotspoty skalują się odpowiednio.**
-<br>**Rzeczywisty rezultat: [PLACEHOLDER - opisz co faktycznie się wydarzyło podczas testu]**
-<br>**Status testu: [ZALICZONY / NIEZALICZONY]**
+<br>**Rzeczywisty rezultat:  hotspoty nie skalują przy zoomie [zdjęcie]**
+<p float="left">
+<img src="TC010 - 1.png" width="300"/>
+</p>
+<br>**Status testu: NIEZALICZONY**
 <br>**Warunki końcowe: Mapa w wybranym poziomie przybliżenia. Funkcja zoom działa poprawnie.**
 
 ### TC011
@@ -177,8 +196,15 @@
 
 
 **Oczekiwany rezultat: Płynne przesuwanie mapy we wszystkich kierunkach. Hotspoty aktualizują się dla widocznego obszaru.**
-<br>**Rzeczywisty rezultat: [PLACEHOLDER - opisz co faktycznie się wydarzyło podczas testu]**
-<br>**Status testu: [ZALICZONY / NIEZALICZONY]**
+<br>**Rzeczywisty rezultat: [zdjęcia]**
+<p float="left">
+<img src="TC011 - 1.png" width="300"/>
+<img src="TC011 - 2.png" width="300"/>
+<img src="TC011 - 3.png" width="300"/>
+<img src="TC011 - 4.png" width="300"/>
+<img src="TC011 - 5.png" width="300"/>
+</p>
+<br>**Status testu: ZALICZONY**
 <br>**Warunki końcowe: Mapa wyświetla nowy obszar z odpowiednimi hotspotami.**
 
 ## 4. GÓRNY PASEK - AKTUALNA MUZYKA
@@ -193,8 +219,11 @@
 
 
 **Oczekiwany rezultat: W górnym pasku wyświetla się tytuł utworu i nazwa wykonawcy aktualnie słuchanej muzyki.**
-<br>**Rzeczywisty rezultat: [PLACEHOLDER - opisz co faktycznie się wydarzyło podczas testu]**
-<br>**Status testu: [ZALICZONY / NIEZALICZONY]**
+<br>**Rzeczywisty rezultat: [zdjęcia]**
+<p float="left">
+<img src="TC012 - 1.png" width="300"/>
+</p>
+<br>**Status testu: ZALICZONY**
 <br>**Warunki końcowe: Górny pasek pokazuje aktualne informacje o muzyce.**
 
 ### TC013
@@ -208,8 +237,12 @@
 
 
 **Oczekiwany rezultat: Górny pasek automatycznie aktualizuje informacje o nowym utworze.**
-<br>**Rzeczywisty rezultat: [PLACEHOLDER - opisz co faktycznie się wydarzyło podczas testu]**
-<br>**Status testu: [ZALICZONY / NIEZALICZONY]**
+<br>**Rzeczywisty rezultat: [zdjęcia]**
+<p float="left">
+<img src="TC013 - 1.png" width="300"/>
+<img src="TC013 - 2.png" width="300"/>
+</p>
+<br>**Status testu: ZALICZONY**
 <br>**Warunki końcowe: Pasek wyświetla informacje o aktualnie odtwarzanym utworze.**
 
 ### TC014
@@ -222,8 +255,12 @@
 
 
 **Oczekiwany rezultat: Górny pasek zmienia się na pusty.**
-<br>**Rzeczywisty rezultat: [PLACEHOLDER - opisz co faktycznie się wydarzyło podczas testu]**
-<br>**Status testu: [ZALICZONY / NIEZALICZONY]**
+<br>**Rzeczywisty rezultat: [zdjęcia]**
+<p float="left">
+<img src="TC014 - 1.png" width="300"/>
+<img src="TC014 - 2.png" width="300"/>
+</p>
+<br>**Status testu: ZALICZONY**
 <br>**Warunki końcowe: Pasek obecnie słuchanej muzyki jest pusty.**
 
 ## 5. HOTSPOTY - LISTA UŻYTKOWNIKÓW
@@ -238,8 +275,12 @@
 
 
 **Oczekiwany rezultat: Otwiera się panel z listą użytkowników słuchających muzyki w danej lokalizacji. Ilość użytkowników zgadza się z numerem na hotspocie.**
-<br>**Rzeczywisty rezultat: [PLACEHOLDER - opisz co faktycznie się wydarzyło podczas testu]**
-<br>**Status testu: [ZALICZONY / NIEZALICZONY]**
+<br>**Rzeczywisty rezultat: [zdjęcia]**
+<p float="left">
+<img src="TC015 - 1.png" width="300"/>
+<img src="TC015 - 2.png" width="300"/>
+</p>
+<br>**Status testu: ZALICZONY**
 <br>**Warunki końcowe: Widoczna lista użytkowników z tej lokalizacji. Możliwość przeglądania listy.**
 
 ### TC016
@@ -252,8 +293,12 @@
 
 
 **Oczekiwany rezultat: Lista użytkowników zamyka się. Powrót do normalnego widoku mapy.**
-<br>**Rzeczywisty rezultat: [PLACEHOLDER - opisz co faktycznie się wydarzyło podczas testu]**
-<br>**Status testu: [ZALICZONY / NIEZALICZONY]**
+<br>**Rzeczywisty rezultat: [zdjęcia]**
+<p float="left">
+<img src="TC016 - 1.png" width="300"/>
+<img src="TC016 - 2.png" width="300"/>
+</p>
+<br>**Status testu: ZALICZONY**
 <br>**Warunki końcowe: Widoczna mapa bez otwartej listy użytkowników.**
 
 ## 6. UPRAWNIENIA I BEZPIECZEŃSTWO
@@ -268,8 +313,8 @@
 
 
 **Oczekiwany rezultat: Aplikacja wyświetla systemową prośbę o dostęp do lokalizacji urządzenia.**
-<br>**Rzeczywisty rezultat: [PLACEHOLDER - opisz co faktycznie się wydarzyło podczas testu]**
-<br>**Status testu: [ZALICZONY / NIEZALICZONY]**
+<br>**Rzeczywisty rezultat: [Aplikacja poprosiła o lokalizacje]**
+<br>**Status testu: ZALICZONY**
 <br>**Warunki końcowe: Użytkownik ma możliwość przyznania lub odmowy uprawnień.**
 
 ### TC018
@@ -299,9 +344,12 @@
 
 
 **Oczekiwany rezultat: Stabilne działanie przez cały czas testowania. Rozsądne zużycie zasobów urządzenia.**
-<br>**Rzeczywisty rezultat: [PLACEHOLDER - opisz co faktycznie się wydarzyło podczas testu]**
-<br>**Status testu: [ZALICZONY / NIEZALICZONY]**
-<br>**Warunki końcowe: Aplikacja nadal działa płynnie po długotrwałym użytkowaniu oraz zużyła nie wielkie ilości baterii.**
+<br>**Rzeczywisty rezultat: Telefon w trakcie testu rozładował się [zdjęcie]**
+<p float="left">
+<img src="TC019 - 1.jpg" width="300"/>
+</p>
+<br>**Status testu: NIEZALICZONY**
+<br>**Warunki końcowe: Aplikacja nadal działa płynnie po długotrwałym użytkowaniu oraz zużyła niewielkie ilości baterii.**
 
 ### TC020
 **Tytuł: Przejście aplikacji do tła i powrót**
@@ -315,8 +363,8 @@
 
 
 **Oczekiwany rezultat: Aplikacja wznawia się w tym samym stanie co przed przejściem do tła. Mapa i dane są aktualne.**
-<br>**Rzeczywisty rezultat: [PLACEHOLDER - opisz co faktycznie się wydarzyło podczas testu]**
-<br>**Status testu: [ZALICZONY / NIEZALICZONY]**
+<br>**Rzeczywisty rezultat: Po wznowieniu aplikacji, działała ona poprawnie**
+<br>**Status testu: ZALICZONY**
 <br>**Warunki końcowe: Aplikacja działa normalnie po powrocie z tła.**
 
 ## 8. PRZYPADKI BRZEGOWE
@@ -331,6 +379,6 @@
 
 
 **Oczekiwany rezultat: Aplikacja wyświetla komunikat o braku połączenia. Graceful degradation funkcjonalności. Możliwość przeglądania hotspotów oraz przesuwania mapy z nieaktualnymi danymi**
-<br>**Rzeczywisty rezultat: [PLACEHOLDER - opisz co faktycznie się wydarzyło podczas testu]**
-<br>**Status testu: [ZALICZONY / NIEZALICZONY]**
+<br>**Rzeczywisty rezultat: Aplikacja po odłączeniu od sieci nadal funkcjonowała, ale nie pojawił się komunikat o przerwanym połączeniu**
+<br>**Status testu: NIEZALICZONY**
 **Warunki końcowe: Użytkownik informowany o problemie z połączeniem. Aplikacja działa z nieaktualnymi danymi**
