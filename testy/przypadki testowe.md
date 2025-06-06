@@ -17,7 +17,9 @@ Screenshoty do testów są w tym samym folderze co przypadki testowe. Zdjęcia n
 
 **Oczekiwany rezultat: Wyświetlenie pierwszego slajdu z opisem działania aplikacji, prawidłową grafiką i czytelnym tekstem.**
 <br>**Rzeczywisty rezultat: [zdjęcie]**
-<img src="TC001 - 1.png"/>
+<p float="left">
+<img src="TC001 - 1.png" width="300"/>
+</p>
 <br>**Status testu: NIEZALICZONY**
 <br>**Warunki końcowe: Pierwszy slajd onboardingu jest widoczny. Użytkownik może przejść do kolejnego slajdu.**
 
@@ -88,7 +90,9 @@ Screenshoty do testów są w tym samym folderze co przypadki testowe. Zdjęcia n
 
 **Oczekiwany rezultat: Wyświetlenie komunikatu o błędnych danych logowania. Pozostanie na ekranie logowania Spotify.**
 <br>**Rzeczywisty rezultat: [Zdjęcie]**
+<p float="left">
 <img src="TC007 - 1.png"/>
+</p>
 <br>**Status testu: ZALICZONY**
 <br>**Warunki końcowe: Użytkownik nadal niezalogowany. Możliwość ponownej próby logowania.**
 
@@ -135,7 +139,9 @@ Screenshoty do testów są w tym samym folderze co przypadki testowe. Zdjęcia n
 
 **Oczekiwany rezultat: Mapa ładuje się poprawnie z widocznymi hotspotami oznaczonymi numerkami.**
 <br>**Rzeczywisty rezultat: [zdjęcie]**
+<p float="left">
 <img src="TC008 - 1.png"/>
+</p>
 <br>**Status testu: ZALICZONY**
 <br>**Warunki końcowe: Widoczna mapa z hotspotami. Użytkownik może interakcjonować z mapą.**
 
@@ -152,8 +158,10 @@ Screenshoty do testów są w tym samym folderze co przypadki testowe. Zdjęcia n
 
 **Oczekiwany rezultat: Aktualna lokalizacja użytkownika jest poprawnie wyświetlona na mapie.**
 <br>**Rzeczywisty rezultat: [zdjęcie]**
+<p float="left">
 <img src="TC009 - 1.png"/>
 <img src="TC009 - 2.png"/>
+</p>
 <br>**Status testu: ZALICZONY**
 <br>**Warunki końcowe: Użytkownik widzi swoją pozycję na mapie. Lokalizacja jest aktualna.**
 
@@ -170,7 +178,9 @@ Screenshoty do testów są w tym samym folderze co przypadki testowe. Zdjęcia n
 
 **Oczekiwany rezultat: Płynne przybliżanie i oddalanie mapy. Hotspoty skalują się odpowiednio.**
 <br>**Rzeczywisty rezultat:  hotspoty nie skalują przy zoomie [zdjęcie]**
+<p float="left">
 <img src="TC010 - 1.png"/>
+</p>
 <br>**Status testu: NIEZALICZONY**
 <br>**Warunki końcowe: Mapa w wybranym poziomie przybliżenia. Funkcja zoom działa poprawnie.**
 
@@ -187,11 +197,13 @@ Screenshoty do testów są w tym samym folderze co przypadki testowe. Zdjęcia n
 
 **Oczekiwany rezultat: Płynne przesuwanie mapy we wszystkich kierunkach. Hotspoty aktualizują się dla widocznego obszaru.**
 <br>**Rzeczywisty rezultat: [zdjęcia]**
+<p float="left">
 <img src="TC011 - 1.png"/>
 <img src="TC011 - 2.png"/>
 <img src="TC011 - 3.png"/>
 <img src="TC011 - 4.png"/>
 <img src="TC011 - 5.png"/>
+</p>
 <br>**Status testu: ZALICZONY**
 <br>**Warunki końcowe: Mapa wyświetla nowy obszar z odpowiednimi hotspotami.**
 
@@ -208,7 +220,9 @@ Screenshoty do testów są w tym samym folderze co przypadki testowe. Zdjęcia n
 
 **Oczekiwany rezultat: W górnym pasku wyświetla się tytuł utworu i nazwa wykonawcy aktualnie słuchanej muzyki.**
 <br>**Rzeczywisty rezultat: [zdjęcia]**
+<p float="left">
 <img src="TC012 - 1.png"/>
+</p>
 <br>**Status testu: ZALICZONY**
 <br>**Warunki końcowe: Górny pasek pokazuje aktualne informacje o muzyce.**
 
@@ -224,8 +238,10 @@ Screenshoty do testów są w tym samym folderze co przypadki testowe. Zdjęcia n
 
 **Oczekiwany rezultat: Górny pasek automatycznie aktualizuje informacje o nowym utworze.**
 <br>**Rzeczywisty rezultat: [zdjęcia]**
+<p float="left">
 <img src="TC013 - 1.png"/>
 <img src="TC013 - 2.png"/>
+</p>
 <br>**Status testu: ZALICZONY**
 <br>**Warunki końcowe: Pasek wyświetla informacje o aktualnie odtwarzanym utworze.**
 
@@ -240,8 +256,10 @@ Screenshoty do testów są w tym samym folderze co przypadki testowe. Zdjęcia n
 
 **Oczekiwany rezultat: Górny pasek zmienia się na pusty.**
 <br>**Rzeczywisty rezultat: [zdjęcia]**
+<p float="left">
 <img src="TC014 - 1.png"/>
 <img src="TC014 - 2.png"/>
+</p>
 <br>**Status testu: ZALICZONY**
 <br>**Warunki końcowe: Pasek obecnie słuchanej muzyki jest pusty.**
 
@@ -258,8 +276,10 @@ Screenshoty do testów są w tym samym folderze co przypadki testowe. Zdjęcia n
 
 **Oczekiwany rezultat: Otwiera się panel z listą użytkowników słuchających muzyki w danej lokalizacji. Ilość użytkowników zgadza się z numerem na hotspocie.**
 <br>**Rzeczywisty rezultat: [zdjęcia]**
+<p float="left">
 <img src="TC015 - 1.png"/>
 <img src="TC015 - 2.png"/>
+</p>
 <br>**Status testu: ZALICZONY**
 <br>**Warunki końcowe: Widoczna lista użytkowników z tej lokalizacji. Możliwość przeglądania listy.**
 
@@ -274,8 +294,10 @@ Screenshoty do testów są w tym samym folderze co przypadki testowe. Zdjęcia n
 
 **Oczekiwany rezultat: Lista użytkowników zamyka się. Powrót do normalnego widoku mapy.**
 <br>**Rzeczywisty rezultat: [zdjęcia]**
+<p float="left">
 <img src="TC016 - 1.png"/>
 <img src="TC016 - 2.png"/>
+</p>
 <br>**Status testu: ZALICZONY**
 <br>**Warunki końcowe: Widoczna mapa bez otwartej listy użytkowników.**
 
@@ -323,7 +345,9 @@ Screenshoty do testów są w tym samym folderze co przypadki testowe. Zdjęcia n
 
 **Oczekiwany rezultat: Stabilne działanie przez cały czas testowania. Rozsądne zużycie zasobów urządzenia.**
 <br>**Rzeczywisty rezultat: Telefon w trakcie testu rozładował się [zdjęcie]**
+<p float="left">
 <img src="TC019 - 1.png"/>
+</p>
 <br>**Status testu: NIEZALICZONY**
 <br>**Warunki końcowe: Aplikacja nadal działa płynnie po długotrwałym użytkowaniu oraz zużyła niewielkie ilości baterii.**
 
