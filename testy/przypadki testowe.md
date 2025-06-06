@@ -17,6 +17,7 @@ Screenshoty do testów są w tym samym folderze co przypadki testowe. Zdjęcia n
 
 **Oczekiwany rezultat: Wyświetlenie pierwszego slajdu z opisem działania aplikacji, prawidłową grafiką i czytelnym tekstem.**
 <br>**Rzeczywisty rezultat: [zdjęcie]**
+<img src="TC001 - 1.png"/>
 <br>**Status testu: NIEZALICZONY**
 <br>**Warunki końcowe: Pierwszy slajd onboardingu jest widoczny. Użytkownik może przejść do kolejnego slajdu.**
 
