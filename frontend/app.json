@@ -28,7 +28,12 @@
         "READ_EXTERNAL_STORAGE"
       ],
       "package": "com.bigbadcode1.realtimemusicmap",
-      "newArchEnabled": false
+      "newArchEnabled": false,
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyAkyio4bhk4CpAozrP_T7wnXuCy8nAi8g4"
+        }
+      }
     },
     "web": {
       "bundler": "metro",
