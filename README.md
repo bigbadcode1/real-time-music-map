@@ -7,6 +7,9 @@
   See the sound around you - live.
 </p>
 
+
+<!---
+
 <p align="center">
   <a href="...">
     <img alt="Download on the App Store" title="App Store" src="http://i.imgur.com/0n2zqHD.png" width="140">
@@ -16,6 +19,9 @@
     <img alt="Get it on Google Play" title="Google Play" src="http://i.imgur.com/mtGRPuM.png" width="140">
   </a>
 </p>
+
+
+--->
 
 <p align="center">
   <a href="#introduction">Introduction</a> •
@@ -32,10 +38,17 @@
 
 Real-Time Music Map is a live geosocial platform that visualizes what people are listening to around you. Connect your Spotify account, see nearby listeners, explore local trends, and share your own music vibe — all in real-time.
 
-**Available for both iOS and Android.**
+**Available for both iOS and Android.** 
 
+<p>
+  <strong>Android .apk:</strong>  
+  <a href="https://bit.ly/real-time-music-map">Download from itch.io</a>
+</p>
+<br>
 <p align="center">
-  <img src = "https://github.com/user-attachments/assets/38367c69-dd06-45f7-bd3c-0fa496e9ea3b" width=350>
+  <img src="https://github.com/user-attachments/assets/4bfa6ed6-3302-45c7-8046-c3d6adcf2c4c" alt="screenshot1" width="250" />
+  &nbsp;&nbsp;&nbsp;
+  <img src="https://github.com/user-attachments/assets/aac3ad60-f8e4-4a9f-9381-cccc310a1666" alt="screenshot2" width="250" />
 </p>
 
 
@@ -72,13 +85,6 @@ Real-Time Music Map is a live geosocial platform that visualizes what people are
   - 👥 Friends-only - share with connections
   - 👻 Ghost mode - hide location (shows only music data)
 - **Proximity ghosts**: Animated indicators for nearby ghost-mode users.
-- 
-
-
-<p align="center">
-  <img src = "https://github.com/user-attachments/assets/c33462e5-ad18-4d1e-944f-2c6a0f6cef06" width=750>
-</p>
-
 
 ## Feedback
 
