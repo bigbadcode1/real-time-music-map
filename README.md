@@ -42,7 +42,7 @@ Real-Time Music Map is a live geosocial platform that visualizes what people are
 
 <p>
   <strong>Android .apk:</strong>  
-  <a href="https://bit.ly/real-time-music-map">Download from itch.io</a>
+  <a href="http://filip01.itch.io/real-time-music-map?fbclid=IwY2xjawK40ZZleHRuA2FlbQIxMABicmlkETBKR0JLZjhzajAyaXp3V21wAR43U-XDFqOhIk07aQO8l6EltGS4hT9L8S-ShFhlpnf9gseSG-qRcUAQxzU8cg_aem_j33qp2JOpc4YyFCMMEAOFQ">Download from itch.io</a>
 </p>
 <br>
 <p align="center">
