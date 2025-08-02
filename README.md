@@ -45,10 +45,11 @@ Real-Time Music Map is a live geosocial platform that visualizes what people are
   <a href="http://filip01.itch.io/real-time-music-map?fbclid=IwY2xjawK40ZZleHRuA2FlbQIxMABicmlkETBKR0JLZjhzajAyaXp3V21wAR43U-XDFqOhIk07aQO8l6EltGS4hT9L8S-ShFhlpnf9gseSG-qRcUAQxzU8cg_aem_j33qp2JOpc4YyFCMMEAOFQ">Download from itch.io</a>
 </p>
 <br>
+
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/4bfa6ed6-3302-45c7-8046-c3d6adcf2c4c" alt="screenshot1" width="250" />
+  <img src="https://github.com/user-attachments/assets/efb021c4-261b-4e3a-a76a-718cede1bc0e" alt="screenshot1" width="250" />
   &nbsp;&nbsp;&nbsp;
-  <img src="https://github.com/user-attachments/assets/aac3ad60-f8e4-4a9f-9381-cccc310a1666" alt="screenshot2" width="250" />
+  <img src="https://github.com/user-attachments/assets/dc8d79e0-34ef-418a-b57e-8dfd754bbb86" alt="screenshot2" width="250" />
 </p>
 
 
