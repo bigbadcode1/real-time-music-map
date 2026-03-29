@@ -32,18 +32,18 @@ export const useSpotifyAuth = (): UseSpotifyAuthReturn => {
   const isProcessingResponse = useRef<boolean>(false);
 
   // PROD
-  const redirectUri = useMemo(() => {
-    const scheme = "myapp"
-    return makeRedirectUri({
-      scheme: scheme,
-    });
-  }, []);
+  // const redirectUri = useMemo(() => {
+  //   const scheme = "myapp"
+  //   return makeRedirectUri({
+  //     scheme: scheme,
+  //   });
+  // }, []);
 
   // DEV
-  // const redirectUri = useMemo(() => process.env.EXPO_PUBLIC_SPOTIFY_REDIRECT_URI || 'no redirect uri', []);
-  // useEffect(() => {
-  //   console.log("[useSpotifyAuth] Using redirect URI: ", redirectUri);
-  // }, [redirectUri]);
+  const redirectUri = useMemo(() => process.env.EXPO_PUBLIC_SPOTIFY_REDIRECT_URI || 'no redirect uri', []);
+  useEffect(() => {
+    console.log("[useSpotifyAuth] Using redirect URI: ", redirectUri);
+  }, [redirectUri]);
 
   useEffect(() => {
     console.log("[useSpotifyAuth] Using redirect URI: ", redirectUri);

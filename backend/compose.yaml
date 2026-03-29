@@ -5,13 +5,13 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     # for mac users
-    #platform: linux/amd64
+    platform: linux/amd64
     ports:
       - 8888:8888
     env_file: ".env"
     # when running db + backend
-    # environment:
-    #   - DB_HOST=mapme-db
+    environment:
+      - DB_HOST=mapme-db
     networks:
       - mapme-network
       - mapme-tunnel
