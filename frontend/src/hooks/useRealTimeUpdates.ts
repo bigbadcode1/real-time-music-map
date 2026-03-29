@@ -6,39 +6,13 @@ import * as geohash from 'ngeohash';
 import {
   BasicHotspotData,
   UserListenerData,
-  HotspotSize,
-  HotspotActivity,
   CurrentLocation,
   CurrentTrack,
 } from '../../types/dataTypes';
+import { mapHotspotDtoArray } from '../mappers/hotspotMapper';
+import { mapUserDtoArray } from '../mappers/userMapper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-function getSizeFromCount(count: number): HotspotSize {
-  if (count <= 2) return 'small';
-  if (count <= 5) return 'medium';
-  if (count <= 10) return 'large';
-  return 'xlarge';
-}
-
-function getActivityLevel(count: number, lastUpdated: string): HotspotActivity {
-  const minutesSinceUpdate = (Date.now() - new Date(lastUpdated).getTime()) / (1000 * 60);
-
-  if (minutesSinceUpdate < 5 && count > 5) return 'trending';
-  if (minutesSinceUpdate < 15) return 'high';
-  if (minutesSinceUpdate < 30) return 'medium';
-  return 'low';
-}
-
-function calculateTimeAgo(timestamp: string): string {
-  const now = new Date();
-  const updatedTime = new Date(timestamp);
-  const diffInSeconds = Math.floor((now.getTime() - updatedTime.getTime()) / 1000);
-
-  if (diffInSeconds < 60) return 'Just now';
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
-  return `${Math.floor(diffInSeconds / 86400)} days ago`;
-}
 
 interface MapRegion {
   latitude: number;
@@ -173,19 +147,7 @@ const getNearbyHotspotsData = async (region: MapRegion): Promise<BasicHotspotDat
 
     console.log(`[useRealTimeUpdates] Found ${data.hotspots.length} hotspots in region`);
 
-    return data.hotspots.map((h: any) => ({
-      id: h.geohash,
-      coordinate: { 
-        latitude: parseFloat(h.latitude), 
-        longitude: parseFloat(h.longitude) 
-      },
-      size: getSizeFromCount(h.count),
-      activity: getActivityLevel(h.count, h.last_updated),
-      userCount: h.count,
-      lastUpdated: h.last_updated,
-      locationName: `Hotspot ${h.geohash.substring(0, 5)}`,
-      geohash: h.geohash,
-    }));
+    return mapHotspotDtoArray(data.hotspots);
   } catch (error) {
     console.error('[useRealTimeUpdates] Error getting map region hotspots data:', error);
     return null;
@@ -213,20 +175,7 @@ const getNearbyHotspotsData = async (region: MapRegion): Promise<BasicHotspotDat
 
       
       const data = await response.json();
-      console.log("data user song id:", data.users[0].song_id)
-      return data.users.map((user: any) => ({
-        id: user.id,
-        name: user.name,
-        avatar: user.image,
-        currentTrack: {
-          id: user.song_id,
-          title: user.song_title,
-          artist: user.song_artist,
-          albumArt: user.song_image,
-          isCurrentlyListening: (new Date(user.last_updated) > new Date(Date.now() - 5 * 60 * 1000)),
-          timestamp: calculateTimeAgo(user.last_updated),
-        },
-      }));
+      return mapUserDtoArray(data.users);
     } catch (error) {
       console.error(`[useRealTimeUpdates] Error getting details for hotspot ${geohash}:`, error);
       return null;

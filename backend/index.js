@@ -8,6 +8,10 @@ import Database from "./database/Postgres.database.js";
 import { hashToken } from "#utils/hashToken.js";
 import crypto from 'crypto'
 import { Console } from "console";
+import { HotspotDTO } from "./dto/HotspotDTO.js";
+import { UserDTO } from "./dto/UserDTO.js";
+import { CurrentlyPlayingDTO } from "./dto/TrackDTO.js";
+import { AuthResponseDTO, TokenRefreshDTO } from "./dto/AuthResponseDTO.js";
 
 dotenv.config();
 
@@ -76,7 +80,7 @@ app.get('/currentTrack', async function (req, res) {
     }
 
 
-    res.json(track);
+    res.json(CurrentlyPlayingDTO.from(track));
   } catch (error) {
     console.error('[/currentTrack] Error', error);
     res.status(500).json({ error: 'Failed to get current track' });
@@ -178,7 +182,7 @@ app.post('/update-user-info', async function (req, res) {
     }
     
     //return song data
-    res.status(200).json({ track: isPlaying && track ? track : null, isPlaying: isPlaying });
+    res.status(200).json(new CurrentlyPlayingDTO(isPlaying, isPlaying ? track : null));
   } catch (error) {
     console.error('[/update-user-info] Error:', error);
     res.status(500).json({ error: 'Failed to update user info' });
@@ -234,13 +238,13 @@ app.post('/exchange-token', async function (req, res) {
     // })
 
 
-    res.json({
+    res.json(AuthResponseDTO.from({
       access_token: spotifyTokens.access_token,
       refresh_token: spotifyTokens.refresh_token,
       expires_in: spotifyTokens.expires_in,
       app_session_token: appSessionToken,
-      user_id: userId
-    });
+      user_id: userId,
+    }));
     
   } catch (error) {
     console.error('Error exchanging code for token:', error);
@@ -282,11 +286,7 @@ app.post('/refresh-token', async function (req, res) {
       console.log('[/refresh-token] tokens.refresh_token == null');
     }
 
-    res.json({
-      access_token: tokens.access_token,
-      refresh_token: tokens.refresh_token,
-      expires_in: tokens.expires_in
-    });
+    res.json(TokenRefreshDTO.from(tokens));
 
   } catch (error) {
     console.error('Error refreshing token:', error);
@@ -313,7 +313,7 @@ app.post('/get_hotspots', async function (req, res) {
 
     const result = await Database.getHotspots(ne_lat, ne_long, sw_lat, sw_long);
 
-    res.status(200).json({ "hotspots": result })
+    res.status(200).json({ hotspots: HotspotDTO.fromDbRows(result) })
   } catch (error) {
     console.error("[/get_hotspots] Error ", error)
     res.status(500).json({ error: "Failed to get hotspots" });
@@ -343,8 +343,7 @@ app.post('/get_users_from_hotspots', async function (req, res) {
       result = await Database.getUsersFromHotspots(hotspots);
     }
 
-    // console.log("result: ", result);received
-    res.status(200).json({ "users": result });
+    res.status(200).json({ users: UserDTO.fromDbRows(result) });
   } catch (error) {
     console.log("[/get_users_from_hotspots] Error: ", error);
     res.status(500).json({ error: "Failed to get users from hotspots" });
