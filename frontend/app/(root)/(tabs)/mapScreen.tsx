@@ -58,18 +58,14 @@ const MapContent: React.FC<MapContentProps> = React.memo(
       !isNaN(hotspot.coordinate.latitude) &&
       !isNaN(hotspot.coordinate.longitude)
     );
-
-    if (Platform.OS === 'android') {
       return (
         <>
           {validHotspots.map((hotspot) => (
             <Marker
               key={hotspot.id}
               coordinate={hotspot.coordinate}
-              // tracksViewChanges={false}
               anchor={{ x: 0.5, y: 0.5 }}
               zIndex={currentSelectedHotspotId === hotspot.id ? 100 : 10}
-              // flat={true}
               onPress={() => onHotspotPress(hotspot)}
             >
               <Hotspot
@@ -83,29 +79,6 @@ const MapContent: React.FC<MapContentProps> = React.memo(
           ))}
         </>
       )
-    }
-    return (
-      <>
-        {validHotspots.map((hotspot) => (
-          <Marker
-            key={hotspot.id}
-            coordinate={hotspot.coordinate}
-            // tracksViewChanges={false}
-            anchor={{ x: 0.5, y: 0.5 }}
-            zIndex={currentSelectedHotspotId === hotspot.id ? 100 : 10}
-          // flat={true}
-          >
-            <Hotspot
-              size={hotspot.size}
-              activity={hotspot.activity}
-              userCount={hotspot.userCount}
-              coordinate={hotspot.coordinate}
-              onPress={() => onHotspotPress(hotspot)}
-            />
-          </Marker>
-        ))}
-      </>
-    );
   },
   (prevProps, nextProps) =>
     prevProps.hotspots === nextProps.hotspots &&
