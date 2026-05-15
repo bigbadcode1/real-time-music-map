@@ -20,48 +20,6 @@ var app = express();
 app.use(express.json());
 app.use(cors());
 
-
-// app.get('/login', function (req, res) {
-//   const client_id = process.env.SPOTIFY_CLIENT_ID;
-//   const redirect_uri = process.env.SPOTIFY_REDIRECT_URI;
-//   const state = "4hdkjhgfjkldasj;l";
-//   const scope = [
-//     'user-read-private',
-//     'user-read-email',
-//     'user-read-currently-playing',
-//     'user-read-playback-state',
-//     'user-modify-playback-state',
-//     'user-read-recently-played',
-//     'user-library-read',
-//     'playlist-read-private',
-//     'playlist-read-collaborative',
-//     'streaming'
-//   ].join(' ');
-
-
-//   res.redirect('https://accounts.spotify.com/authorize?' +
-//     querystring.stringify({
-//       response_type: 'code',
-//       client_id: client_id,
-//       scope: scope,
-//       redirect_uri: redirect_uri,
-//       state: state
-//     }));
-//   });
-
-
-
-//   app.get('/callback', async function (req, res) {
-//     console.log("callback")
-//     const code = req.query.code;
-//     const AccessTokenResponse = await getSpotifyAccessToken(process.env.SPOTIFY_CLIENT_ID, process.env.SPOTIFY_CLIENT_SECRET, code, process.env.SPOTIFY_REDIRECT_URI);
-//     const track = await getCurrentlyPlayingTrack(AccessTokenResponse.access_token);
-//     console.log(track.track.name);
-
-//   });
-
-
-
 // --------------------- SPOTIFY API -------------------------
 
 // get currently playing track
@@ -95,12 +53,6 @@ app.post('/update-user-info', async function (req, res) {
   try {
     const { access_token, refresh_token, user_id, geohash, expires_in = 3600 } = req.body;
 
-    // console.log('[/update-user-info] Debug - Received request body:', {
-    //   user_id,
-    //   access_token: access_token,
-    //   refresh_token: refresh_token,
-    //   geohash
-    // });
     if (!user_id || !access_token || !refresh_token) {
       return res.status(400).json({ error: 'Required data is missing' });
     }
@@ -123,8 +75,6 @@ app.post('/update-user-info', async function (req, res) {
     
     //hash token
     const tokenHash = hashToken(refresh_token);
-    // console.log('[/update-user-info] Debug - Generated token hash:', tokenHash);
-
   
     // send user data to db
     try {
@@ -307,10 +257,6 @@ app.post('/get_hotspots', async function (req, res) {
       throw new Error("isNaN error for coordinates");
     }
 
-    // test to get all hotspots (limited to top 20)
-    // const result = await Database.getHotspots(90, 180, -90, -180);
-    //
-
     const result = await Database.getHotspots(ne_lat, ne_long, sw_lat, sw_long);
 
     res.status(200).json({ hotspots: HotspotDTO.fromDbRows(result) })
@@ -330,15 +276,7 @@ app.post('/get_users_from_hotspots', async function (req, res) {
       throw new Error("Invalid hotspots array");
     }
 
-
     let result = [];
-
-
-    // example
-    // result = await Database.getUsersFromHotspots(['xj', '4d1q', '6vw', 'd2zuqdt', 'kscwfkb']);
-    //
-
-
     if (hotspots.length > 0) {
       result = await Database.getUsersFromHotspots(hotspots);
     }
