@@ -116,7 +116,7 @@ def main():
 
     frontend_vars = {
         "EXPO_PUBLIC_SPOTIFY_CLIENT_ID": config["SPOTIFY_CLIENT_ID"],
-        "EXPO_PUBLIC_SPOTIFY_REDIRECT_URI": f"exp://{config["LOCAL_IP"]:8081}",
+        "EXPO_PUBLIC_SPOTIFY_REDIRECT_URI": f"exp://{config["LOCAL_IP"]}:8081",
         "EXPO_PUBLIC_BACKEND_URL": f"http://{config["LOCAL_IP"]}:{config["BACKEND_PORT"]}",
     }
     
@@ -124,7 +124,7 @@ def main():
 
     # --- Configure Database .env (if applicable for Docker Compose etc.) ---
     database_vars = {
-        "POSTGRES_DB": config["DB_PORT"],
+        "POSTGRES_DB": config["DB_NAME"],
         "POSTGRES_USER": config["DB_USER"],
         "POSTGRES_PASSWORD": config["DB_PASS"],
         "POSTGRES_HOST_AUTH_METHOD": config["POSTGRES_HOST_AUTH_METHOD"],
