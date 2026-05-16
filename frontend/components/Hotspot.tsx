@@ -29,7 +29,8 @@ const COLORS = {
 const getDynamicSize = (userCount: number): number => {
   const baseSize = 45;
 
-  const maxSize = Platform.OS === 'android' ? 27 : 120; // small hostpost for android temp fix
+  // hardcoded to 35, react maps cap Mark to around 35pixels on android 
+  const maxSize = 35;
   const scaleFactor = Math.log(userCount + 1) * 12;
   return Math.min(baseSize + scaleFactor, maxSize);
 };
